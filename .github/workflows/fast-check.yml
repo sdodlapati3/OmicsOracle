@@ -2,17 +2,17 @@ name: Fast Quality Check
 
 on:
   push:
-    branches: [ develop, feature/* ]
+    branches: [ main ]
   pull_request:
     branches: [ main, develop ]
 
 env:
   PYTHON_VERSION: "3.12"
-  CACHE_VERSION: v1
+  CACHE_VERSION: v2
 
 jobs:
   fast-check:
-    name: "[FAST] Quality & Tests (< 1 min)"
+    name: "[FAST] Quality & Tests (< 90s)"
     runs-on: ubuntu-latest
     timeout-minutes: 2  # Hard timeout
 
@@ -62,15 +62,27 @@ jobs:
           start_time=$(date +%s)
 
           # Run all checks in parallel for maximum speed
-          black --check --quiet src/ tests/ scripts/ --line-length 88 &
+          black --check --quiet src/ tests/ scripts/ --line-length 80 &
           PID1=$!
           isort --check-only --quiet src/ tests/ scripts/ --profile black &
           PID2=$!
           ruff check src/ tests/ scripts/ --quiet &
           PID3=$!
+          # Two-tier line length check (hard limit 100, soft target 80)
+          flake8 src/ tests/ scripts/ --max-line-length=100 --quiet &
+          PID4=$!
 
           # Wait for all and capture results
-          wait $PID1 && wait $PID2 && wait $PID3
+          wait $PID1 && wait $PID2 && wait $PID3 && wait $PID4
+
+          # Soft warning for 80-char limit (non-blocking)
+          echo "::group::Soft Line Length Check (80 chars)"
+          if ! flake8 src/ tests/ scripts/ --max-line-length=80 --quiet; then
+            echo "::warning::Some lines exceed 80 characters (soft limit)"
+          else
+            echo "[PASS] All lines within 80 character soft limit"
+          fi
+          echo "::endgroup::"
 
           end_time=$(date +%s)
           echo "[PASS] Code quality: PASSED ($(($end_time - $start_time))s)"

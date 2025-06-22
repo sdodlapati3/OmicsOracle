@@ -82,7 +82,7 @@ jobs:
 
       - name: Code Formatting Check
         run: |
-          black --check --diff src/ tests/ scripts/ --line-length 88
+          black --check --diff src/ tests/ scripts/ --line-length 80
           echo "[PASS] Black formatting check"
         if: always()
 

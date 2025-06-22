@@ -14,7 +14,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-import yaml  # type: ignore[import-untyped]
+import yaml
 
 from .exceptions import ConfigurationError
 

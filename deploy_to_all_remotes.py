@@ -5,18 +5,34 @@ Deploy OmicsOracle to all GitHub remotes
 
 import subprocess
 import sys
-from typing import Tuple
+from typing import Optional, Tuple
+
+# Account mapping for different remotes
+REMOTE_ACCOUNTS = {
+    "origin": "sdodlapati3",
+    "backup": "sdodlapa",
+    "sanjeeva": "SanjeevaRDodlapati",
+}
 
 
 def run_command(command: str) -> Tuple[bool, str]:
     """Execute shell command and return success status and output"""
     try:
         result = subprocess.run(
-            command, shell=True, capture_output=True, text=True
+            command, shell=True, capture_output=True, text=True, check=False
         )
         return result.returncode == 0, result.stdout + result.stderr
-    except Exception as e:
+    except (subprocess.SubprocessError, OSError) as e:
         return False, str(e)
+
+
+def switch_github_account(account: str) -> bool:
+    """Switch to the specified GitHub account using gh CLI"""
+    print(f"  [AUTH] Switching to GitHub account: {account}")
+    success, output = run_command(f"gh auth switch --user {account}")
+    if not success:
+        print(f"  [ERROR] Failed to switch to account {account}: {output}")
+    return success
 
 
 def get_current_branch() -> str:
@@ -27,32 +43,40 @@ def get_current_branch() -> str:
     return "main"
 
 
-def push_to_remote(remote_name: str, branch: str = None) -> bool:
-    """Push current branch to specified remote"""
+def push_to_remote(remote_name: str, branch: Optional[str] = None) -> bool:
+    """Push current branch to specified remote with proper account switching"""
     if branch is None:
         branch = get_current_branch()
 
-    print(
-        f"[ICON][ICON][ICON][ICON] Pushing to remote '{remote_name}' "
-        f"(branch: {branch})..."
-    )
+    print(f"[PUSH] Pushing to remote '{remote_name}' " f"(branch: {branch})...")
+
+    # Switch to the appropriate GitHub account for this remote
+    if remote_name in REMOTE_ACCOUNTS:
+        account = REMOTE_ACCOUNTS[remote_name]
+        if not switch_github_account(account):
+            print(f"[WARN] Failed to switch account for " f"{remote_name}")
+            return False
 
     success, output = run_command(f"git push {remote_name} {branch}")
 
     if success:
-        print(f"[ICON][ICON][ICON] Successfully pushed to {remote_name}")
+        print(f"[SUCCESS] Successfully pushed to {remote_name}")
         return True
     else:
-        print(f"[ICON][ICON][ICON] Failed to push to {remote_name}: {output}")
+        # Check for authentication/permission errors
+        if "Permission denied" in output or "403" in output:
+            print(f"[SKIP] Skipping {remote_name}: " f"Authentication required")
+        else:
+            print(f"[FAIL] Failed to push to {remote_name}: " f"{output}")
         return False
 
 
-def push_to_all_remotes(branch: str = None) -> None:
+def push_to_all_remotes(branch: Optional[str] = None) -> None:
     """Push to all configured remotes"""
     # Get list of remotes
     success, output = run_command("git remote")
     if not success:
-        print("[ICON][ICON][ICON] Failed to get git remotes")
+        print("[ERROR] Failed to get git remotes")
         sys.exit(1)
 
     remotes = [
@@ -60,22 +84,22 @@ def push_to_all_remotes(branch: str = None) -> None:
     ]
 
     if not remotes:
-        print("[ICON][ICON][ICON] No git remotes configured")
+        print("[ERROR] No git remotes configured")
         sys.exit(1)
 
     print(
-        f"[ICON][ICON][ICON][ICON] Deploying OmicsOracle to "
+        f"[DEPLOY] Deploying OmicsOracle to "
         f"{len(remotes)} GitHub repositories..."
     )
-    print(f"[ICON][ICON][ICON][ICON] Configured remotes: {', '.join(remotes)}")
+    print(f"[INFO] Configured remotes: {', '.join(remotes)}")
 
     current_branch = branch or get_current_branch()
-    print(f"[ICON][ICON][ICON][ICON] Current branch: {current_branch}")
+    print(f"[INFO] Current branch: {current_branch}")
 
     # Check for uncommitted changes
     success, output = run_command("git status --porcelain")
     if success and output.strip():
-        print("[ICON][ICON][ICON]  Warning: You have uncommitted changes:")
+        print("[WARN] Warning: You have uncommitted changes:")
         print(output)
         response = input("Continue anyway? (y/N): ")
         if response.lower() != "y":
@@ -89,16 +113,12 @@ def push_to_all_remotes(branch: str = None) -> None:
         results.append((remote, success))
 
     # Summary
-    print("\n[ICON][ICON][ICON][ICON] Deployment Summary:")
+    print("\n[DEPLOY] Deployment Summary:")
     print("=" * 50)
 
     successful = 0
     for remote, success in results:
-        status = (
-            "[ICON][ICON][ICON] SUCCESS"
-            if success
-            else "[ICON][ICON][ICON] FAILED"
-        )
+        status = "[SUCCESS] SUCCESS" if success else "[FAIL] FAILED"
         print(f"{remote:12} | {status}")
         if success:
             successful += 1
@@ -109,20 +129,20 @@ def push_to_all_remotes(branch: str = None) -> None:
     )
 
     if successful == len(remotes):
-        print("[ICON][ICON][ICON][ICON] All repositories updated successfully!")
-        print("\n[ICON][ICON][ICON][ICON] Repository URLs:")
+        print("[SUCCESS] All repositories updated successfully!")
+        print("\n[INFO] Repository URLs:")
         for remote in remotes:
             success, url = run_command(f"git remote get-url {remote}")
             if success:
-                print(f"  [ICON][ICON][ICON] {remote}: {url.strip()}")
+                print(f"  [URL] {remote}: {url.strip()}")
     else:
         print(
-            "[ICON][ICON][ICON]  Some deployments failed. "
+            "[WARN] Some deployments failed. "
             "Check the output above for details."
         )
 
 
-def main():
+def main() -> None:
     """Main deployment function"""
     if len(sys.argv) > 1:
         branch = sys.argv[1]
