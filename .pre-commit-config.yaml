@@ -1,0 +1,66 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+      - id: check-toml
+      - id: check-merge-conflict
+      - id: debug-statements
+      - id: check-docstring-first
+
+  - repo: https://github.com/psf/black
+    rev: 23.9.1
+    hooks:
+      - id: black
+        language_version: python3.11
+        args: ["--line-length=88"]
+
+  - repo: https://github.com/pycqa/isort
+    rev: 5.12.0
+    hooks:
+      - id: isort
+        args: ["--profile", "black"]
+
+  - repo: https://github.com/pycqa/flake8
+    rev: 6.1.0
+    hooks:
+      - id: flake8
+        args: ["--max-line-length=88", "--extend-ignore=E203,W503"]
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.6.1
+    hooks:
+      - id: mypy
+        additional_dependencies: [types-requests, types-PyYAML]
+        args: ["--strict", "--ignore-missing-imports"]
+
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.7.5
+    hooks:
+      - id: bandit
+        args: ["-r", "src/"]
+        exclude: ^tests/
+
+  # ASCII-only enforcement - CRITICAL for CI/CD reliability
+  - repo: local
+    hooks:
+      - id: ascii-only-enforcer
+        name: ASCII-Only Character Enforcement
+        entry: python scripts/ascii_enforcer.py
+        language: system
+        files: \.(py|yml|yaml|json|sh|bash|zsh|toml|ini|cfg|conf|txt|sql|js|ts|html|css|xml)$|Dockerfile$|Makefile$|requirements.*\.txt$
+        exclude: ^(docs/|\.md$|\.rst$|\.tex$|README|extracted_docs/|\.git/|__pycache__/|\.pytest_cache/|\.mypy_cache/)
+        description: Enforce ASCII-only characters in all code and config files (except markdown docs)
+        pass_filenames: true
+
+      - id: no-emoji-check
+        name: No Emoji Characters in Code
+        entry: sh
+        args: [-c, 'if grep -P "[\x{1F000}-\x{1FFFF}]|\x{2705}|\x{274C}|\x{26A0}" "$@"; then echo "ERROR: Emoji characters found in code files"; exit 1; fi', find-emojis]
+        language: system
+        files: \.(py|yml|yaml|sh|bash|zsh|toml|ini|cfg|conf|json)$
+        exclude: ^(docs/|\.md$|\.rst$|README)
+        description: Prevent emoji characters that can break CI/CD pipelines

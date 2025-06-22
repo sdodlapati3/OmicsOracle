@@ -76,22 +76,22 @@ class PDFReader:
         # Try pdfplumber first (usually best results)
         text = self.extract_with_pdfplumber()
         if text and len(text) > 100:
-            print(f"✅ Successfully extracted {len(text)} characters with pdfplumber")
+            print(f"[OK] Successfully extracted {len(text)} characters with pdfplumber")
             return text
         
         # Try PyMuPDF as fallback
         text = self.extract_with_pymupdf()
         if text and len(text) > 100:
-            print(f"✅ Successfully extracted {len(text)} characters with PyMuPDF")
+            print(f"[OK] Successfully extracted {len(text)} characters with PyMuPDF")
             return text
         
         # Try PyPDF2 as last resort
         text = self.extract_with_pypdf2()
         if text and len(text) > 100:
-            print(f"✅ Successfully extracted {len(text)} characters with PyPDF2")
+            print(f"[OK] Successfully extracted {len(text)} characters with PyPDF2")
             return text
         
-        print("❌ Failed to extract meaningful text from PDF")
+        print("[FAIL] Failed to extract meaningful text from PDF")
         return ""
     
     def get_metadata(self) -> Dict:
@@ -161,12 +161,12 @@ def save_extracted_text(results: Dict[str, Dict], output_dir: str = "extracted_d
                 f.write(f"# Extraction date: {datetime.now().isoformat()}\n\n")
                 f.write(data['text'])
             
-            print(f"✅ Saved extracted text to: {output_file}")
+            print(f"[OK] Saved extracted text to: {output_file}")
 
 
 def main():
     """Main function to read OmicsOracle PDF documents."""
-    print("🔍 OmicsOracle PDF Document Reader")
+    print("[SEARCH] OmicsOracle PDF Document Reader")
     print("=" * 50)
     
     # Get the directory containing the PDFs
@@ -179,7 +179,7 @@ def main():
     save_extracted_text(results)
     
     # Summary
-    print(f"\n📊 SUMMARY:")
+    print("\n[DATA] SUMMARY:")
     print(f"Total PDFs processed: {len(results)}")
     successful_extractions = sum(1 for r in results.values() if r['text'])
     print(f"Successful extractions: {successful_extractions}")
@@ -187,12 +187,12 @@ def main():
     print(f"Total words extracted: {total_words}")
     
     # List files with content
-    print(f"\n📄 Files with extracted content:")
+    print("\n[FILE] Files with extracted content:")
     for filename, data in results.items():
         if data['text']:
-            print(f"  ✅ {filename} ({data['word_count']} words)")
+            print(f"  [OK] {filename} ({data['word_count']} words)")
         else:
-            print(f"  ❌ {filename} (extraction failed)")
+            print(f"  [FAIL] {filename} (extraction failed)")
     
     return results
 
@@ -201,8 +201,8 @@ if __name__ == "__main__":
     try:
         results = main()
     except KeyboardInterrupt:
-        print("\n❌ Process interrupted by user")
+        print("\n[INTERRUPT] Process interrupted by user")
         sys.exit(1)
     except Exception as e:
-        print(f"❌ Error: {e}")
+        print(f"[ERROR] Error: {e}")
         sys.exit(1)

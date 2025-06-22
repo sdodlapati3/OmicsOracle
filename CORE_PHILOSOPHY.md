@@ -162,6 +162,12 @@ class MeSHMapper(OntologyMapper):
 - **isort** for import organization
 - **mypy** for static type checking (strict mode)
 - **flake8** for linting with custom genomics rules
+- **ASCII-Only Code Policy**: Strict enforcement of ASCII characters (0x00-0x7F) in all code, scripts, configurations, and commit messages
+- **Special Character Policy**: Emojis and Unicode symbols allowed ONLY in markdown documentation files (.md, .rst)
+- **Enforcement System**: Automated pre-commit hooks and CI/CD checks prevent non-ASCII characters in code files
+- **Character Replacement Guidelines**: Use ASCII alternatives (e.g., [PASS] instead of ✅, [FAIL] instead of ❌)
+- **Documentation Exception**: Unicode content permitted in docs/, README files, and .md/.rst files for scientific notation
+- **Rationale**: Prevents CI/CD failures, ensures cross-platform compatibility, and maintains terminal/shell reliability
 - **docstring** coverage minimum 95%
 
 #### 2. Testing Strategy
@@ -476,3 +482,39 @@ This Core Philosophy serves as our North Star, guiding every decision from indiv
 
 *"Excellence is not a destination but a continuous journey of improvement."*  
 *- OmicsOracle Development Team*
+
+---
+
+## 🔒 ASCII-Only Code Policy (Critical)
+
+### Rationale & Benefits
+- **Cross-platform compatibility**: Ensures code works identically on all operating systems
+- **CI/CD reliability**: Prevents pipeline failures due to character encoding issues  
+- **Terminal compatibility**: Works in all shell environments and terminal emulators
+- **Git workflow stability**: Avoids merge conflicts and encoding problems
+- **International collaboration**: ASCII works universally across all locales
+- **Scientific reproducibility**: Ensures consistent behavior in all environments
+
+### Implementation
+- **Automated enforcement**: Pre-commit hooks and CI/CD checks prevent violations
+- **Comprehensive coverage**: All code, scripts, configs, and commit messages  
+- **Exception handling**: Unicode allowed ONLY in markdown documentation (.md/.rst files)
+- **Character replacement**: Detailed ASCII alternatives for common Unicode symbols
+- **Error reporting**: Clear violation messages with specific character codes and locations
+
+### ASCII Replacement Examples
+```python
+# ❌ WRONG - Unicode symbols
+# ✅ Function works perfectly!
+temperature = 25°C  
+α = 0.05
+
+# ✅ CORRECT - ASCII alternatives  
+# [OK] Function works perfectly!
+temperature = "25degC"
+alpha = 0.05
+```
+
+**Reference**: See `docs/ASCII_ENFORCEMENT_GUIDE.md` for comprehensive replacement tables and examples.
+
+---
