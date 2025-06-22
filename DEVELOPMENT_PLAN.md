@@ -225,7 +225,7 @@ Operational Quality Standards:
 - [ ] Integrate GEOparse for SOFT file parsing
 - [ ] Configure pysradb for SRA metadata retrieval
 - [ ] Set up GEOfetch for standardized data download
-- [ ] Implement GEOmetadb SQLite integration (optional)
+- [ ] Implement GEOmetadb SQLite integration (optional - package not available on PyPI)
 - [ ] Create unified GEO client interface
 
 #### Deliverables:
@@ -478,7 +478,7 @@ Operational Quality Standards:
 - **pysradb**: SRA metadata retrieval and GEO-SRA accession mapping
 - **GEOfetch**: Standardized GEO/SRA data and metadata download with PEP format output
 - **BioPython**: Bio.Entrez module for additional NCBI database access
-- **GEOmetadb**: Optional integration for SQLite-based GEO metadata queries
+- **GEOmetadb**: Optional integration for SQLite-based GEO metadata queries (not available on PyPI)
 
 ### AI/NLP Technologies  
 - **OpenAI API**: GPT-4 for natural language interpretation and summarization

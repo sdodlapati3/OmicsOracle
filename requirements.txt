@@ -11,7 +11,7 @@ GEOparse>=2.0.3
 pysradb>=1.4.2
 # Note: GEOfetch needs to be installed via pip install geofetch
 geofetch>=0.12.6
-geometadb>=0.1.0
+# geometadb: Optional SQLite-based GEO metadata (not available on PyPI)
 
 # AI/ML dependencies
 openai>=1.3.0
