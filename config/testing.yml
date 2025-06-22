@@ -1,0 +1,41 @@
+# Testing Configuration
+
+debug: false
+
+database:
+  url: "sqlite:///:memory:"
+  pool_size: 1
+  echo: false
+
+ncbi:
+  api_key: "test_key"
+  email: "test@example.com"
+  rate_limit: 10  # Higher for testing
+  timeout: 10
+  retries: 1
+
+nlp:
+  model: "en_core_sci_sm"
+  batch_size: 8
+  max_tokens: 256
+  enable_gpu: false
+  cache_models: false
+
+logging:
+  level: "ERROR"
+  format: "json"
+  file: null
+  max_file_size: "1MB"
+  backup_count: 1
+
+api:
+  host: "127.0.0.1"
+  port: 8001
+  workers: 1
+  reload: false
+  debug: false
+
+cache:
+  enabled: false
+  backend: "memory"
+  default_ttl: 300  # 5 minutes

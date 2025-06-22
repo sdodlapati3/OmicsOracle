@@ -1,0 +1,44 @@
+# Production Configuration
+
+debug: false
+
+database:
+  url: "${DATABASE_URL}"
+  pool_size: 20
+  pool_timeout: 30
+  pool_recycle: 3600
+  echo: false
+
+ncbi:
+  api_key: "${NCBI_API_KEY}"
+  email: "${NCBI_EMAIL}"
+  rate_limit: 3
+  timeout: 60
+  retries: 5
+
+nlp:
+  model: "en_core_sci_sm"
+  batch_size: 64
+  max_tokens: 512
+  enable_gpu: "${NLP_ENABLE_GPU:false}"
+  cache_models: true
+
+logging:
+  level: "INFO"
+  format: "json"
+  file: "logs/omics_oracle.log"
+  max_file_size: "100MB"
+  backup_count: 10
+
+api:
+  host: "0.0.0.0"
+  port: "${PORT:8000}"
+  workers: "${API_WORKERS:4}"
+  reload: false
+  debug: false
+
+cache:
+  enabled: true
+  backend: "redis"
+  redis_url: "${REDIS_URL}"
+  default_ttl: 3600  # 1 hour

@@ -1,0 +1,41 @@
+# Development Configuration
+
+debug: true
+
+database:
+  url: "sqlite:///./omics_oracle_dev.db"
+  pool_size: 5
+  echo: true
+
+ncbi:
+  api_key: "${NCBI_API_KEY}"
+  email: "${NCBI_EMAIL:developer@example.com}"
+  rate_limit: 3
+  timeout: 30
+  retries: 3
+
+nlp:
+  model: "en_core_sci_sm"
+  batch_size: 16
+  max_tokens: 512
+  enable_gpu: false
+  cache_models: true
+
+logging:
+  level: "DEBUG"
+  format: "json"
+  file: "logs/omics_oracle_dev.log"
+  max_file_size: "10MB"
+  backup_count: 3
+
+api:
+  host: "127.0.0.1"
+  port: 8000
+  workers: 1
+  reload: true
+  debug: true
+
+cache:
+  enabled: true
+  backend: "memory"
+  default_ttl: 1800  # 30 minutes
