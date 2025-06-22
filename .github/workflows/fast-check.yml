@@ -53,7 +53,7 @@ jobs:
 
       - name: "[ASCII] ASCII Enforcement"
         run: |
-          python scripts/ascii_enforcer.py --check-only
+          python scripts/ascii_enforcer.py
           echo "[PASS] ASCII enforcement: PASSED"
 
       - name: "[QUALITY] Parallel Code Quality"

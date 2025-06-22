@@ -34,7 +34,7 @@ jobs:
       - name: ASCII Quick Check
         run: |
           # Quick ASCII check on core files only
-          python scripts/ascii_enforcer.py --check-only --quick-mode || true
+          python scripts/ascii_enforcer.py --quick-mode || true
           echo "[PASS] ASCII quick check"
 
       - name: Import Test

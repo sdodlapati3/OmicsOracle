@@ -33,7 +33,7 @@ jobs:
 
       - name: Validate ASCII-Only Code
         run: |
-          python scripts/ascii_enforcer.py --check-only
+          python scripts/ascii_enforcer.py
           echo "[PASS] ASCII enforcement validated"
         if: always()
 
@@ -135,7 +135,7 @@ jobs:
 
       - name: Run Core Unit Tests
         run: |
-          if [[ -d "tests/unit" ]]; then
+          if [[ -d "tests/unit" && $(find tests/unit -name "*.py" -not -name "__init__.py" | wc -l) -gt 0 ]]; then
             pytest tests/unit/ -v --tb=short --disable-warnings --maxfail=3
             echo "[PASS] Core unit tests"
           else

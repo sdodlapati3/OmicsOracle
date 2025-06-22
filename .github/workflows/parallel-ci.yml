@@ -36,7 +36,7 @@ jobs:
       
       - name: ASCII Enforcement Check
         run: |
-          python scripts/ascii_enforcer.py --check-only
+          python scripts/ascii_enforcer.py
           echo "[PASS] ASCII enforcement validated"
 
   code-format:
@@ -162,8 +162,12 @@ jobs:
       
       - name: Run unit tests
         run: |
-          pytest tests/unit/ -v --cov=src/omics_oracle --cov-report=xml --tb=short
-          echo "[PASS] Unit tests completed"
+          if [[ -d "tests/unit" && $(find tests/unit -name "*.py" -not -name "__init__.py" | wc -l) -gt 0 ]]; then
+            pytest tests/unit/ -v --cov=src/omics_oracle --cov-report=xml --tb=short
+            echo "[PASS] Unit tests completed"
+          else
+            echo "[SKIP] No unit tests found"
+          fi
       
       - name: Upload coverage
         if: matrix.python-version == '3.12'

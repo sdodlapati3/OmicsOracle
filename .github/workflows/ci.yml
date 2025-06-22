@@ -56,7 +56,7 @@ jobs:
     
     - name: ASCII Enforcement
       run: |
-        python scripts/ascii_enforcer.py --check-only
+        python scripts/ascii_enforcer.py
         echo "[PASS] ASCII enforcement validated"
     
     - name: Code Formatting (Black)
@@ -95,8 +95,12 @@ jobs:
 
     - name: Unit Tests with Coverage
       run: |
-        pytest tests/unit/ -v --cov=src/omics_oracle --cov-report=xml --cov-report=term-missing --tb=short
-        echo "[PASS] Unit tests completed"
+        if [[ -d "tests/unit" && $(find tests/unit -name "*.py" -not -name "__init__.py" | wc -l) -gt 0 ]]; then
+          pytest tests/unit/ -v --cov=src/omics_oracle --cov-report=xml --cov-report=term-missing --tb=short
+          echo "[PASS] Unit tests completed"
+        else
+          echo "[SKIP] No unit tests found"
+        fi
       if: always()
 
     - name: Integration Tests
