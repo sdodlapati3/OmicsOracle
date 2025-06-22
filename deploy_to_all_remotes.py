@@ -11,7 +11,9 @@ from typing import Tuple
 def run_command(command: str) -> Tuple[bool, str]:
     """Execute shell command and return success status and output"""
     try:
-        result = subprocess.run(command, shell=True, capture_output=True, text=True)
+        result = subprocess.run(
+            command, shell=True, capture_output=True, text=True
+        )
         return result.returncode == 0, result.stdout + result.stderr
     except Exception as e:
         return False, str(e)
@@ -31,7 +33,8 @@ def push_to_remote(remote_name: str, branch: str = None) -> bool:
         branch = get_current_branch()
 
     print(
-        f"[ICON][ICON][ICON][ICON] Pushing to remote '{remote_name}' (branch: {branch})..."
+        f"[ICON][ICON][ICON][ICON] Pushing to remote '{remote_name}' "
+        f"(branch: {branch})..."
     )
 
     success, output = run_command(f"git push {remote_name} {branch}")
@@ -52,14 +55,17 @@ def push_to_all_remotes(branch: str = None) -> None:
         print("[ICON][ICON][ICON] Failed to get git remotes")
         sys.exit(1)
 
-    remotes = [remote.strip() for remote in output.split("\n") if remote.strip()]
+    remotes = [
+        remote.strip() for remote in output.split("\n") if remote.strip()
+    ]
 
     if not remotes:
         print("[ICON][ICON][ICON] No git remotes configured")
         sys.exit(1)
 
     print(
-        f"[ICON][ICON][ICON][ICON] Deploying OmicsOracle to {len(remotes)} GitHub repositories..."
+        f"[ICON][ICON][ICON][ICON] Deploying OmicsOracle to "
+        f"{len(remotes)} GitHub repositories..."
     )
     print(f"[ICON][ICON][ICON][ICON] Configured remotes: {', '.join(remotes)}")
 
@@ -89,14 +95,18 @@ def push_to_all_remotes(branch: str = None) -> None:
     successful = 0
     for remote, success in results:
         status = (
-            "[ICON][ICON][ICON] SUCCESS" if success else "[ICON][ICON][ICON] FAILED"
+            "[ICON][ICON][ICON] SUCCESS"
+            if success
+            else "[ICON][ICON][ICON] FAILED"
         )
         print(f"{remote:12} | {status}")
         if success:
             successful += 1
 
     print("=" * 50)
-    print(f"Total: {successful}/{len(remotes)} repositories updated successfully")
+    print(
+        f"Total: {successful}/{len(remotes)} repositories updated successfully"
+    )
 
     if successful == len(remotes):
         print("[ICON][ICON][ICON][ICON] All repositories updated successfully!")
@@ -107,7 +117,8 @@ def push_to_all_remotes(branch: str = None) -> None:
                 print(f"  [ICON][ICON][ICON] {remote}: {url.strip()}")
     else:
         print(
-            "[ICON][ICON][ICON]  Some deployments failed. Check the output above for details."
+            "[ICON][ICON][ICON]  Some deployments failed. "
+            "Check the output above for details."
         )
 
 

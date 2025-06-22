@@ -162,6 +162,11 @@ chromadb/
 models/
 checkpoints/
 
+# Archived and backup files
+scripts/archived_*.bak
+*.archived
+*.backup
+
 # Temporary files
 tmp/
 temp/

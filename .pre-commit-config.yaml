@@ -16,19 +16,24 @@ repos:
     hooks:
       - id: black
         language_version: python3.11
-        args: ["--line-length=79"]
+        # Configuration is read from pyproject.toml
 
   - repo: https://github.com/pycqa/isort
     rev: 5.12.0
     hooks:
       - id: isort
-        args: ["--profile", "black"]
+        # Configuration is read from pyproject.toml
 
   - repo: https://github.com/pycqa/flake8
     rev: 6.1.0
     hooks:
       - id: flake8
-        args: ["--max-line-length=79", "--extend-ignore=E203,W503"]
+        args: ["--max-line-length=100", "--extend-ignore=E203,W503"]
+        name: flake8 (hard limit at 100 chars)
+      - id: flake8
+        args: ["--max-line-length=80", "--extend-ignore=E203,W503", "--exit-zero"]
+        name: flake8 (soft warning at 80 chars)
+        verbose: true
 
   # - repo: https://github.com/pre-commit/mirrors-mypy
   #   rev: v1.6.1
@@ -41,8 +46,9 @@ repos:
     rev: 1.7.5
     hooks:
       - id: bandit
-        args: ["-r", "src/", "-c", ".bandit"]
+        args: ["-r", "-c", ".bandit"]
         exclude: ^(tests/|scripts/)
+        files: ^src/
 
   # ASCII-only enforcement - CRITICAL for CI/CD reliability
   - repo: local
@@ -53,7 +59,9 @@ repos:
         language: system
         files: \.(py|yml|yaml|json|sh|bash|zsh|toml|ini|cfg|conf|txt|sql|js|ts|html|css|xml)$|Dockerfile$|Makefile$|requirements.*\.txt$
         exclude: ^(docs/|\.md$|\.rst$|\.tex$|README|extracted_docs/|\.git/|__pycache__/|\.pytest_cache/|\.mypy_cache/)
-        description: Enforce ASCII-only characters in all code and config files (except markdown docs)
+        description: >
+          Enforce ASCII-only characters in all code and config files (except markdown docs).
+          Note: JSON files are included for CI/CD reliability - exclude specific data directories if needed.
         pass_filenames: true
 
       - id: no-emoji-check

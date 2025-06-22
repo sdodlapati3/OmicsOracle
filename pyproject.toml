@@ -87,7 +87,8 @@ package-dir = {"" = "src"}
 write_to = "src/omics_oracle/_version.py"
 
 [tool.black]
-line-length = 88
+# Target 80 characters for optimal readability, but allow auto-formatting flexibility
+line-length = 80
 target-version = ['py311']
 include = '\.pyi?$'
 extend-exclude = '''
@@ -107,8 +108,23 @@ extend-exclude = '''
 [tool.isort]
 profile = "black"
 multi_line_output = 3
-line_length = 88
+# Match Black's line length for consistency
+line_length = 80
 known_first_party = ["omics_oracle"]
+
+[tool.flake8]
+# Two-tier approach: 80 chars preferred, 100 chars maximum
+max-line-length = 100
+extend-ignore = ["E203", "W503"]
+exclude = [
+    ".git",
+    "__pycache__",
+    ".mypy_cache",
+    ".pytest_cache",
+    "venv",
+    "build",
+    "dist"
+]
 
 [tool.mypy]
 python_version = "3.11"

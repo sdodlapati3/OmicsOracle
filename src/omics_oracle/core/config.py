@@ -120,9 +120,7 @@ class Config:
                     "NCBI API key is required in production"
                 )
             if not self.ncbi.email:
-                raise ConfigurationError(
-                    "NCBI email is required in production"
-                )
+                raise ConfigurationError("NCBI email is required in production")
 
         # Validate database URL
         if not self.database.url:
