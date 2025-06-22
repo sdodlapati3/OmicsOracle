@@ -1,0 +1,7 @@
+# Bandit configuration for OmicsOracle development tools
+# Skip acceptable warnings for CI validation scripts and development configurations
+
+skips:
+  - B404  # subprocess import - needed for CI validation scripts
+  - B603  # subprocess call without shell - safe with controlled commands
+  - B104  # binding to 0.0.0.0 - acceptable for development configurations
