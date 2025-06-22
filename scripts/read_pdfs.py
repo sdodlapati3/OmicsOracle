@@ -4,7 +4,6 @@ PDF Reader script for OmicsOracle project documents.
 This script reads PDF documents and extracts their content for analysis.
 """
 
-import os
 import sys
 from datetime import datetime
 from pathlib import Path

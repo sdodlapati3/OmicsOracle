@@ -29,7 +29,7 @@ repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     hooks:
       - trailing-whitespace     # Remove trailing spaces
-      - end-of-file-fixer      # Ensure files end with newline  
+      - end-of-file-fixer      # Ensure files end with newline
       - check-yaml             # Validate YAML syntax
       - check-json             # Validate JSON syntax
       - check-merge-conflict   # Detect merge conflict markers
@@ -40,7 +40,7 @@ repos:
     hooks:
       - black                  # Python code formatter
 
-  # Import sorting  
+  # Import sorting
   - repo: https://github.com/pycqa/isort
     hooks:
       - isort                  # Sort Python imports
@@ -51,7 +51,7 @@ repos:
       - flake8                 # Python linting
 
   # Type checking
-  - repo: https://github.com/pre-commit/mirrors-mypy  
+  - repo: https://github.com/pre-commit/mirrors-mypy
     hooks:
       - mypy                   # Static type checking
 
@@ -107,7 +107,7 @@ pre-commit install
 # Check specific files
 pre-commit run --files src/omics_oracle/core/config.py
 
-# Check all files  
+# Check all files
 pre-commit run --all-files
 
 # Skip hooks for emergency commits (use sparingly!)
@@ -177,7 +177,7 @@ pre-commit run black isort flake8 --all-files && python -m pytest tests/unit/tes
 ```bash
 # Run only specific hooks:
 pre-commit run black                    # Just formatting
-pre-commit run flake8 mypy             # Just linting + types  
+pre-commit run flake8 mypy             # Just linting + types
 pre-commit run --all-files bandit      # Just security
 ```
 
@@ -218,7 +218,7 @@ find . -name "*.py" | xargs flake8
 ## 🚨 Common Issues & Solutions
 
 ### Issue: "Pre-commit hooks are too slow"
-**Solution**: 
+**Solution**:
 ```bash
 # Run hooks in parallel (if supported):
 pre-commit run --hook-stage manual --all-files

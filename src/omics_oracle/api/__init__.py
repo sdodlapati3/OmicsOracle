@@ -6,7 +6,6 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from omics_oracle.config import settings
-from omics_oracle.core.exceptions import OmicsOracleException
 
 # Create FastAPI application
 app = FastAPI(

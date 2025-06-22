@@ -2,7 +2,6 @@
 Test configuration and fixtures for OmicsOracle tests.
 """
 
-import os
 import tempfile
 from pathlib import Path
 

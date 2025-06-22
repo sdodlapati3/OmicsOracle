@@ -168,15 +168,15 @@ class ASCIIEnforcer:
             )
             print("-" * 60)
 
-        print(f"\nSUMMARY:")
+        print("\nSUMMARY:")
         print(f"  Errors:   {self.total_violations}")
-        print(f"  Warnings: 0")
+        print("  Warnings: 0")
 
-        print(f"\n[OK][OK][OK][OK] To fix ASCII violations:")
-        print(f"   1. Replace non-ASCII characters with ASCII equivalents")
-        print(f"   2. Move decorative content to markdown documentation")
-        print(f"   3. Use ASCII art instead of Unicode symbols")
-        print(f"   4. Replace smart quotes with straight quotes")
+        print("\n[OK][OK][OK][OK] To fix ASCII violations:")
+        print("   1. Replace non-ASCII characters with ASCII equivalents")
+        print("   2. Move decorative content to markdown documentation")
+        print("   3. Use ASCII art instead of Unicode symbols")
+        print("   4. Replace smart quotes with straight quotes")
 
     def run(self, paths: List[str]) -> int:
         """Run ASCII enforcement on specified paths."""
