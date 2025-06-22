@@ -19,7 +19,7 @@ from typing import Optional
 class JSONFormatter(logging.Formatter):
     """Custom JSON formatter for structured logging."""
 
-    def format(self, record):
+    def format(self, record: logging.LogRecord) -> str:
         """Format log record as JSON."""
         log_data = {
             "timestamp": datetime.utcnow().isoformat(),
@@ -84,7 +84,7 @@ def setup_logging(
     logging.getLogger("requests").setLevel(logging.WARNING)
 
 
-def get_logger(name: Optional[str] = None):
+def get_logger(name: Optional[str] = None) -> logging.Logger:
     """Get logger instance.
 
     Args:

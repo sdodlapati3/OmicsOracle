@@ -10,7 +10,7 @@ from omics_oracle.core.exceptions import OmicsOracleException
 
 @click.group()
 @click.version_option()
-def main():
+def main() -> None:
     """OmicsOracle - AI-Powered Genomics Data Summary Agent."""
     pass
 
@@ -19,7 +19,7 @@ def main():
 @click.option("--host", default="0.0.0.0", help="Host to bind to")
 @click.option("--port", default=8000, help="Port to bind to")
 @click.option("--reload", is_flag=True, help="Enable auto-reload")
-def serve(host: str, port: int, reload: bool):
+def serve(host: str, port: int, reload: bool) -> None:
     """Start the API server."""
     try:
         import uvicorn
@@ -39,7 +39,7 @@ def serve(host: str, port: int, reload: bool):
 @click.argument("input_file", type=click.Path(exists=True))
 @click.option("--output", "-o", help="Output file path")
 @click.option("--format", "output_format", default="json", help="Output format")
-def analyze(input_file: str, output: str, output_format: str):
+def analyze(input_file: str, output: str, output_format: str) -> None:
     """Analyze a genomics data file."""
     click.echo(f"Analyzing file: {input_file}")
     click.echo(f"Output format: {output_format}")
@@ -51,7 +51,7 @@ def analyze(input_file: str, output: str, output_format: str):
 @main.command()
 @click.argument("geo_id")
 @click.option("--summary", is_flag=True, help="Generate summary only")
-def fetch_geo(geo_id: str, summary: bool):
+def fetch_geo(geo_id: str, summary: bool) -> None:
     """Fetch and analyze GEO dataset."""
     click.echo(f"Fetching GEO dataset: {geo_id}")
     if summary:
@@ -60,7 +60,7 @@ def fetch_geo(geo_id: str, summary: bool):
 
 
 @main.command()
-def status():
+def status() -> None:
     """Check system status."""
     click.echo("OmicsOracle System Status:")
     try:

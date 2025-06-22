@@ -9,7 +9,6 @@ This script validates that our core architecture components are working correctl
 - Logging infrastructure
 """
 
-import os
 import sys
 from pathlib import Path
 
@@ -18,12 +17,12 @@ src_path = Path(__file__).parent.parent.parent / "src"
 sys.path.insert(0, str(src_path))
 
 
-def test_configuration():
+def test_configuration() -> bool:
     """Test configuration system."""
     print("Testing configuration system...")
 
     try:
-        from omics_oracle.core.config import ConfigManager, Environment
+        from omics_oracle.core.config import ConfigManager
 
         # Test configuration manager
         config_manager = ConfigManager()
@@ -41,7 +40,7 @@ def test_configuration():
         return False
 
 
-def test_exceptions():
+def test_exceptions() -> bool:
     """Test exception hierarchy."""
     print("Testing exception system...")
 
@@ -49,7 +48,6 @@ def test_exceptions():
         from omics_oracle.core.exceptions import (
             ConfigurationError,
             OmicsOracleException,
-            ValidationError,
         )
 
         # Test base exception
@@ -77,7 +75,6 @@ def test_models():
     try:
         from omics_oracle.core.models import (
             AssayType,
-            ErrorResponse,
             GEOSample,
             SearchRequest,
         )
@@ -131,7 +128,6 @@ def test_integration():
     try:
         # Test that we can load config and use it in other components
         from omics_oracle.core.config import load_config
-        from omics_oracle.core.exceptions import ValidationError
         from omics_oracle.core.models import SearchRequest
 
         # Load config (should work)

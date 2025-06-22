@@ -31,7 +31,7 @@ class Environment(str, Enum):
 class DatabaseConfig:
     """Database configuration."""
 
-    url: str
+    url: str = "sqlite:///omics_oracle.db"
     pool_size: int = 10
     pool_timeout: int = 30
     pool_recycle: int = 3600
@@ -100,14 +100,14 @@ class Config:
     debug: bool = False
 
     # Service configurations
-    database: DatabaseConfig = field(default_factory=DatabaseConfig)
-    ncbi: NCBIConfig = field(default_factory=NCBIConfig)
-    nlp: NLPConfig = field(default_factory=NLPConfig)
-    logging: LoggingConfig = field(default_factory=LoggingConfig)
-    api: APIConfig = field(default_factory=APIConfig)
-    cache: CacheConfig = field(default_factory=CacheConfig)
+    database: DatabaseConfig = field(default_factory=lambda: DatabaseConfig())
+    ncbi: NCBIConfig = field(default_factory=lambda: NCBIConfig())
+    nlp: NLPConfig = field(default_factory=lambda: NLPConfig())
+    logging: LoggingConfig = field(default_factory=lambda: LoggingConfig())
+    api: APIConfig = field(default_factory=lambda: APIConfig())
+    cache: CacheConfig = field(default_factory=lambda: CacheConfig())
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate configuration after initialization."""
         self._validate()
 
