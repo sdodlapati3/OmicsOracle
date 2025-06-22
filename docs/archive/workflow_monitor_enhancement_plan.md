@@ -9,7 +9,7 @@ for OmicsOracle, borrowing best practices from patch-hyena while avoiding length
 
 ### Step 1: Update Base Classes and Enums
 - Enhance WorkflowStatus enum with additional states
-- Add AlertSeverity enum for notification levels  
+- Add AlertSeverity enum for notification levels
 - Update WorkflowRun dataclass with more metadata fields
 - Add ErrorPattern and MonitoringAlert dataclasses
 

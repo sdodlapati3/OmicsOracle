@@ -1,7 +1,7 @@
 # OmicsOracle Development Plan 🧬🔮
 
-**Version:** 2.0  
-**Date:** June 22, 2025  
+**Version:** 2.0
+**Date:** June 22, 2025
 **Project:** OmicsOracle - AI-Powered GEO Metadata Summarization Tool
 
 ## 📋 Executive Summary
@@ -21,7 +21,7 @@ OmicsOracle is an AI-powered data summary agent specifically designed to extract
 
 ### Success Metrics
 - Process natural language queries with 95%+ accuracy in term extraction
-- Successfully parse and summarize 1000+ GEO series (GSE) efficiently  
+- Successfully parse and summarize 1000+ GEO series (GSE) efficiently
 - Reduce manual metadata analysis time by 80%
 - Support all major functional genomics data types (RNA-seq, ChIP-seq, WGBS, ATAC-seq)
 - Achieve sub-5-second response times for standard queries
@@ -123,7 +123,7 @@ Code Quality Standards:
   - Type Coverage: 100% for public APIs
   - Security: Zero high-severity vulnerabilities
   - Performance: <5s response time, <2GB memory usage
-  
+
 Scientific Quality Standards:
   - NLP Accuracy: >95% for entity recognition
   - Metadata Parsing: >98% successful extraction
@@ -184,6 +184,8 @@ Operational Quality Standards:
   - [ ] **bandit**: Security vulnerability scanning
   - [ ] **safety**: Dependency vulnerability checking
 - [ ] **CI/CD PIPELINE**: Set up GitHub Actions with quality gates
+  - [ ] **PRE-COMMIT HOOKS**: Install git hooks for quality enforcement (FIRST PRIORITY)
+  - [ ] **PRE-PUSH VALIDATION**: Create comprehensive pre-push check script
   - [ ] Automated code quality checks on every PR
   - [ ] Type checking and linting validation
   - [ ] Security scanning integration
@@ -235,7 +237,7 @@ Operational Quality Standards:
 - Test suite for GEO tool integrations
 
 ### 2.2 Natural Language Processing Foundation
-**Duration:** 3-4 days  
+**Duration:** 3-4 days
 **Priority:** Critical
 
 #### Tasks:
@@ -474,13 +476,13 @@ Operational Quality Standards:
 
 ### Core GEO/Genomics Libraries
 - **Entrezpy**: Advanced NCBI E-utilities Python wrapper for complex queries and workflows
-- **GEOparse**: Python library for fetching and parsing GEO SOFT files into pandas DataFrames  
+- **GEOparse**: Python library for fetching and parsing GEO SOFT files into pandas DataFrames
 - **pysradb**: SRA metadata retrieval and GEO-SRA accession mapping
 - **GEOfetch**: Standardized GEO/SRA data and metadata download with PEP format output
 - **BioPython**: Bio.Entrez module for additional NCBI database access
 - **GEOmetadb**: Optional integration for SQLite-based GEO metadata queries (not available on PyPI)
 
-### AI/NLP Technologies  
+### AI/NLP Technologies
 - **OpenAI API**: GPT-4 for natural language interpretation and summarization
 - **LangChain**: AI pipeline orchestration and prompt management
 - **spaCy + SciSpaCy**: Biomedical named entity recognition
@@ -488,14 +490,14 @@ Operational Quality Standards:
 
 ### Ontology and Mapping
 - **UMLS/MeSH**: Medical Subject Headings for disease and medical concept mapping
-- **Disease Ontology**: Standardized disease term mapping  
+- **Disease Ontology**: Standardized disease term mapping
 - **Uberon**: Anatomical/tissue ontology integration
 - **NCBI Taxonomy**: Species and organism mapping
 - **owlready2**: Ontology manipulation and querying
 
 ### Backend Infrastructure
 - **FastAPI**: High-performance API framework with automatic OpenAPI documentation
-- **Pydantic**: Data validation and settings management  
+- **Pydantic**: Data validation and settings management
 - **Celery + Redis**: Asynchronous task queue for long-running GEO queries
 - **MongoDB**: Document storage for GEO metadata and query results
 - **ChromaDB**: Vector database for semantic search of experimental summaries
@@ -577,7 +579,7 @@ OmicsOracle/
 │       ├── services/
 │       │   ├── __init__.py
 │       │   ├── nlp_service.py          # Natural language processing
-│       │   ├── ontology_service.py     # Ontology mapping service  
+│       │   ├── ontology_service.py     # Ontology mapping service
 │       │   ├── geo_service.py          # GEO data service
 │       │   └── cache_service.py        # Caching service
 │       └── cli/
@@ -647,7 +649,7 @@ OmicsOracle/
 
 ### Advanced Features (Phase 4-7)
 1. **LLM-Powered Summarization**: Generate natural language summaries of experimental findings
-2. **Cross-Platform Integration**: Link GEO series with SRA experiments and publication data  
+2. **Cross-Platform Integration**: Link GEO series with SRA experiments and publication data
 3. **Statistical Analysis**: Compute metadata statistics, sample distributions, and platform usage
 4. **Batch Processing**: Process multiple queries or large dataset collections efficiently
 5. **Visualization Dashboard**: Interactive charts showing metadata trends and experimental landscapes
@@ -769,7 +771,7 @@ OmicsOracle/
 - [ ] Set up basic NLP processing with spaCy
 - [ ] Implement hard-coded keyword matching for common terms
 
-**Week 3-4: Basic Pipeline**  
+**Week 3-4: Basic Pipeline**
 - [ ] Build query term extraction ("WGBS", "brain", "cancer" → structured terms)
 - [ ] Implement Entrez query construction using Entrezpy
 - [ ] Create basic GEO series retrieval using GEOparse
@@ -851,7 +853,7 @@ OmicsOracle/
 - Process queries in <10 seconds
 - Zero critical bugs in core pipeline
 
-### Phase 2 Metrics  
+### Phase 2 Metrics
 - Handle 95%+ of synonym variations correctly
 - Map 90%+ of biological terms to ontologies
 - Integrate 3+ data sources seamlessly
@@ -901,8 +903,8 @@ OmicsOracle/
 
 ---
 
-**Document Status:** Draft v1.0  
-**Next Review:** After stakeholder feedback  
+**Document Status:** Draft v1.0
+**Next Review:** After stakeholder feedback
 **Contact:** Development Team Lead
 
 ---

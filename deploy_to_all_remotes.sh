@@ -25,12 +25,12 @@ get_account_for_remote() {
 # Get current branch if not specified
 BRANCH=${1:-$(git rev-parse --abbrev-ref HEAD)}
 
-echo -e "${BLUE}🚀 Deploying OmicsOracle to all GitHub repositories...${NC}"
-echo -e "${BLUE}🌿 Branch: $BRANCH${NC}"
+echo -e "${BLUE}[ICON][ICON][ICON][ICON] Deploying OmicsOracle to all GitHub repositories...${NC}"
+echo -e "${BLUE}[ICON][ICON][ICON][ICON] Branch: $BRANCH${NC}"
 
 # Check for uncommitted changes
 if [ -n "$(git status --porcelain)" ]; then
-    echo -e "${YELLOW}⚠️  Warning: You have uncommitted changes${NC}"
+    echo -e "${YELLOW}[ICON][ICON][ICON]  Warning: You have uncommitted changes${NC}"
     read -p "Continue anyway? (y/N): " -n 1 -r
     echo
     if [[ ! $REPLY =~ ^[Yy]$ ]]; then
@@ -43,11 +43,11 @@ fi
 REMOTES=$(git remote)
 
 if [ -z "$REMOTES" ]; then
-    echo -e "${RED}❌ No git remotes configured${NC}"
+    echo -e "${RED}[ICON][ICON][ICON] No git remotes configured${NC}"
     exit 1
 fi
 
-echo -e "${BLUE}📋 Configured remotes: $(echo $REMOTES | tr '\n' ' ')${NC}"
+echo -e "${BLUE}[ICON][ICON][ICON][ICON] Configured remotes: $(echo $REMOTES | tr '\n' ' ')${NC}"
 echo
 
 # Push to each remote
@@ -57,48 +57,48 @@ TOTAL_COUNT=0
 for REMOTE in $REMOTES; do
     TOTAL_COUNT=$((TOTAL_COUNT + 1))
     ACCOUNT=$(get_account_for_remote "$REMOTE")
-    
-    echo -e "${BLUE}📤 Pushing to remote '$REMOTE' (GitHub account: $ACCOUNT)...${NC}"
-    
+
+    echo -e "${BLUE}[ICON][ICON][ICON][ICON] Pushing to remote '$REMOTE' (GitHub account: $ACCOUNT)...${NC}"
+
     # Switch to the appropriate GitHub account
     if [ -n "$ACCOUNT" ]; then
-        echo -e "${YELLOW}🔄 Switching to GitHub account: $ACCOUNT${NC}"
+        echo -e "${YELLOW}[ICON][ICON][ICON][ICON] Switching to GitHub account: $ACCOUNT${NC}"
         if gh auth switch --user "$ACCOUNT"; then
-            echo -e "${GREEN}✅ Switched to $ACCOUNT${NC}"
+            echo -e "${GREEN}[ICON][ICON][ICON] Switched to $ACCOUNT${NC}"
         else
-            echo -e "${RED}❌ Failed to switch to $ACCOUNT${NC}"
+            echo -e "${RED}[ICON][ICON][ICON] Failed to switch to $ACCOUNT${NC}"
             continue
         fi
     fi
-    
+
     # Push using git (will use the current authentication context)
     if git push "$REMOTE" "$BRANCH" 2>/dev/null; then
-        echo -e "${GREEN}✅ Successfully pushed to $REMOTE${NC}"
+        echo -e "${GREEN}[ICON][ICON][ICON] Successfully pushed to $REMOTE${NC}"
         SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
     else
-        echo -e "${YELLOW}⚠️  Git push failed, trying with GitHub CLI...${NC}"
+        echo -e "${YELLOW}[ICON][ICON][ICON]  Git push failed, trying with GitHub CLI...${NC}"
         # Alternative: Use gh to create/update the repository
         REPO_NAME="OmicsOracle"
         if gh repo view "$ACCOUNT/$REPO_NAME" >/dev/null 2>&1; then
             # Repository exists, just push
             if git push "$REMOTE" "$BRANCH" --force-with-lease; then
-                echo -e "${GREEN}✅ Successfully pushed to $REMOTE with force-with-lease${NC}"
+                echo -e "${GREEN}[ICON][ICON][ICON] Successfully pushed to $REMOTE with force-with-lease${NC}"
                 SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
             else
-                echo -e "${RED}❌ Failed to push to $REMOTE${NC}"
+                echo -e "${RED}[ICON][ICON][ICON] Failed to push to $REMOTE${NC}"
             fi
         else
             echo -e "${YELLOW}Repository doesn't exist, creating it...${NC}"
             if gh repo create "$REPO_NAME" --public --description "AI-powered GEO metadata summarization tool"; then
-                echo -e "${GREEN}✅ Created repository $ACCOUNT/$REPO_NAME${NC}"
+                echo -e "${GREEN}[ICON][ICON][ICON] Created repository $ACCOUNT/$REPO_NAME${NC}"
                 if git push "$REMOTE" "$BRANCH"; then
-                    echo -e "${GREEN}✅ Successfully pushed to new repository${NC}"
+                    echo -e "${GREEN}[ICON][ICON][ICON] Successfully pushed to new repository${NC}"
                     SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
                 else
-                    echo -e "${RED}❌ Failed to push to new repository${NC}"
+                    echo -e "${RED}[ICON][ICON][ICON] Failed to push to new repository${NC}"
                 fi
             else
-                echo -e "${RED}❌ Failed to create repository${NC}"
+                echo -e "${RED}[ICON][ICON][ICON] Failed to create repository${NC}"
             fi
         fi
     fi
@@ -106,11 +106,11 @@ for REMOTE in $REMOTES; do
 done
 
 # Switch back to primary account
-echo -e "${YELLOW}🔄 Switching back to primary account (sdodlapati3)...${NC}"
+echo -e "${YELLOW}[ICON][ICON][ICON][ICON] Switching back to primary account (sdodlapati3)...${NC}"
 gh auth switch --user "sdodlapati3"
 
 # Summary
-echo -e "${BLUE}📊 Deployment Summary:${NC}"
+echo -e "${BLUE}[ICON][ICON][ICON][ICON] Deployment Summary:${NC}"
 echo "=================================================="
 
 for REMOTE in $REMOTES; do
@@ -123,12 +123,12 @@ echo "=================================================="
 echo -e "Total: ${SUCCESS_COUNT}/${TOTAL_COUNT} repositories updated successfully"
 
 if [ $SUCCESS_COUNT -eq $TOTAL_COUNT ]; then
-    echo -e "${GREEN}🎉 All repositories updated successfully!${NC}"
-    echo -e "${BLUE}🔗 Repository URLs:${NC}"
-    echo -e "  • origin: https://github.com/sdodlapati3/OmicsOracle"
-    echo -e "  • sanjeeva: https://github.com/SanjeevaRDodlapati/OmicsOracle"
-    echo -e "  • backup: https://github.com/sdodlapa/OmicsOracle"
+    echo -e "${GREEN}[ICON][ICON][ICON][ICON] All repositories updated successfully!${NC}"
+    echo -e "${BLUE}[ICON][ICON][ICON][ICON] Repository URLs:${NC}"
+    echo -e "  [ICON][ICON][ICON] origin: https://github.com/sdodlapati3/OmicsOracle"
+    echo -e "  [ICON][ICON][ICON] sanjeeva: https://github.com/SanjeevaRDodlapati/OmicsOracle"
+    echo -e "  [ICON][ICON][ICON] backup: https://github.com/sdodlapa/OmicsOracle"
 else
-    echo -e "${YELLOW}⚠️  Some deployments failed. Check the output above for details.${NC}"
+    echo -e "${YELLOW}[ICON][ICON][ICON]  Some deployments failed. Check the output above for details.${NC}"
     exit 1
 fi

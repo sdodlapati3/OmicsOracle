@@ -5,10 +5,11 @@ This module defines the fundamental data structures used throughout
 the application for GEO data, search results, and API responses.
 """
 
-from typing import Optional, List, Dict, Any
+from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from dataclasses import dataclass, field
+from typing import Any, Dict, List, Optional
+
 from pydantic import BaseModel, Field, validator
 
 

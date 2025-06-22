@@ -7,13 +7,13 @@ This module provides structured logging capabilities with:
 - Configurable log levels and outputs
 """
 
-import sys
+import json
 import logging
 import logging.handlers
+import sys
+from datetime import datetime
 from pathlib import Path
 from typing import Optional
-import json
-from datetime import datetime
 
 
 class JSONFormatter(logging.Formatter):

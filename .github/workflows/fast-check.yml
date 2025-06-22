@@ -60,7 +60,7 @@ jobs:
         run: |
           echo "::group::Code Quality (Parallel)"
           start_time=$(date +%s)
-          
+
           # Run all checks in parallel for maximum speed
           black --check --quiet src/ tests/ scripts/ --line-length 88 &
           PID1=$!
@@ -68,10 +68,10 @@ jobs:
           PID2=$!
           ruff check src/ tests/ scripts/ --quiet &
           PID3=$!
-          
+
           # Wait for all and capture results
           wait $PID1 && wait $PID2 && wait $PID3
-          
+
           end_time=$(date +%s)
           echo "[PASS] Code quality: PASSED ($(($end_time - $start_time))s)"
           echo "::endgroup::"
@@ -86,7 +86,7 @@ jobs:
         run: |
           echo "::group::Essential Unit Tests"
           start_time=$(date +%s)
-          
+
           # Run core validation tests only
           pytest tests/validation/ \
             --quiet \
@@ -94,7 +94,7 @@ jobs:
             -x \
             --disable-warnings \
             --maxfail=1
-          
+
           end_time=$(date +%s)
           echo "[PASS] Essential tests: PASSED ($(($end_time - $start_time))s)"
           echo "::endgroup::"
@@ -107,7 +107,7 @@ jobs:
           duration=$(($end_time - $start_time))
           echo "duration=${duration}" >> $GITHUB_OUTPUT
           echo "[SUCCESS] Fast check completed in ${duration} seconds"
-          
+
           if [ $duration -gt 60 ]; then
             echo "::warning::Fast check took ${duration}s (target: <60s)"
           else
@@ -127,7 +127,7 @@ jobs:
           echo "DURATION: ${{ needs.fast-check.outputs.duration }}s"
           echo "TARGET: <60s"
           echo "STATUS: ${{ needs.fast-check.result }}"
-          
+
           if [ "${{ needs.fast-check.result }}" = "success" ]; then
             echo "[SUCCESS] Fast check passed"
           else

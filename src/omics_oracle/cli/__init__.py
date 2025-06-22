@@ -3,6 +3,7 @@ Command-line interface for OmicsOracle.
 """
 
 import click
+
 from omics_oracle.config import settings
 from omics_oracle.core.exceptions import OmicsOracleException
 

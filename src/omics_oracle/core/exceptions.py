@@ -6,7 +6,7 @@ All custom exceptions inherit from OmicsOracleException for consistent
 error handling and logging.
 """
 
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
 
 
 class OmicsOracleException(Exception):

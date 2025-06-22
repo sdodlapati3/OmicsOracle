@@ -48,7 +48,7 @@ jobs:
             "requirements.txt"
             "pyproject.toml"
           )
-          
+
           for file in "${required_files[@]}"; do
             if [[ ! -f "$file" ]]; then
               echo "::error::Required file missing: $file"
@@ -160,23 +160,23 @@ jobs:
       - name: Validate Requirements Resolution
         run: |
           echo "::group::Requirements Resolution Test"
-          
+
           # Test that requirements.txt resolves without conflicts
           pip install --dry-run -r requirements.txt 2>&1 | tee requirements_check.log
-          
+
           if grep -i "error\|conflict\|incompatible" requirements_check.log; then
             echo "::error::Requirements resolution failed - check for dependency conflicts"
             cat requirements_check.log
             exit 1
           fi
-          
+
           echo "[PASS] Requirements resolution validated"
           echo "::endgroup::"
 
       - name: Install and Test Package
         run: |
           echo "::group::Package Installation Test"
-          
+
           # Install the package and test basic import
           pip install --quiet -e .
           python -c "
@@ -188,7 +188,7 @@ jobs:
               print(f'[FAIL] Import error: {e}')
               exit(1)
           "
-          
+
           echo "::endgroup::"
 
   pr-summary:
@@ -206,10 +206,10 @@ jobs:
           echo "Essential Tests: ${{ needs.pr-essential-tests.result }}"
           echo "Dependency Check: ${{ needs.pr-dependency-check.result }}"
           echo "::endgroup::"
-          
+
           # Determine overall PR status
-          if [[ "${{ needs.pr-quick-validation.result }}" == "success" && 
-                "${{ needs.pr-code-quality.result }}" == "success" && 
+          if [[ "${{ needs.pr-quick-validation.result }}" == "success" &&
+                "${{ needs.pr-code-quality.result }}" == "success" &&
                 "${{ needs.pr-essential-tests.result }}" == "success" &&
                 "${{ needs.pr-dependency-check.result }}" == "success" ]]; then
             echo "::notice::PR validation passed - ready for review"
@@ -228,5 +228,5 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: '🔍 **PR Validation Failed**\n\nSome validation checks failed. Please review the workflow logs and fix the issues before requesting a review.\n\n- Check code formatting (Black, isort)\n- Ensure all tests pass\n- Verify ASCII-only compliance\n- Resolve any dependency conflicts'
+              body: '[SEARCH] **PR Validation Failed**\n\nSome validation checks failed. Please review the workflow logs and fix the issues before requesting a review.\n\n- Check code formatting (Black, isort)\n- Ensure all tests pass\n- Verify ASCII-only compliance\n- Resolve any dependency conflicts'
             })

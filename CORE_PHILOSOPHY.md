@@ -1,7 +1,7 @@
 # OmicsOracle Core Philosophy 🧬🔮
 
-**Version:** 1.0  
-**Date:** June 22, 2025  
+**Version:** 1.0
+**Date:** June 22, 2025
 **Project:** OmicsOracle - AI-Powered GEO Metadata Summarization Tool
 
 ---
@@ -41,13 +41,13 @@ To build the world's most intelligent and reliable GEO metadata summarization sy
 # Every data processing function must include validation
 def process_geo_metadata(data: Dict) -> ProcessedMetadata:
     """Process GEO metadata with validation.
-    
+
     Args:
         data: Raw GEO metadata dictionary
-        
+
     Returns:
         ProcessedMetadata: Validated and structured metadata
-        
+
     Raises:
         ValidationError: If data fails quality checks
     """
@@ -104,7 +104,7 @@ def process_geo_metadata(data: Dict) -> ProcessedMetadata:
 # Example of modular design
 class OntologyMapper(ABC):
     """Abstract base class for ontology mapping services."""
-    
+
     @abstractmethod
     def map_term(self, term: str, context: str) -> MappingResult:
         """Map a term to controlled vocabulary."""
@@ -112,7 +112,7 @@ class OntologyMapper(ABC):
 
 class MeSHMapper(OntologyMapper):
     """MeSH-specific implementation."""
-    
+
     def map_term(self, term: str, context: str) -> MappingResult:
         # MeSH-specific mapping logic
         pass
@@ -219,35 +219,35 @@ Testing Pyramid:
 #### 1. Code Documentation
 ```python
 def query_geo_metadata(
-    query: str, 
+    query: str,
     filters: Optional[Dict[str, Any]] = None,
     max_results: int = 100
 ) -> QueryResult:
     """Query GEO metadata using natural language.
-    
+
     This function implements the core OmicsOracle pipeline:
     1. Parse natural language query using NLP models
     2. Map biological terms to controlled vocabularies
     3. Construct optimized Entrez queries
     4. Retrieve and aggregate metadata from multiple sources
     5. Generate structured results with quality metrics
-    
+
     Args:
         query: Natural language query (e.g., "WGBS data in human brain")
         filters: Optional additional filters for refinement
         max_results: Maximum number of GEO series to return
-        
+
     Returns:
         QueryResult containing:
             - matched_series: List of GEO series with metadata
             - query_metrics: Processing time, confidence scores
             - suggestions: Related queries and improvements
-            
+
     Raises:
         QueryParsingError: If natural language query cannot be parsed
         GEOAPIError: If GEO database access fails
         ValidationError: If results fail quality validation
-        
+
     Example:
         >>> result = query_geo_metadata("WGBS brain cancer human")
         >>> print(f"Found {len(result.matched_series)} series")
@@ -480,7 +480,7 @@ This Core Philosophy serves as our North Star, guiding every decision from indiv
 
 ---
 
-*"Excellence is not a destination but a continuous journey of improvement."*  
+*"Excellence is not a destination but a continuous journey of improvement."*
 *- OmicsOracle Development Team*
 
 ---
@@ -489,7 +489,7 @@ This Core Philosophy serves as our North Star, guiding every decision from indiv
 
 ### Rationale & Benefits
 - **Cross-platform compatibility**: Ensures code works identically on all operating systems
-- **CI/CD reliability**: Prevents pipeline failures due to character encoding issues  
+- **CI/CD reliability**: Prevents pipeline failures due to character encoding issues
 - **Terminal compatibility**: Works in all shell environments and terminal emulators
 - **Git workflow stability**: Avoids merge conflicts and encoding problems
 - **International collaboration**: ASCII works universally across all locales
@@ -497,7 +497,7 @@ This Core Philosophy serves as our North Star, guiding every decision from indiv
 
 ### Implementation
 - **Automated enforcement**: Pre-commit hooks and CI/CD checks prevent violations
-- **Comprehensive coverage**: All code, scripts, configs, and commit messages  
+- **Comprehensive coverage**: All code, scripts, configs, and commit messages
 - **Exception handling**: Unicode allowed ONLY in markdown documentation (.md/.rst files)
 - **Character replacement**: Detailed ASCII alternatives for common Unicode symbols
 - **Error reporting**: Clear violation messages with specific character codes and locations
@@ -506,10 +506,10 @@ This Core Philosophy serves as our North Star, guiding every decision from indiv
 ```python
 # ❌ WRONG - Unicode symbols
 # ✅ Function works perfectly!
-temperature = 25°C  
+temperature = 25°C
 α = 0.05
 
-# ✅ CORRECT - ASCII alternatives  
+# ✅ CORRECT - ASCII alternatives
 # [OK] Function works perfectly!
 temperature = "25degC"
 alpha = 0.05

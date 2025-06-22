@@ -27,14 +27,14 @@ python -m src.omics_oracle.cli --help
 
 ## 📋 Features
 
-- **GEO Metadata Parser**: Intelligent parsing of GEO database entries  
-- **AI-Powered Summarization**: Automated generation of dataset summaries  
-- **Multi-format Support**: Support for various omics data formats  
-- **Pattern Recognition**: Identification of trends and patterns in metadata  
-- **Search & Discovery**: Advanced search capabilities across datasets  
-- **Batch Processing**: Efficient processing of multiple datasets  
-- **Real-time Monitoring**: Live updates on processing status  
-- **API Integration**: RESTful API for programmatic access  
+- **GEO Metadata Parser**: Intelligent parsing of GEO database entries
+- **AI-Powered Summarization**: Automated generation of dataset summaries
+- **Multi-format Support**: Support for various omics data formats
+- **Pattern Recognition**: Identification of trends and patterns in metadata
+- **Search & Discovery**: Advanced search capabilities across datasets
+- **Batch Processing**: Efficient processing of multiple datasets
+- **Real-time Monitoring**: Live updates on processing status
+- **API Integration**: RESTful API for programmatic access
 
 ## 🛠️ Technology Stack
 
@@ -62,10 +62,11 @@ OmicsOracle/
 ## 📚 Documentation
 
 - [Development Plan](DEVELOPMENT_PLAN.md) - Comprehensive development roadmap
-- [API Documentation](docs/api/) - API reference and examples
-- [User Guide](docs/user-guide/) - How to use OmicsOracle
-- [Architecture Guide](docs/architecture/) - System architecture details
-- [Deployment Guide](docs/deployment/) - How to deploy OmicsOracle
+- [Core Philosophy](CORE_PHILOSOPHY.md) - Project principles and values
+- [System Architecture](docs/SYSTEM_ARCHITECTURE.md) - Technical architecture details
+- [Code Quality Guide](docs/CODE_QUALITY_GUIDE.md) - Development standards
+- [ASCII Enforcement Guide](docs/ASCII_ENFORCEMENT_GUIDE.md) - Character encoding standards
+- [Reference Materials](data/references/) - Source PDFs and research documents
 
 ## 🧪 Development
 
@@ -134,9 +135,9 @@ docker-compose -f docker-compose.prod.yml up
 
 ## 📊 Current Status
 
-**Development Phase**: Foundation & Infrastructure  
-**Version**: 0.1.0-alpha  
-**Last Updated**: June 22, 2025  
+**Development Phase**: Foundation & Infrastructure
+**Version**: 0.1.0-alpha
+**Last Updated**: June 22, 2025
 
 See [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md) for detailed progress and roadmap.
 

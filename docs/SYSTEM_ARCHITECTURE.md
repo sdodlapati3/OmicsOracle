@@ -1,7 +1,7 @@
 # OmicsOracle System Architecture
 
-**Version:** 1.0.0  
-**Date:** June 22, 2025  
+**Version:** 1.0.0
+**Date:** June 22, 2025
 **Status:** Phase 1.2 Implementation
 
 ## Architecture Overview
@@ -111,17 +111,17 @@ Results ← Summarizer ← NLP Pipeline ← Metadata Extractor ← GEO Data
 database:
   url: "${DATABASE_URL}"
   pool_size: 10
-  
+
 ncbi:
   api_key: "${NCBI_API_KEY}"
   email: "${NCBI_EMAIL}"
   rate_limit: 3
-  
+
 nlp:
   model: "en_core_sci_sm"
   batch_size: 32
   max_tokens: 512
-  
+
 logging:
   level: "INFO"
   format: "json"
@@ -179,7 +179,7 @@ class SearchRequest(BaseModel):
     query: str
     filters: Optional[Dict[str, Any]] = None
     limit: int = Field(default=10, le=100)
-    
+
 class MetadataResponse(BaseModel):
     geo_id: str
     title: str

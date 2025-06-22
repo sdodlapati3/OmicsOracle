@@ -27,13 +27,13 @@ jobs:
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v4
-    
+
     - name: Setup Python ${{ matrix.python-version }}
       uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
         cache: 'pip'
-    
+
     - name: Enhanced Caching
       uses: actions/cache@v4
       with:
@@ -45,7 +45,7 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-main-${{ env.CACHE_VERSION }}-${{ matrix.python-version }}-
           ${{ runner.os }}-main-${{ env.CACHE_VERSION }}-
-    
+
     - name: Install Dependencies
       run: |
         python -m pip install --upgrade pip --quiet
@@ -53,22 +53,22 @@ jobs:
         pip install -e .
         # Install spaCy models for NLP testing
         python -m spacy download en_core_web_sm || echo "SpaCy model download skipped for speed"
-    
+
     - name: ASCII Enforcement
       run: |
         python scripts/ascii_enforcer.py
         echo "[PASS] ASCII enforcement validated"
-    
+
     - name: Code Formatting (Black)
       run: |
         black --check --diff src/ tests/ scripts/ --line-length 88
         echo "[PASS] Black formatting validated"
-    
+
     - name: Import Sorting (isort)
       run: |
         isort --check-only --diff src/ tests/ scripts/ --profile black
         echo "[PASS] Import sorting validated"
-    
+
     - name: Type Checking (mypy)
       run: |
         mypy src/omics_oracle/ --ignore-missing-imports
@@ -78,12 +78,12 @@ jobs:
         ruff check src/ tests/ scripts/ --output-format=github
         flake8 src/ tests/ scripts/ --quiet
         echo "[PASS] Linting validated"
-    
+
     - name: Security Scan (bandit)
       run: |
         bandit -r src/ -f json -o bandit-report.json
         echo "[PASS] Security scan completed"
-    
+
     - name: Dependency Vulnerability Scan
       run: |
         safety check --quiet || echo "[WARN] Safety check completed with warnings"
@@ -130,15 +130,15 @@ jobs:
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v4
-    
+
     - name: Setup Docker Buildx
       uses: docker/setup-buildx-action@v3
-    
+
     - name: Build Docker Image
       run: |
         docker build -t omics-oracle:latest .
         echo "[PASS] Docker build successful"
-    
+
     - name: Test Docker Image
       run: |
         docker run --rm omics-oracle:latest --help
@@ -155,13 +155,13 @@ jobs:
     - name: Deployment Status
       run: |
         echo "::group::Deployment Readiness Report"
-        echo "Comprehensive Validation: ${{ needs.comprehensive-validation.result }}" 
+        echo "Comprehensive Validation: ${{ needs.comprehensive-validation.result }}"
         echo "Docker Build Test: ${{ needs.docker-build-test.result }}"
         echo "Branch: ${{ github.ref }}"
         echo "Commit: ${{ github.sha }}"
         echo "::endgroup::"
-        
-        if [[ "${{ needs.comprehensive-validation.result }}" == "success" && 
+
+        if [[ "${{ needs.comprehensive-validation.result }}" == "success" &&
               "${{ needs.docker-build-test.result }}" == "success" ]]; then
           echo "[SUCCESS] OmicsOracle is ready for deployment"
         else

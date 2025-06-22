@@ -49,6 +49,19 @@ coverage.xml
 .hypothesis/
 .pytest_cache/
 
+# Type checking and linting cache
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Backup files
+*.backup
+*.bak
+*_backup.*
+*_old.*
+*_temp.*
+*_tmp.*
+
 # Translations
 *.mo
 *.pot
@@ -113,14 +126,6 @@ venv.bak/
 
 # mkdocs documentation
 /site
-
-# mypy
-.mypy_cache/
-.dmypy.json
-dmypy.json
-
-# Pyre type checker
-.pyre/
 
 # IDEs
 .vscode/

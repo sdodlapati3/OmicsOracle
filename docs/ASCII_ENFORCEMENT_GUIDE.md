@@ -1,7 +1,7 @@
 # ASCII-Only Enforcement Guide 🔒
 
-**Version:** 1.0  
-**Date:** June 22, 2025  
+**Version:** 1.0
+**Date:** June 22, 2025
 **Project:** OmicsOracle - ASCII Character Enforcement System
 
 ---
@@ -143,7 +143,7 @@ The ASCII enforcer is integrated into `.pre-commit-config.yaml`:
 # ❌ WRONG - Smart quotes
 print("Hello World")
 
-# ✅ CORRECT - Straight quotes  
+# ✅ CORRECT - Straight quotes
 print("Hello World")
 ```
 
@@ -223,7 +223,7 @@ status_indicators:
   success: "[PASS]"
   failure: "[FAIL]"
   warning: "[WARN]"
-  
+
 # ❌ AVOID - Unicode in config
 status_indicators:
   success: "✅"

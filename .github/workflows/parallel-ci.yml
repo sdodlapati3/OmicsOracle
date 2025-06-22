@@ -28,12 +28,12 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-      
+
       - name: ASCII Enforcement Check
         run: |
           python scripts/ascii_enforcer.py
@@ -46,17 +46,17 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
-      
+
       - name: Install formatters
         run: |
           pip install --quiet black isort
-      
+
       - name: Check formatting
         run: |
           black --check src/ tests/ scripts/ --line-length 88
@@ -70,17 +70,17 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
-      
+
       - name: Install linter
         run: |
           pip install --quiet ruff flake8
-      
+
       - name: Run linting
         run: |
           ruff check src/ tests/ scripts/ --quiet
@@ -94,18 +94,18 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
-      
+
       - name: Install dependencies
         run: |
           pip install --quiet mypy pydantic pyyaml click
           pip install --quiet -e .
-      
+
       - name: Type checking
         run: |
           mypy src/omics_oracle/ --ignore-missing-imports
@@ -118,17 +118,17 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
-      
+
       - name: Install security tools
         run: |
           pip install --quiet bandit safety
-      
+
       - name: Security scanning
         run: |
           bandit -r src/ --quiet -f json -o bandit-report.json || true
@@ -148,18 +148,18 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
           cache: 'pip'
-      
+
       - name: Install test dependencies
         run: |
           pip install --quiet pytest pytest-cov pydantic pyyaml click
           pip install --quiet -e .
-      
+
       - name: Run unit tests
         run: |
           if [[ -d "tests/unit" && $(find tests/unit -name "*.py" -not -name "__init__.py" | wc -l) -gt 0 ]]; then
@@ -168,7 +168,7 @@ jobs:
           else
             echo "[SKIP] No unit tests found"
           fi
-      
+
       - name: Upload coverage
         if: matrix.python-version == '3.12'
         uses: codecov/codecov-action@v3
@@ -176,24 +176,24 @@ jobs:
           file: ./coverage.xml
 
   validation-tests:
-    name: "[VALIDATE] Architecture Tests" 
+    name: "[VALIDATE] Architecture Tests"
     runs-on: ubuntu-latest
     timeout-minutes: 3
 
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
-      
+
       - name: Install dependencies
         run: |
           pip install --quiet pytest pydantic pyyaml click
           pip install --quiet -e .
-      
+
       - name: Run validation tests
         run: |
           pytest tests/validation/ -v --tb=short
@@ -210,18 +210,18 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
-      
+
       - name: Install full dependencies
         run: |
           pip install --quiet -r requirements-dev.txt
           pip install --quiet -e .
-      
+
       - name: Run integration tests
         run: |
           if [ -d "tests/integration" ]; then
@@ -243,15 +243,15 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@v3
-      
+
       - name: Build Docker image
         run: |
           docker build -t omics-oracle:latest .
           echo "[PASS] Docker build successful"
-      
+
       - name: Test Docker image
         run: |
           docker run --rm omics-oracle:latest --help
@@ -278,10 +278,10 @@ jobs:
           echo "Unit Tests: ${{ needs.unit-tests.result }}"
           echo "Validation Tests: ${{ needs.validation-tests.result }}"
           echo "::endgroup::"
-          
+
           # Check if any critical jobs failed
-          if [[ "${{ needs.ascii-check.result }}" == "failure" || 
-                "${{ needs.code-format.result }}" == "failure" || 
+          if [[ "${{ needs.ascii-check.result }}" == "failure" ||
+                "${{ needs.code-format.result }}" == "failure" ||
                 "${{ needs.lint-check.result }}" == "failure" ||
                 "${{ needs.unit-tests.result }}" == "failure" ||
                 "${{ needs.validation-tests.result }}" == "failure" ]]; then
