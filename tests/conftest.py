@@ -30,7 +30,7 @@ def mock_geo_response():
         "summary": "This is a test genomics dataset",
         "organism": "Homo sapiens",
         "samples": 24,
-        "platform": "GPL1234"
+        "platform": "GPL1234",
     }
 
 
@@ -58,5 +58,5 @@ def sample_metadata():
         "condition": "control",
         "replicate_count": 3,
         "platform": "Illumina HiSeq",
-        "date_created": "2024-01-01"
+        "date_created": "2024-01-01",
     }

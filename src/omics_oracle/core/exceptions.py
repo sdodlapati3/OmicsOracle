@@ -11,15 +11,15 @@ from typing import Optional, Dict, Any
 
 class OmicsOracleException(Exception):
     """Base exception for all OmicsOracle errors."""
-    
+
     def __init__(
-        self, 
-        message: str, 
+        self,
+        message: str,
         code: Optional[str] = None,
-        details: Optional[Dict[str, Any]] = None
+        details: Optional[Dict[str, Any]] = None,
     ):
         """Initialize exception.
-        
+
         Args:
             message: Error message
             code: Error code for API responses

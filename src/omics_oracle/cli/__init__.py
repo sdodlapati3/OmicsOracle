@@ -15,27 +15,30 @@ def main():
 
 
 @main.command()
-@click.option('--host', default=settings.api_host, help='Host to bind to')
-@click.option('--port', default=settings.api_port, help='Port to bind to')
-@click.option('--reload', is_flag=True, help='Enable auto-reload')
+@click.option("--host", default=settings.api_host, help="Host to bind to")
+@click.option("--port", default=settings.api_port, help="Port to bind to")
+@click.option("--reload", is_flag=True, help="Enable auto-reload")
 def serve(host: str, port: int, reload: bool):
     """Start the API server."""
     try:
         import uvicorn
+
         uvicorn.run(
             "omics_oracle.api.main:app",
             host=host,
             port=port,
-            reload=reload or settings.api_reload
+            reload=reload or settings.api_reload,
         )
     except Exception as e:
         raise OmicsOracleException(f"Failed to start server: {e}")
 
 
 @main.command()
-@click.argument('input_file', type=click.Path(exists=True))
-@click.option('--output', '-o', help='Output file path')
-@click.option('--format', default='json', help='Output format (json, csv, txt)')
+@click.argument("input_file", type=click.Path(exists=True))
+@click.option("--output", "-o", help="Output file path")
+@click.option(
+    "--format", default="json", help="Output format (json, csv, txt)"
+)
 def analyze(input_file: str, output: str, format: str):
     """Analyze a genomics data file."""
     click.echo(f"Analyzing file: {input_file}")
@@ -47,8 +50,8 @@ def analyze(input_file: str, output: str, format: str):
 
 
 @main.command()
-@click.argument('geo_id')
-@click.option('--summary', is_flag=True, help='Generate summary only')
+@click.argument("geo_id")
+@click.option("--summary", is_flag=True, help="Generate summary only")
 def fetch_geo(geo_id: str, summary: bool):
     """Fetch and analyze GEO dataset."""
     click.echo(f"Fetching GEO dataset: {geo_id}")
@@ -69,5 +72,5 @@ def status():
     click.echo("Status: OK")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

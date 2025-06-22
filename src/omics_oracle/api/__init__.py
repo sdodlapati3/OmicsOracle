@@ -13,7 +13,7 @@ app = FastAPI(
     description="AI-Powered Genomics Data Summary Agent",
     version="0.1.0",
     docs_url="/docs",
-    redoc_url="/redoc"
+    redoc_url="/redoc",
 )
 
 # Add CORS middleware
@@ -32,7 +32,7 @@ async def root():
     return {
         "message": "Welcome to OmicsOracle API",
         "version": "0.1.0",
-        "docs": "/docs"
+        "docs": "/docs",
     }
 
 
@@ -42,7 +42,7 @@ async def health_check():
     return {
         "status": "healthy",
         "environment": settings.environment,
-        "version": "0.1.0"
+        "version": "0.1.0",
     }
 
 
@@ -55,10 +55,12 @@ async def system_status():
             "api": "running",
             "database": "connected",
             "cache": "available",
-            "ai_service": "available"
+            "ai_service": "available",
         }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"System check failed: {e}")
+        raise HTTPException(
+            status_code=500, detail=f"System check failed: {e}"
+        )
 
 
 # TODO: Add more API endpoints for:
