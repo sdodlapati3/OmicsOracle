@@ -38,7 +38,15 @@ def main() -> int:
     checks: List[Tuple[List[str], str]] = [
         (["python", "scripts/ascii_enforcer.py"], "ASCII Enforcement"),
         (
-            ["black", "--check", "src/", "tests/", "scripts/", "--line-length", "88"],
+            [
+                "black",
+                "--check",
+                "src/",
+                "tests/",
+                "scripts/",
+                "--line-length",
+                "79",
+            ],
             "Black Formatting",
         ),
         (

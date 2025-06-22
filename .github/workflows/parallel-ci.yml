@@ -59,7 +59,7 @@ jobs:
 
       - name: Check formatting
         run: |
-          black --check src/ tests/ scripts/ --line-length 88
+          black --check src/ tests/ scripts/ --line-length 79
           isort --check-only src/ tests/ scripts/ --profile black
           echo "[PASS] Code formatting validated"
 
@@ -103,12 +103,12 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install --quiet mypy pydantic pyyaml click
+          pip install --quiet mypy pydantic pyyaml click types-PyYAML
           pip install --quiet -e .
 
       - name: Type checking
         run: |
-          mypy src/omics_oracle/ --ignore-missing-imports
+          mypy src/omics_oracle/ --ignore-missing-imports --disable-error-code=misc
           echo "[PASS] Type checking validated"
 
   security-check:

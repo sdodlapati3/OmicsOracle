@@ -2,7 +2,7 @@
 """
 Test script for Phase 1.2 Core Architecture Implementation.
 
-This script validates that our core architecture components are working correctly:
+This script validates our core architecture components:
 - Configuration system
 - Exception handling
 - Data models
@@ -73,11 +73,7 @@ def test_models():
     print("Testing data models...")
 
     try:
-        from omics_oracle.core.models import (
-            AssayType,
-            GEOSample,
-            SearchRequest,
-        )
+        from omics_oracle.core.models import AssayType, GEOSample, SearchRequest
 
         # Test enum
         assay = AssayType.RNA_SEQ
@@ -182,12 +178,12 @@ def main():
     print(f"Test Results: {passed}/{total} tests passed")
 
     if passed == total:
-        print(
-            "[STATUS][STATUS][STATUS][STATUS] All tests passed! Core architecture is ready."
-        )
+        print("[STATUS] All tests passed! Core architecture is ready.")
         return 0
     else:
-        print("[STATUS][STATUS][STATUS] Some tests failed. Check output above.")
+        print(
+            "[STATUS][STATUS][STATUS] Some tests failed. Check output above."
+        )
         return 1
 
 

@@ -1,7 +1,7 @@
 """
 Core module for OmicsOracle.
 
-This module provides the foundational components for the OmicsOracle application:
+This module provides the foundational components for OmicsOracle:
 - Configuration management
 - Exception handling
 - Data models and types
