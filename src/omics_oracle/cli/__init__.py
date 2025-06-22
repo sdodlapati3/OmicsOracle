@@ -38,9 +38,7 @@ def serve(host: str, port: int, reload: bool) -> None:
 @main.command()
 @click.argument("input_file", type=click.Path(exists=True))
 @click.option("--output", "-o", help="Output file path")
-@click.option(
-    "--format", "output_format", default="json", help="Output format"
-)
+@click.option("--format", "output_format", default="json", help="Output format")
 def analyze(input_file: str, output: str, output_format: str) -> None:
     """Analyze a genomics data file."""
     click.echo(f"Analyzing file: {input_file}")

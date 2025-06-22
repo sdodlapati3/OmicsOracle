@@ -76,25 +76,19 @@ class PDFReader:
         # Try pdfplumber first (usually best results)
         text = self.extract_with_pdfplumber()
         if text and len(text) > 100:
-            print(
-                f"[OK] Successfully extracted {len(text)} characters with pdfplumber"
-            )
+            print(f"[OK] Successfully extracted {len(text)} characters with pdfplumber")
             return text
 
         # Try PyMuPDF as fallback
         text = self.extract_with_pymupdf()
         if text and len(text) > 100:
-            print(
-                f"[OK] Successfully extracted {len(text)} characters with PyMuPDF"
-            )
+            print(f"[OK] Successfully extracted {len(text)} characters with PyMuPDF")
             return text
 
         # Try PyPDF2 as last resort
         text = self.extract_with_pypdf2()
         if text and len(text) > 100:
-            print(
-                f"[OK] Successfully extracted {len(text)} characters with PyPDF2"
-            )
+            print(f"[OK] Successfully extracted {len(text)} characters with PyPDF2")
             return text
 
         print("[FAIL] Failed to extract meaningful text from PDF")
@@ -148,9 +142,7 @@ def read_all_pdfs(directory: str) -> Dict[str, Dict]:
     return results
 
 
-def save_extracted_text(
-    results: Dict[str, Dict], output_dir: str = "extracted_docs"
-):
+def save_extracted_text(results: Dict[str, Dict], output_dir: str = "extracted_docs"):
     """Save extracted text to individual files."""
     output_path = Path(output_dir)
     output_path.mkdir(exist_ok=True)

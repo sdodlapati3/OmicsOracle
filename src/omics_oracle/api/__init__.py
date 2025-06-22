@@ -67,6 +67,4 @@ async def system_status() -> Dict[str, str]:
             "ai_service": "available",
         }
     except Exception as e:
-        raise HTTPException(
-            status_code=500, detail=f"System check failed: {e}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"System check failed: {e}") from e

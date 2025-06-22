@@ -27,9 +27,7 @@ class ASCIIEnforcer:
         except UnicodeEncodeError:
             return False
 
-    def find_non_ascii_chars(
-        self, text: str, filepath: str
-    ) -> List[Dict[str, str]]:
+    def find_non_ascii_chars(self, text: str, filepath: str) -> List[Dict[str, str]]:
         """Find all non-ASCII characters in text with their positions."""
         violations = []
         lines = text.split("\n")
@@ -83,9 +81,7 @@ class ASCIIEnforcer:
             self.total_violations += len(file_violations)
 
             if self.verbose:
-                print(
-                    f"[OK][OK][OK] {filepath} - {len(file_violations)} violations"
-                )
+                print(f"[OK][OK][OK] {filepath} - {len(file_violations)} violations")
 
             return False
 
@@ -201,9 +197,7 @@ class ASCIIEnforcer:
                     all_files.append(path)
             elif path.is_dir():
                 for file_path in path.rglob("*"):
-                    if file_path.is_file() and self.should_check_file(
-                        file_path
-                    ):
+                    if file_path.is_file() and self.should_check_file(file_path):
                         all_files.append(file_path)
 
         if not all_files:
@@ -234,9 +228,7 @@ def main() -> None:
         default=["."],
         help="Paths to check (default: current directory)",
     )
-    parser.add_argument(
-        "-v", "--verbose", action="store_true", help="Verbose output"
-    )
+    parser.add_argument("-v", "--verbose", action="store_true", help="Verbose output")
 
     args = parser.parse_args()
 
