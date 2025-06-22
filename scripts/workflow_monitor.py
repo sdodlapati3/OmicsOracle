@@ -167,7 +167,9 @@ class OmicsOracleWorkflowMonitor:
             print(f"Error running GitHub CLI: {e}")
             return None
 
-    def _calculate_duration(self, start_time: str, end_time: str) -> Optional[int]:
+    def _calculate_duration(
+        self, start_time: str, end_time: str
+    ) -> Optional[int]:
         """Calculate workflow duration in seconds"""
         try:
             start = datetime.fromisoformat(start_time.replace("Z", "+00:00"))
@@ -176,7 +178,9 @@ class OmicsOracleWorkflowMonitor:
         except (ValueError, TypeError):
             return None
 
-    def fetch_workflow_runs(self, repo_name: str, limit: int = 10) -> List[WorkflowRun]:
+    def fetch_workflow_runs(
+        self, repo_name: str, limit: int = 10
+    ) -> List[WorkflowRun]:
         """Fetch recent workflow runs with enhanced parsing"""
         command = (
             f"gh run list --repo {repo_name} --limit {limit} "
@@ -298,7 +302,9 @@ class OmicsOracleWorkflowMonitor:
 if __name__ == "__main__":
     print("[OK] Step 3 Complete: Enhanced monitoring core")
     monitor = OmicsOracleWorkflowMonitor()
-    print(f"[DATA] Configured repositories: {list(monitor.repositories.keys())}")
+    print(
+        f"[DATA] Configured repositories: {list(monitor.repositories.keys())}"
+    )
     print(
         f"[TOOL][TOOL][TOOL][TOOL] Error patterns defined: {len(monitor.error_patterns)}"
     )
@@ -320,7 +326,9 @@ if __name__ == "__main__":
             if errors_found:
                 print(f"[ERROR] Found {len(errors_found)} error(s)")
                 categories = monitor.categorize_errors(errors_found)
-                recommendations = monitor.generate_fix_recommendations(categories)
+                recommendations = monitor.generate_fix_recommendations(
+                    categories
+                )
                 rec_count = len(recommendations)
                 print(
                     f"[TOOL][TOOL][TOOL][TOOL] Generated {rec_count} fix recommendation(s)"

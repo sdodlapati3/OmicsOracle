@@ -187,7 +187,9 @@ def main():
         )
         return 0
     else:
-        print("[STATUS][STATUS][STATUS] Some tests failed. Check output above.")
+        print(
+            "[STATUS][STATUS][STATUS] Some tests failed. Check output above."
+        )
         return 1
 
 

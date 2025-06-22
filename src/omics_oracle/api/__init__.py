@@ -2,6 +2,8 @@
 FastAPI application for OmicsOracle.
 """
 
+from typing import Dict
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -27,7 +29,7 @@ app.add_middleware(
 
 
 @app.get("/")
-async def root():
+async def root() -> Dict[str, str]:
     """Root endpoint."""
     return {
         "message": "Welcome to OmicsOracle API",
@@ -37,7 +39,7 @@ async def root():
 
 
 @app.get("/health")
-async def health_check():
+async def health_check() -> Dict[str, str]:
     """Health check endpoint."""
     try:
         config = get_config()
@@ -55,7 +57,7 @@ async def health_check():
 
 
 @app.get("/status")
-async def system_status():
+async def system_status() -> Dict[str, str]:
     """System status endpoint."""
     try:
         return {
@@ -65,4 +67,6 @@ async def system_status():
             "ai_service": "available",
         }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"System check failed: {e}") from e
+        raise HTTPException(
+            status_code=500, detail=f"System check failed: {e}"
+        ) from e

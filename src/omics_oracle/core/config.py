@@ -116,9 +116,13 @@ class Config:
         # Validate NCBI configuration
         if self.environment == Environment.PRODUCTION:
             if not self.ncbi.api_key:
-                raise ConfigurationError("NCBI API key is required in production")
+                raise ConfigurationError(
+                    "NCBI API key is required in production"
+                )
             if not self.ncbi.email:
-                raise ConfigurationError("NCBI email is required in production")
+                raise ConfigurationError(
+                    "NCBI email is required in production"
+                )
 
         # Validate database URL
         if not self.database.url:
@@ -127,7 +131,9 @@ class Config:
         # Validate logging level
         valid_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
         if self.logging.level.upper() not in valid_levels:
-            raise ConfigurationError(f"Invalid logging level: {self.logging.level}")
+            raise ConfigurationError(
+                f"Invalid logging level: {self.logging.level}"
+            )
 
 
 class ConfigManager:
@@ -170,13 +176,17 @@ class ConfigManager:
         # Load configuration file
         config_file = self.config_dir / f"{env}.yml"
         if not config_file.exists():
-            raise ConfigurationError(f"Configuration file not found: {config_file}")
+            raise ConfigurationError(
+                f"Configuration file not found: {config_file}"
+            )
 
         try:
             with open(config_file, "r", encoding="utf-8") as f:
                 config_data = yaml.safe_load(f)
         except yaml.YAMLError as e:
-            raise ConfigurationError(f"Invalid YAML in {config_file}: {e}") from e
+            raise ConfigurationError(
+                f"Invalid YAML in {config_file}: {e}"
+            ) from e
 
         # Substitute environment variables
         config_data = self._substitute_env_vars(config_data)
@@ -186,7 +196,9 @@ class ConfigManager:
             self._config = self._create_config(config_data, env_enum)
             return self._config
         except Exception as e:
-            raise ConfigurationError(f"Failed to create configuration: {e}") from e
+            raise ConfigurationError(
+                f"Failed to create configuration: {e}"
+            ) from e
 
     def get_config(self) -> Config:
         """Get current configuration.
@@ -216,7 +228,11 @@ class ConfigManager:
             return {k: self._substitute_env_vars(v) for k, v in data.items()}
         elif isinstance(data, list):
             return [self._substitute_env_vars(item) for item in data]
-        elif isinstance(data, str) and data.startswith("${") and data.endswith("}"):
+        elif (
+            isinstance(data, str)
+            and data.startswith("${")
+            and data.endswith("}")
+        ):
             env_var = data[2:-1]
             default_value = None
 

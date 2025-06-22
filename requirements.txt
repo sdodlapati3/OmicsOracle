@@ -4,6 +4,8 @@ uvicorn[standard]>=0.24.0
 pydantic>=2.5.0
 python-dotenv>=1.0.0
 httpx>=0.25.0
+PyYAML>=6.0
+types-PyYAML>=6.0.12  # Type stubs for mypy
 
 # GEO/Genomics Libraries - CRITICAL for Phase 1
 entrezpy>=2.1.3
