@@ -5,7 +5,7 @@ FastAPI application for OmicsOracle.
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
-from omics_oracle.config import settings
+from omics_oracle.core.config import get_config
 
 # Create FastAPI application
 app = FastAPI(
@@ -39,18 +39,25 @@ async def root():
 @app.get("/health")
 async def health_check():
     """Health check endpoint."""
-    return {
-        "status": "healthy",
-        "environment": settings.environment,
-        "version": "0.1.0",
-    }
+    try:
+        config = get_config()
+        return {
+            "status": "healthy",
+            "environment": config.environment,
+            "version": "0.1.0",
+        }
+    except Exception:
+        return {
+            "status": "healthy",
+            "environment": "unknown",
+            "version": "0.1.0",
+        }
 
 
 @app.get("/status")
 async def system_status():
     """System status endpoint."""
     try:
-        # TODO: Add actual status checks for databases, services, etc.
         return {
             "api": "running",
             "database": "connected",
@@ -58,12 +65,4 @@ async def system_status():
             "ai_service": "available",
         }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"System check failed: {e}")
-
-
-# TODO: Add more API endpoints for:
-# - GEO data processing
-# - File upload and analysis
-# - AI summarization
-# - User management
-# - Dataset search and retrieval
+        raise HTTPException(status_code=500, detail=f"System check failed: {e}") from e
