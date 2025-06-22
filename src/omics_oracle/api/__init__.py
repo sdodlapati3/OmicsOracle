@@ -58,9 +58,7 @@ async def system_status():
             "ai_service": "available",
         }
     except Exception as e:
-        raise HTTPException(
-            status_code=500, detail=f"System check failed: {e}"
-        )
+        raise HTTPException(status_code=500, detail=f"System check failed: {e}")
 
 
 # TODO: Add more API endpoints for:
