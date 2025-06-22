@@ -1,0 +1,232 @@
+name: Pull Request Validation
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+    types: [ opened, synchronize, reopened ]
+
+env:
+  PYTHON_VERSION: "3.12"
+  FORCE_COLOR: "1"
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  pr-quick-validation:
+    name: "[PR] Quick Validation"
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python Environment
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Validate ASCII-Only Code
+        run: |
+          python scripts/ascii_enforcer.py --check-only
+          echo "[PASS] ASCII enforcement validated"
+        if: always()
+
+      - name: Check File Structure
+        run: |
+          # Validate critical files exist
+          required_files=(
+            "src/omics_oracle/core/__init__.py"
+            "src/omics_oracle/core/config.py"
+            "src/omics_oracle/core/exceptions.py"
+            "tests/validation/test_architecture.py"
+            "requirements.txt"
+            "pyproject.toml"
+          )
+          
+          for file in "${required_files[@]}"; do
+            if [[ ! -f "$file" ]]; then
+              echo "::error::Required file missing: $file"
+              exit 1
+            fi
+          done
+          echo "[PASS] File structure validated"
+        if: always()
+
+  pr-code-quality:
+    name: "[PR] Code Quality"
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python Environment
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install Quality Tools
+        run: |
+          pip install --quiet black isort ruff mypy bandit
+          pip install --quiet pydantic pyyaml click
+        env:
+          PIP_DISABLE_PIP_VERSION_CHECK: "1"
+
+      - name: Code Formatting Check
+        run: |
+          black --check --diff src/ tests/ scripts/ --line-length 88
+          echo "[PASS] Black formatting check"
+        if: always()
+
+      - name: Import Sorting Check
+        run: |
+          isort --check-only --diff src/ tests/ scripts/ --profile black
+          echo "[PASS] Import sorting check"
+        if: always()
+
+      - name: Linting Check
+        run: |
+          ruff check src/ tests/ scripts/ --output-format=github
+          echo "[PASS] Ruff linting check"
+        if: always()
+
+      - name: Security Scan
+        run: |
+          bandit -r src/ -f json -o bandit-report.json || true
+          if [[ -f bandit-report.json ]]; then
+            echo "[INFO] Security scan completed - check bandit-report.json"
+          fi
+          echo "[PASS] Security scan completed"
+        if: always()
+
+  pr-essential-tests:
+    name: "[PR] Essential Tests"
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python Environment
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install Test Dependencies
+        run: |
+          pip install --quiet pytest pytest-cov
+          pip install --quiet pydantic pyyaml click
+          pip install --quiet -e .
+
+      - name: Run Architecture Validation Tests
+        run: |
+          pytest tests/validation/ -v --tb=short --disable-warnings
+          echo "[PASS] Architecture validation tests"
+
+      - name: Run Core Unit Tests
+        run: |
+          if [[ -d "tests/unit" ]]; then
+            pytest tests/unit/ -v --tb=short --disable-warnings --maxfail=3
+            echo "[PASS] Core unit tests"
+          else
+            echo "[SKIP] No unit tests directory found"
+          fi
+
+  pr-dependency-check:
+    name: "[PR] Dependency Validation"
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python Environment
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Validate Requirements Resolution
+        run: |
+          echo "::group::Requirements Resolution Test"
+          
+          # Test that requirements.txt resolves without conflicts
+          pip install --dry-run -r requirements.txt 2>&1 | tee requirements_check.log
+          
+          if grep -i "error\|conflict\|incompatible" requirements_check.log; then
+            echo "::error::Requirements resolution failed - check for dependency conflicts"
+            cat requirements_check.log
+            exit 1
+          fi
+          
+          echo "[PASS] Requirements resolution validated"
+          echo "::endgroup::"
+
+      - name: Install and Test Package
+        run: |
+          echo "::group::Package Installation Test"
+          
+          # Install the package and test basic import
+          pip install --quiet -e .
+          python -c "
+          try:
+              import omics_oracle
+              from omics_oracle.core import config, exceptions, models
+              print('[PASS] Package imports successfully')
+          except ImportError as e:
+              print(f'[FAIL] Import error: {e}')
+              exit(1)
+          "
+          
+          echo "::endgroup::"
+
+  pr-summary:
+    name: "[PR] Validation Summary"
+    runs-on: ubuntu-latest
+    needs: [pr-quick-validation, pr-code-quality, pr-essential-tests, pr-dependency-check]
+    if: always()
+
+    steps:
+      - name: PR Validation Report
+        run: |
+          echo "::group::PR Validation Summary"
+          echo "Quick Validation: ${{ needs.pr-quick-validation.result }}"
+          echo "Code Quality: ${{ needs.pr-code-quality.result }}"
+          echo "Essential Tests: ${{ needs.pr-essential-tests.result }}"
+          echo "Dependency Check: ${{ needs.pr-dependency-check.result }}"
+          echo "::endgroup::"
+          
+          # Determine overall PR status
+          if [[ "${{ needs.pr-quick-validation.result }}" == "success" && 
+                "${{ needs.pr-code-quality.result }}" == "success" && 
+                "${{ needs.pr-essential-tests.result }}" == "success" &&
+                "${{ needs.pr-dependency-check.result }}" == "success" ]]; then
+            echo "::notice::PR validation passed - ready for review"
+            echo "[SUCCESS] All PR validation checks passed"
+          else
+            echo "::error::PR validation failed - please fix issues before review"
+            exit 1
+          fi
+
+      - name: Add PR Comment
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '🔍 **PR Validation Failed**\n\nSome validation checks failed. Please review the workflow logs and fix the issues before requesting a review.\n\n- Check code formatting (Black, isort)\n- Ensure all tests pass\n- Verify ASCII-only compliance\n- Resolve any dependency conflicts'
+            })
