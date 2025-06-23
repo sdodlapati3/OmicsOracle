@@ -112,10 +112,13 @@ class TestOmicsOracle:
     @pytest.fixture
     def mock_oracle(self, mock_config):
         """Mock OmicsOracle instance for testing."""
-        with patch("omics_oracle.pipeline.pipeline.UnifiedGEOClient"), patch(
-            "omics_oracle.pipeline.pipeline.PromptInterpreter"
-        ), patch("omics_oracle.pipeline.pipeline.BiomedicalNER"), patch(
-            "omics_oracle.pipeline.pipeline.EnhancedBiologicalSynonymMapper"
+        with (
+            patch("omics_oracle.pipeline.pipeline.UnifiedGEOClient"),
+            patch("omics_oracle.pipeline.pipeline.PromptInterpreter"),
+            patch("omics_oracle.pipeline.pipeline.BiomedicalNER"),
+            patch(
+                "omics_oracle.pipeline.pipeline.EnhancedBiologicalSynonymMapper"
+            ),
         ):
             oracle = OmicsOracle(mock_config)
             # Mock the components
@@ -128,10 +131,13 @@ class TestOmicsOracle:
 
     def test_oracle_initialization(self, mock_config):
         """Test OmicsOracle initialization."""
-        with patch("omics_oracle.pipeline.pipeline.UnifiedGEOClient"), patch(
-            "omics_oracle.pipeline.pipeline.PromptInterpreter"
-        ), patch("omics_oracle.pipeline.pipeline.BiomedicalNER"), patch(
-            "omics_oracle.pipeline.pipeline.EnhancedBiologicalSynonymMapper"
+        with (
+            patch("omics_oracle.pipeline.pipeline.UnifiedGEOClient"),
+            patch("omics_oracle.pipeline.pipeline.PromptInterpreter"),
+            patch("omics_oracle.pipeline.pipeline.BiomedicalNER"),
+            patch(
+                "omics_oracle.pipeline.pipeline.EnhancedBiologicalSynonymMapper"
+            ),
         ):
             oracle = OmicsOracle(mock_config)
 

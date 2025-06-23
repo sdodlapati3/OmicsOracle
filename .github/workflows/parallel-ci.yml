@@ -103,7 +103,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install --quiet mypy pydantic pyyaml click types-PyYAML
+          pip install --quiet -r requirements-dev.txt
           pip install --quiet -e .
 
       - name: Type checking
@@ -157,7 +157,7 @@ jobs:
 
       - name: Install test dependencies
         run: |
-          pip install --quiet pytest pytest-cov pydantic pyyaml click
+          pip install --quiet -r requirements-dev.txt
           pip install --quiet -e .
 
       - name: Run unit tests
@@ -191,7 +191,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install --quiet pytest pydantic pyyaml click
+          pip install --quiet -r requirements-dev.txt
           pip install --quiet -e .
 
       - name: Run validation tests

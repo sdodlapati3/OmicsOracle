@@ -32,7 +32,7 @@ logger = logging.getLogger(__name__)
 class AnalyticsService:
     """Service for collecting and analyzing OmicsOracle usage data."""
 
-    def __init__(self, storage_path: str = "analytics_data"):
+    def __init__(self, storage_path: str = "analytics_data") -> None:
         """Initialize analytics service."""
         self.storage_path = storage_path
         self.active_queries: Dict[str, QueryAnalytics] = {}
@@ -50,7 +50,7 @@ class AnalyticsService:
             f"Analytics service initialized with storage at {storage_path}"
         )
 
-    def _load_analytics_data(self):
+    def _load_analytics_data(self) -> None:
         """Load existing analytics data from storage."""
         try:
             # Load query history
@@ -78,7 +78,7 @@ class AnalyticsService:
         except Exception as e:
             logger.error(f"Error loading analytics data: {e}")
 
-    def _save_analytics_data(self):
+    def _save_analytics_data(self) -> None:
         """Save analytics data to storage."""
         try:
             # Save query history (last 10000 records)
@@ -113,7 +113,7 @@ class AnalyticsService:
         entities_extracted: Optional[List[Dict[str, Any]]] = None,
         error_type: Optional[str] = None,
         error_message: Optional[str] = None,
-    ):
+    ) -> None:
         """Record the completion of a query."""
         if query_id in self.active_queries:
             query = self.active_queries[query_id]
@@ -141,7 +141,7 @@ class AnalyticsService:
         dataset_id: str,
         query_text: Optional[str] = None,
         entities: Optional[List[str]] = None,
-    ):
+    ) -> None:
         """Record access to a specific dataset."""
         if dataset_id not in self.dataset_stats:
             self.dataset_stats[dataset_id] = DatasetAnalytics(
@@ -232,7 +232,10 @@ class AnalyticsService:
 
         except Exception as e:
             logger.error(f"Error getting system metrics: {e}")
-            return SystemMetrics()
+            return SystemMetrics(
+                memory_usage=0.0,
+                cpu_usage=0.0,
+            )
 
     def get_usage_statistics(
         self,
@@ -287,7 +290,7 @@ class AnalyticsService:
         ]
 
         # Entity analysis
-        entity_counter = defaultdict(int)
+        entity_counter: Dict[str, int] = defaultdict(int)
         for q in filtered_queries:
             for entity in q.entities_extracted:
                 if "text" in entity and "label" in entity:
@@ -463,7 +466,7 @@ class AnalyticsService:
             if start_date <= q.timestamp <= end_date
         ]
 
-        entity_counts = defaultdict(int)
+        entity_counts: Dict[str, int] = defaultdict(int)
         for query in filtered_queries:
             for entity in query.entities_extracted:
                 if "label" in entity:
@@ -478,7 +481,7 @@ class AnalyticsService:
 
         return trends
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         """Clean up analytics service and save data."""
         self._save_analytics_data()
         logger.info("Analytics service cleanup completed")

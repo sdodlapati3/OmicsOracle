@@ -413,9 +413,9 @@ async def get_dashboard_data():
         dashboard_data = {
             "timestamp": datetime.now().isoformat(),
             "system_health": {
-                "status": "healthy"
-                if system_metrics.pipeline_status
-                else "unhealthy",
+                "status": (
+                    "healthy" if system_metrics.pipeline_status else "unhealthy"
+                ),
                 "total_queries": system_metrics.total_queries,
                 "active_queries": system_metrics.active_queries,
                 "avg_response_time": system_metrics.average_response_time,
@@ -614,20 +614,24 @@ async def search_datasets_with_analytics(request: SearchRequest):
             "status": "completed",
             "processing_time": processing_time,
             "entities": entities_data,
-            "metadata": [
-                {
-                    "id": dataset.get("accession", "unknown"),
-                    "title": dataset.get("title", ""),
-                    "summary": dataset.get("summary", ""),
-                    "organism": dataset.get("organism", ""),
-                    "platform": dataset.get("platform", ""),
-                    "sample_count": dataset.get("sample_count", 0),
-                    "publication_date": dataset.get("submission_date", None),
-                }
-                for dataset in result.metadata
-            ]
-            if result.metadata
-            else [],
+            "metadata": (
+                [
+                    {
+                        "id": dataset.get("accession", "unknown"),
+                        "title": dataset.get("title", ""),
+                        "summary": dataset.get("summary", ""),
+                        "organism": dataset.get("organism", ""),
+                        "platform": dataset.get("platform", ""),
+                        "sample_count": dataset.get("sample_count", 0),
+                        "publication_date": dataset.get(
+                            "submission_date", None
+                        ),
+                    }
+                    for dataset in result.metadata
+                ]
+                if result.metadata
+                else []
+            ),
         }
 
     except Exception as e:

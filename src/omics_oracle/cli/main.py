@@ -280,9 +280,11 @@ def analyze(ctx, geo_id: str, output: str, output_format: str):
             analysis = {
                 "geo_id": geo_id,
                 "title": title_text,
-                "summary": summary_text[:500] + "..."
-                if len(summary_text) > 500
-                else summary_text,
+                "summary": (
+                    summary_text[:500] + "..."
+                    if len(summary_text) > 500
+                    else summary_text
+                ),
                 "type": metadata.get("type", "Unknown"),
                 "organism": metadata.get("organism", "Unknown"),
                 "platform": metadata.get("platform", "Unknown"),
@@ -563,9 +565,11 @@ def format_summary(result) -> str:
         f"Query: {result.original_query}",
         f"Status: {result.status.value}",
         f"Intent: {result.intent or 'Unknown'}",
-        f"Processing time: {result.duration:.2f}s"
-        if result.duration
-        else "N/A",
+        (
+            f"Processing time: {result.duration:.2f}s"
+            if result.duration
+            else "N/A"
+        ),
         "",
     ]
 

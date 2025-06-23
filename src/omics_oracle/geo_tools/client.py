@@ -222,12 +222,12 @@ class UnifiedGEOClient:
                 "run_count": len(df),
                 "experiment_count": df["experiment_accession"].nunique(),
                 "sample_count": df["sample_accession"].nunique(),
-                "total_spots": df["total_spots"].sum()
-                if "total_spots" in df
-                else 0,
-                "total_bases": df["total_bases"].sum()
-                if "total_bases" in df
-                else 0,
+                "total_spots": (
+                    df["total_spots"].sum() if "total_spots" in df else 0
+                ),
+                "total_bases": (
+                    df["total_bases"].sum() if "total_bases" in df else 0
+                ),
             }
 
             return sra_info
@@ -309,9 +309,9 @@ class UnifiedGEOClient:
         """Get information about configured clients."""
         return {
             "entrez_email": self.config.ncbi.email or "not_configured",
-            "entrez_api_key": "configured"
-            if self.config.ncbi.api_key
-            else "not_set",
+            "entrez_api_key": (
+                "configured" if self.config.ncbi.api_key else "not_set"
+            ),
             "cache_directory": str(self.config.cache.directory),
             "rate_limit": str(self.config.ncbi.rate_limit),
             "has_entrez": str(HAS_ENTREZ),
