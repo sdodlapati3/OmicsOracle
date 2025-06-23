@@ -1,0 +1,17 @@
+# Web interface requirements
+# These are additional requirements for the FastAPI web interface
+
+# FastAPI and dependencies
+fastapi>=0.104.1
+uvicorn[standard]>=0.24.0
+websockets>=12.0
+python-multipart>=0.0.6
+
+# Additional Pydantic for models (if not already included)
+pydantic>=2.5.0
+
+# For CORS support
+python-jose[cryptography]>=3.3.0  # Optional, for JWT auth if needed
+
+# For static file serving
+aiofiles>=23.2.1
