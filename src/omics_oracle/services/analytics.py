@@ -58,9 +58,10 @@ class AnalyticsService:
             if os.path.exists(query_file):
                 with open(query_file, "r") as f:
                     data = json.load(f)
-                    self.query_history = [
-                        QueryAnalytics(**item) for item in data
-                    ]
+                    if isinstance(data, list):
+                        self.query_history = [
+                            QueryAnalytics(**item) for item in data
+                        ]
                 logger.info(f"Loaded {len(self.query_history)} query records")
 
             # Load dataset statistics
@@ -304,7 +305,7 @@ class AnalyticsService:
         ]
 
         # Dataset analysis
-        dataset_counter = Counter()
+        dataset_counter: Counter = Counter()
         for stats in self.dataset_stats.values():
             if start_date <= stats.last_accessed <= end_date:
                 dataset_counter[stats.dataset_id] = stats.access_count

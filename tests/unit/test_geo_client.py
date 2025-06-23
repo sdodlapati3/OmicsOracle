@@ -5,6 +5,8 @@ Basic GEO client example and test
 import asyncio
 import logging
 
+import pytest
+
 from omics_oracle.core.config import Config
 from omics_oracle.geo_tools.geo_client import UnifiedGEOClient
 
@@ -12,6 +14,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
+@pytest.mark.asyncio
 async def test_geo_client():
     """Test the GEO client functionality."""
     # Initialize configuration
