@@ -119,6 +119,7 @@ class ASCIIEnforcer:
             ".png",
             ".jpg",
             ".jpeg",
+            ".html",  # Allow Unicode/emoji in HTML files for better UX
         }
         if filepath.suffix.lower() in excluded_extensions:
             return False
@@ -140,7 +141,6 @@ class ASCIIEnforcer:
             ".sql",
             ".js",
             ".ts",
-            ".html",
             ".css",
             ".xml",
         }
