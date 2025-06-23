@@ -3,18 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OmicsOracle Web Interface</title>
-                                 document.getElementById('status-text').innerHT                let html = `
-                    <div class="success">
-                        [SUCCESS] Found ${result.metadata.length} datasets
-                        (Processing time: ${result.processing_time?.toFixed(2)}s)
-                    </div>
-                `;                    '<span style="color: #e74c3c;">[ERROR] Unable to connect to API</span>';  statusText.innerHTML = `
-                        <span style="color: #27ae60;">[OK]</span> |
-                        Pipeline: ${data.pipeline_initialized ? '[OK]' : '[ERROR]'} |
-                        Config: ${data.configuration_loaded ? '[OK]' : '[ERROR]'} |
-                        Active Queries: ${data.active_queries}
-                    `;yle>
+    <title>🧬 OmicsOracle Web Interface</title>
+    <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
             max-width: 1200px;
@@ -141,49 +131,49 @@
 </head>
 <body>
     <div class="container">
-        <h1>OmicsOracle Web Interface</h1>
+        <h1>🧬 OmicsOracle Web Interface 🔬</h1>
 
         <div id="status-info" class="status-info">
-            <strong>System Status:</strong> <span id="status-text">Checking...</span>
+            <strong>📊 System Status:</strong> <span id="status-text">⏳ Checking...</span>
         </div>
 
         <div class="search-form">
             <form id="search-form">
                 <div class="form-group">
-                    <label for="query">Search Query (Natural Language):</label>
+                    <label for="query">🔍 Search Query (Natural Language):</label>
                     <input type="text" id="query" name="query"
-                           placeholder="e.g., breast cancer gene expression, COVID-19 RNA-seq"
+                           placeholder="e.g., breast cancer gene expression, COVID-19 RNA-seq data 💡"
                            required>
                 </div>
 
                 <div class="form-group">
-                    <label for="max-results">Maximum Results:</label>
+                    <label for="max-results">📊 Maximum Results:</label>
                     <input type="number" id="max-results" name="max_results"
                            min="1" max="100" value="10">
                 </div>
 
                 <div class="form-group">
-                    <label for="include-sra">Include SRA Information:</label>
+                    <label for="include-sra">🗃️ Include SRA Information:</label>
                     <select id="include-sra" name="include_sra">
                         <option value="false">No</option>
                         <option value="true">Yes</option>
                     </select>
                 </div>
 
-                <button type="submit" id="search-btn">Search Datasets</button>
+                <button type="submit" id="search-btn">🔎 Search Datasets</button>
             </form>
         </div>
 
         <div id="results" class="results" style="display: none;">
-            <h2>Search Results</h2>
+            <h2>📋 Search Results</h2>
             <div id="results-content"></div>
         </div>
 
         <div class="api-links">
-            <strong>API Documentation:</strong>
-            <a href="/api/docs" target="_blank">Swagger UI</a>
-            <a href="/api/redoc" target="_blank">ReDoc</a>
-            <a href="/health" target="_blank">Health Check</a>
+            <strong>📖 API Documentation:</strong>
+            <a href="/api/docs" target="_blank">Swagger UI 📘</a>
+            <a href="/api/redoc" target="_blank">ReDoc 📗</a>
+            <a href="/health" target="_blank">Health Check ❤️</a>
         </div>
     </div>
 
@@ -197,18 +187,18 @@
                 const statusText = document.getElementById('status-text');
                 if (data.status === 'healthy') {
                     statusText.innerHTML = `
-                        <span style="color: #27ae60;">[OK] Healthy</span> |
-                        Pipeline: ${data.pipeline_initialized ? '[OK]' : '[ERROR]'} |
-                        Config: ${data.configuration_loaded ? '[OK]' : '[ERROR]'} |
-                        Active Queries: ${data.active_queries}
+                        <span style="color: #27ae60;">✅ Healthy</span> |
+                        Pipeline: ${data.pipeline_initialized ? '✅ OK' : '❌ ERROR'} |
+                        Config: ${data.configuration_loaded ? '✅ OK' : '❌ ERROR'} |
+                        Active Queries: ${data.active_queries} 🔄
                     `;
                 } else {
                     statusText.innerHTML =
-                        '<span style="color: #e74c3c;">[ERROR] Unhealthy</span>';
+                        '<span style="color: #e74c3c;">❌ Unhealthy</span>';
                 }
             } catch (error) {
                 document.getElementById('status-text').innerHTML =
-                    '<span style="color: #e74c3c;">[ERROR] Unable to connect to API</span>';
+                    '<span style="color: #e74c3c;">❌ Unable to connect to API</span>';
             }
         }
 
@@ -230,9 +220,9 @@
             const searchBtn = document.getElementById('search-btn');
 
             resultsDiv.style.display = 'block';
-            resultsContent.innerHTML = '<div class="loading">Searching datasets...</div>';
+            resultsContent.innerHTML = '<div class="loading">🔍 Searching datasets... ⏳</div>';
             searchBtn.disabled = true;
-            searchBtn.textContent = 'Searching...';
+            searchBtn.textContent = '🔄 Searching...';
 
             try {
                 const response = await fetch('/api/search', {
@@ -255,12 +245,12 @@
             } catch (error) {
                 resultsContent.innerHTML = `
                     <div class="error">
-                        [ERROR] Search failed: ${error.message}
+                        ❌ Search failed: ${error.message}
                     </div>
                 `;
             } finally {
                 searchBtn.disabled = false;
-                searchBtn.textContent = 'Search Datasets';
+                searchBtn.textContent = '🔎 Search Datasets';
             }
         });
 
@@ -270,14 +260,14 @@
             if (result.metadata && result.metadata.length > 0) {
                 let html = `
                     <div class="success">
-                        [SUCCESS] Found ${result.metadata.length} datasets
-                        (Processing time: ${result.processing_time?.toFixed(2)}s)
+                        ✅ Found ${result.metadata.length} datasets
+                        (Processing time: ${result.processing_time?.toFixed(2)}s ⚡)
                     </div>
                 `;
 
                 // Show extracted entities if available
                 if (result.entities && result.entities.length > 0) {
-                    html += '<div style="margin: 15px 0;"><strong>Extracted Entities:</strong> ';
+                    html += '<div style="margin: 15px 0;"><strong>🏷️ Extracted Entities:</strong> ';
                     html += result.entities.map(e => `<span style="background: #e8f4f8; padding: 2px 6px; border-radius: 3px; margin: 2px;">${e.text} (${e.label})</span>`).join(' ');
                     html += '</div>';
                 }
@@ -286,12 +276,12 @@
                 result.metadata.forEach(dataset => {
                     html += `
                         <div class="result-item">
-                            <div class="result-title">${dataset.title}</div>
+                            <div class="result-title">📊 ${dataset.title}</div>
                             <div class="result-meta">
-                                ID: ${dataset.id} |
-                                Organism: ${dataset.organism || 'Unknown'} |
-                                Samples: ${dataset.sample_count || 'Unknown'} |
-                                Platform: ${dataset.platform || 'Unknown'}
+                                🆔 ID: ${dataset.id} |
+                                🧬 Organism: ${dataset.organism || 'Unknown'} |
+                                🧪 Samples: ${dataset.sample_count || 'Unknown'} |
+                                🔬 Platform: ${dataset.platform || 'Unknown'}
                             </div>
                             <div class="result-summary">${dataset.summary}</div>
                         </div>
@@ -302,7 +292,7 @@
             } else {
                 resultsContent.innerHTML = `
                     <div class="error">
-                        [INFO] No datasets found for query: "${result.original_query}"
+                        ℹ️ No datasets found for query: "${result.original_query}"
                     </div>
                 `;
             }

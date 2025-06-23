@@ -17,10 +17,13 @@ try:
     from omics_oracle.web.models import QueryStatus, SearchRequest
 
     print("+ Models imported successfully")
+    print(f"  - QueryStatus: {QueryStatus}")
+    print(f"  - SearchRequest: {SearchRequest}")
 
     from omics_oracle.web.main import app
 
     print("+ FastAPI app imported successfully")
+    print(f"  - App: {app}")
 
     print("\n*** Web interface imports successful!")
     print("Ready to start FastAPI development server")

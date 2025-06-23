@@ -57,10 +57,11 @@ repos:
         name: ASCII-Only Character Enforcement
         entry: python scripts/ascii_enforcer.py
         language: system
-        files: \.(py|yml|yaml|json|sh|bash|zsh|toml|ini|cfg|conf|txt|sql|js|ts|html|css|xml)$|Dockerfile$|Makefile$|requirements.*\.txt$
-        exclude: ^(docs/|\.md$|\.rst$|\.tex$|README|extracted_docs/|\.git/|__pycache__/|\.pytest_cache/|\.mypy_cache/)
+        files: \.(py|yml|yaml|json|sh|bash|zsh|toml|ini|cfg|conf|txt|sql|js|ts|css|xml)$|Dockerfile$|Makefile$|requirements.*\.txt$
+        exclude: ^(docs/|\.md$|\.rst$|\.tex$|\.html$|README|extracted_docs/|\.git/|__pycache__/|\.pytest_cache/|\.mypy_cache/)
         description: >
-          Enforce ASCII-only characters in all code and config files (except markdown docs).
+          Enforce ASCII-only characters in all code and config files (except markdown docs and HTML files).
+          HTML files are excluded to allow Unicode/emoji for better user experience.
           Note: JSON files are included for CI/CD reliability - exclude specific data directories if needed.
         pass_filenames: true
 
@@ -70,5 +71,5 @@ repos:
         args: [-c, 'if grep -P "[\x{1F000}-\x{1FFFF}]|\x{2705}|\x{274C}|\x{26A0}" "$@"; then echo "ERROR: Emoji characters found in code files"; exit 1; fi', find-emojis]
         language: system
         files: \.(py|yml|yaml|sh|bash|zsh|toml|ini|cfg|conf|json)$
-        exclude: ^(docs/|\.md$|\.rst$|README)
-        description: Prevent emoji characters that can break CI/CD pipelines
+        exclude: ^(docs/|\.md$|\.rst$|\.html$|README)
+        description: Prevent emoji characters that can break CI/CD pipelines (excludes HTML files for UI enhancement)

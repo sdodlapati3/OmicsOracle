@@ -8,7 +8,7 @@ import logging
 import sys
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -20,19 +20,20 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from omics_oracle.core.config import Config  # noqa: E402
 from omics_oracle.pipeline import OmicsOracle  # noqa: E402
+from omics_oracle.web.models import ErrorResponse  # noqa: E402
 
 logger = logging.getLogger(__name__)
 
 # Global variables for application state
-pipeline: OmicsOracle = None
-config: Config = None
+pipeline: Optional[OmicsOracle] = None
+config: Optional[Config] = None
 active_queries: Dict[str, Any] = {}
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(_app: FastAPI):
     """Application lifespan manager."""
-    global pipeline, config
+    global pipeline, config  # noqa: PLW0603
 
     # Startup
     logger.info("Starting OmicsOracle Web API...")
@@ -41,7 +42,7 @@ async def lifespan(app: FastAPI):
         pipeline = OmicsOracle(config)
         logger.info("Pipeline initialized successfully")
     except Exception as e:
-        logger.error(f"Failed to initialize pipeline: {e}")
+        logger.error("Failed to initialize pipeline: %s", str(e))
         raise
 
     yield
@@ -74,7 +75,7 @@ app.add_middleware(
 
 
 @app.exception_handler(HTTPException)
-async def http_exception_handler(request, exc):
+async def http_exception_handler(_request, exc):
     """Custom HTTP exception handler."""
     return JSONResponse(
         status_code=exc.status_code,
@@ -87,9 +88,9 @@ async def http_exception_handler(request, exc):
 
 
 @app.exception_handler(Exception)
-async def general_exception_handler(request, exc):
+async def general_exception_handler(_request, exc):
     """General exception handler."""
-    logger.error(f"Unhandled exception: {exc}")
+    logger.error("Unhandled exception: %s", str(exc))
     return JSONResponse(
         status_code=500,
         content=ErrorResponse(
