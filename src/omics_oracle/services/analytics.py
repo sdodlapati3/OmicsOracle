@@ -69,9 +69,10 @@ class AnalyticsService:
             if os.path.exists(dataset_file):
                 with open(dataset_file, "r") as f:
                     data = json.load(f)
-                    self.dataset_stats = {
-                        k: DatasetAnalytics(**v) for k, v in data.items()
-                    }
+                    if isinstance(data, dict):
+                        self.dataset_stats = {
+                            k: DatasetAnalytics(**v) for k, v in data.items()
+                        }
                 logger.info(
                     f"Loaded stats for {len(self.dataset_stats)} datasets"
                 )
