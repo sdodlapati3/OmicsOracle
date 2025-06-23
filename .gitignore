@@ -172,3 +172,6 @@ tmp/
 temp/
 *.tmp
 *.temp
+
+# Auto-generated files
+src/omics_oracle/_version.py

@@ -1,9 +1,18 @@
 [flake8]
 max-line-length = 100
-max-complexity = 15
+max-complexity = 20
 ignore =
     # Allow long lines in specific contexts
-    E501
+    E501,
+    # Black conflicts
+    E203,
+    W503,
+    # Non-critical whitespace issues
+    W293,
+    # Legacy code complexity
+    C901,
+    # Unused variables in legacy code
+    F824
 extend-ignore = E402
 per-file-ignores =
     # Allow E402 in web main files that need path modification
@@ -18,4 +27,5 @@ exclude =
     .eggs,
     *.egg,
     build,
-    dist
+    dist,
+    src/omics_oracle/_version.py

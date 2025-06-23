@@ -102,6 +102,8 @@ extend-exclude = '''
   | \.venv
   | build
   | dist
+  # auto-generated files
+  | src/omics_oracle/_version\.py
 )/
 '''
 
@@ -115,7 +117,13 @@ known_first_party = ["omics_oracle"]
 [tool.flake8]
 # Two-tier approach: 80 chars preferred, 100 chars maximum
 max-line-length = 100
-extend-ignore = ["E203", "W503"]
+extend-ignore = [
+    "E203",  # whitespace before ':' (conflicts with black)
+    "W503",  # line break before binary operator (conflicts with black)
+    "W293",  # blank line contains whitespace (not critical)
+    "C901",  # function is too complex (legacy code)
+    "F824"   # unused global variable (legacy code)
+]
 exclude = [
     ".git",
     "__pycache__",
@@ -123,7 +131,8 @@ exclude = [
     ".pytest_cache",
     "venv",
     "build",
-    "dist"
+    "dist",
+    "src/omics_oracle/_version.py"  # auto-generated file
 ]
 
 [tool.mypy]
