@@ -20,7 +20,7 @@ try:
 except ImportError:
     SPACY_MODELS_AVAILABLE = False
 
-from src.omics_oracle.nlp.prompt_interpreter import (
+from omics_oracle.nlp.prompt_interpreter import (
     BiologicalSynonymMapper,
     PromptInterpreter,
 )

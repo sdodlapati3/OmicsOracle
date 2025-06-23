@@ -9,9 +9,9 @@ These tests make actual calls to NCBI/GEO APIs and require:
 
 import pytest
 
-from src.omics_oracle.core.config import Config
-from src.omics_oracle.core.exceptions import GEOClientError, NCBIAPIError
-from src.omics_oracle.geo_tools.geo_client import UnifiedGEOClient
+from omics_oracle.core.config import Config
+from omics_oracle.core.exceptions import GEOClientError, NCBIAPIError
+from omics_oracle.geo_tools.geo_client import UnifiedGEOClient
 
 
 @pytest.mark.integration
