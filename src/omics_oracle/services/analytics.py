@@ -71,7 +71,9 @@ class AnalyticsService:
                     data = json.load(f)
                     if isinstance(data, dict):
                         self.dataset_stats = {
-                            k: DatasetAnalytics(**v) for k, v in data.items()
+                            k: DatasetAnalytics(**v)
+                            for k, v in data.items()
+                            if isinstance(v, dict)
                         }
                 logger.info(
                     f"Loaded stats for {len(self.dataset_stats)} datasets"
@@ -86,14 +88,16 @@ class AnalyticsService:
             # Save query history (last 10000 records)
             query_file = os.path.join(self.storage_path, "query_history.json")
             with open(query_file, "w") as f:
-                data = [q.dict() for q in self.query_history[-10000:]]
-                json.dump(data, f, default=str, indent=2)
+                query_data = [q.dict() for q in self.query_history[-10000:]]
+                json.dump(query_data, f, default=str, indent=2)
 
             # Save dataset statistics
             dataset_file = os.path.join(self.storage_path, "dataset_stats.json")
             with open(dataset_file, "w") as f:
-                data = {k: v.dict() for k, v in self.dataset_stats.items()}
-                json.dump(data, f, default=str, indent=2)
+                dataset_data = {
+                    k: v.dict() for k, v in self.dataset_stats.items()
+                }
+                json.dump(dataset_data, f, default=str, indent=2)
 
             logger.debug("Analytics data saved successfully")
 
@@ -146,7 +150,7 @@ class AnalyticsService:
     ) -> None:
         """Record access to a specific dataset."""
         if dataset_id not in self.dataset_stats:
-            self.dataset_stats[dataset_id] = DatasetAnalytics(
+            self.dataset_stats[dataset_id] = DatasetAnalytics(  # type: ignore
                 dataset_id=dataset_id
             )
 
@@ -186,28 +190,15 @@ class AnalyticsService:
                 avg_response_time = sum(
                     q.processing_time for q in recent_queries
                 ) / len(recent_queries)
-                error_rate = (
-                    len(
-                        [
-                            q
-                            for q in recent_queries
-                            if q.status == QueryStatus.FAILED
-                        ]
-                    )
-                    / len(recent_queries)
-                    * 100
-                )
-                timeout_rate = (
-                    len(
-                        [
-                            q
-                            for q in recent_queries
-                            if q.status == QueryStatus.TIMEOUT
-                        ]
-                    )
-                    / len(recent_queries)
-                    * 100
-                )
+                failed_queries = [
+                    q for q in recent_queries if q.status == QueryStatus.FAILED
+                ]
+                error_rate = len(failed_queries) / len(recent_queries) * 100
+
+                timeout_queries = [
+                    q for q in recent_queries if q.status == QueryStatus.TIMEOUT
+                ]
+                timeout_rate = len(timeout_queries) / len(recent_queries) * 100
             else:
                 avg_response_time = 0.0
                 error_rate = 0.0
