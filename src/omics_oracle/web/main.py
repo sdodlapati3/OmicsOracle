@@ -20,7 +20,6 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from omics_oracle.core.config import Config  # noqa: E402
 from omics_oracle.pipeline import OmicsOracle  # noqa: E402
-from omics_oracle.web.models import ErrorResponse  # noqa: E402
 
 logger = logging.getLogger(__name__)
 
@@ -79,11 +78,11 @@ async def http_exception_handler(_request, exc):
     """Custom HTTP exception handler."""
     return JSONResponse(
         status_code=exc.status_code,
-        content=ErrorResponse(
-            error="HTTP_ERROR",
-            message=exc.detail,
-            details={"status_code": exc.status_code},
-        ).dict(),
+        content={
+            "error": "HTTP_ERROR",
+            "message": exc.detail,
+            "details": {"status_code": exc.status_code},
+        },
     )
 
 
@@ -93,11 +92,11 @@ async def general_exception_handler(_request, exc):
     logger.error("Unhandled exception: %s", str(exc))
     return JSONResponse(
         status_code=500,
-        content=ErrorResponse(
-            error="INTERNAL_ERROR",
-            message="An internal server error occurred",
-            details={"exception": str(exc)},
-        ).dict(),
+        content={
+            "error": "INTERNAL_ERROR",
+            "message": "An internal server error occurred",
+            "details": {"exception": str(exc)},
+        },
     )
 
 

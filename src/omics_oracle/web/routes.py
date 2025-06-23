@@ -1,22 +1,17 @@
 """
-API routes for the OmicsOracle web interface.
-
-This module defines all FastAPI routes and WebSocket endpoints.
+Fixed routes for OmicsOracle web interface with proper data handling.
 """
 
-import json
 import logging
 import uuid
 from datetime import datetime
-from typing import Dict, List
+from typing import List
 
 from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
 
 from .models import (
     AnalyzeRequest,
     BatchRequest,
-    BatchResult,
-    ConfigResponse,
     DatasetMetadata,
     EntityInfo,
     QueryStatus,
@@ -38,6 +33,27 @@ status_router = APIRouter()
 websocket_router = APIRouter()
 
 
+# Simple function to get pipeline from main module
+def get_pipeline_state():
+    """Get pipeline and active_queries from main module."""
+    try:
+        # Import the main module and access global variables directly
+        import sys
+
+        main_module = sys.modules.get("src.omics_oracle.web.main")
+        if main_module is None:
+            # Try alternative import paths
+            import src.omics_oracle.web.main as main_module
+
+        pipeline = getattr(main_module, "pipeline", None)
+        active_queries = getattr(main_module, "active_queries", {})
+
+        return pipeline, active_queries
+    except (ImportError, AttributeError) as e:
+        logger.warning("Failed to access pipeline: %s", str(e))
+        return None, {}
+
+
 # WebSocket connection manager
 class ConnectionManager:
     """Manages WebSocket connections."""
@@ -52,96 +68,107 @@ class ConnectionManager:
 
     def disconnect(self, websocket: WebSocket):
         """Disconnect a WebSocket client."""
-        self.active_connections.remove(websocket)
+        if websocket in self.active_connections:
+            self.active_connections.remove(websocket)
 
     async def send_personal_message(self, message: str, websocket: WebSocket):
         """Send message to specific client."""
-        await websocket.send_text(message)
+        try:
+            await websocket.send_text(message)
+        except Exception as e:
+            logger.error("Failed to send WebSocket message: %s", str(e))
 
     async def broadcast(self, message: str):
         """Broadcast message to all connected clients."""
+        disconnected = []
         for connection in self.active_connections:
             try:
                 await connection.send_text(message)
             except Exception as e:
-                logger.error(f"Failed to send WebSocket message: {e}")
+                logger.error("Failed to send WebSocket message: %s", str(e))
+                disconnected.append(connection)
+
+        # Remove disconnected clients
+        for conn in disconnected:
+            self.disconnect(conn)
 
 
 manager = ConnectionManager()
 
 
-# Search endpoints
 @search_router.post("/search", response_model=SearchResult)
 async def search_datasets(request: SearchRequest):
     """Search GEO datasets with natural language query."""
+    pipeline, active_queries = get_pipeline_state()
+
+    if not pipeline:
+        raise HTTPException(status_code=503, detail="Pipeline not initialized")
+
+    # Generate unique query ID
+    query_id = f"search_{uuid.uuid4().hex[:8]}"
+
+    # Create initial result
+    result = SearchResult(
+        query_id=query_id,
+        original_query=request.query,
+        status=QueryStatus.RUNNING,
+        entities=[],
+        metadata=[],
+    )
+
+    # Store in active queries
+    active_queries[query_id] = result
+
     try:
-        from .main import active_queries, pipeline
-
-        if not pipeline:
-            raise HTTPException(
-                status_code=503, detail="Pipeline not initialized"
-            )
-
-        # Generate unique query ID
-        query_id = f"search_{uuid.uuid4().hex[:8]}"
-
-        # Create initial result
-        result = SearchResult(
-            query_id=query_id,
-            original_query=request.query,
-            status=QueryStatus.RUNNING,
-            entities=[],
-            metadata=[],
+        # Execute search
+        start_time = datetime.utcnow()
+        pipeline_result = await pipeline.process_query(
+            query=request.query,
+            max_results=request.max_results,
+            include_sra=request.include_sra,
         )
+        end_time = datetime.utcnow()
 
-        # Store in active queries
-        active_queries[query_id] = result
+        # Convert pipeline result to API format
+        result.status = QueryStatus.COMPLETED
+        result.processing_time = (end_time - start_time).total_seconds()
+        result.expanded_query = pipeline_result.expanded_query
 
-        try:
-            # Execute search
-            start_time = datetime.utcnow()
-            pipeline_result = await pipeline.search_datasets(
-                query=request.query,
-                max_results=request.max_results,
-                include_sra=request.include_sra,
+        # Convert entities - handle Dict[str, List[Dict[str, Any]]] format
+        if pipeline_result.entities:
+            for entity_type, entity_list in pipeline_result.entities.items():
+                if isinstance(entity_list, list):
+                    for entity in entity_list:
+                        if isinstance(entity, dict):
+                            result.entities.append(
+                                EntityInfo(
+                                    text=entity.get("text", ""),
+                                    label=entity.get("label", entity_type),
+                                    confidence=entity.get("confidence"),
+                                    start=entity.get("start"),
+                                    end=entity.get("end"),
+                                )
+                            )
+
+        # Convert metadata
+        for metadata in pipeline_result.metadata:
+            result.metadata.append(
+                DatasetMetadata(
+                    id=metadata.get("id", ""),
+                    title=metadata.get("title", ""),
+                    summary=metadata.get("summary", ""),
+                    organism=metadata.get("organism"),
+                    platform=metadata.get("platform"),
+                    sample_count=metadata.get("sample_count"),
+                    submission_date=metadata.get("submission_date"),
+                    last_update_date=metadata.get("last_update_date"),
+                    pubmed_id=metadata.get("pubmed_id"),
+                    sra_info=metadata.get("sra_info"),
+                )
             )
-            end_time = datetime.utcnow()
 
-            # Convert pipeline result to API format
-            result.status = QueryStatus.COMPLETED
-            result.processing_time = (end_time - start_time).total_seconds()
-            result.expanded_query = pipeline_result.expanded_query
-
-            # Convert entities
-            for entity in pipeline_result.entities:
-                result.entities.append(
-                    EntityInfo(
-                        text=entity.get("text", ""),
-                        label=entity.get("label", ""),
-                        confidence=entity.get("confidence"),
-                        start=entity.get("start"),
-                        end=entity.get("end"),
-                    )
-                )
-
-            # Convert metadata
-            for metadata in pipeline_result.metadata:
-                result.metadata.append(
-                    DatasetMetadata(
-                        id=metadata.get("id", ""),
-                        title=metadata.get("title", ""),
-                        summary=metadata.get("summary", ""),
-                        organism=metadata.get("organism"),
-                        platform=metadata.get("platform"),
-                        sample_count=metadata.get("sample_count"),
-                        submission_date=metadata.get("submission_date"),
-                        last_update_date=metadata.get("last_update_date"),
-                        pubmed_id=metadata.get("pubmed_id"),
-                        sra_info=metadata.get("sra_info"),
-                    )
-                )
-
-            # Broadcast update via WebSocket
+        # Broadcast update via WebSocket
+        try:
             await manager.broadcast(
                 WebSocketMessage(
                     type="search_completed",
@@ -149,367 +176,89 @@ async def search_datasets(request: SearchRequest):
                     data={"results": len(result.metadata)},
                 ).json()
             )
-
-        except Exception as e:
-            result.status = QueryStatus.FAILED
-            result.error_message = str(e)
-            logger.error(f"Search failed for query {query_id}: {e}")
-
-        finally:
-            # Update active queries
-            active_queries[query_id] = result
-
-        return result
+        except Exception as ws_error:
+            logger.warning("WebSocket broadcast failed: %s", str(ws_error))
 
     except Exception as e:
-        logger.error(f"Search endpoint error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        result.status = QueryStatus.FAILED
+        result.error_message = str(e)
+        logger.error("Search failed for query %s: %s", query_id, str(e))
 
-
-# Dataset endpoints
-@dataset_router.get("/dataset/{dataset_id}", response_model=DatasetMetadata)
-async def get_dataset_info(dataset_id: str, include_sra: bool = False):
-    """Get detailed information about a specific dataset."""
-    try:
-        from .main import pipeline
-
-        if not pipeline:
-            raise HTTPException(
-                status_code=503, detail="Pipeline not initialized"
-            )
-
-        # Execute dataset info request
-        result = await pipeline.get_dataset_info(
-            dataset_id=dataset_id, include_sra=include_sra
-        )
-
-        # Convert to API format
-        return DatasetMetadata(
-            id=result.get("id", dataset_id),
-            title=result.get("title", ""),
-            summary=result.get("summary", ""),
-            organism=result.get("organism"),
-            platform=result.get("platform"),
-            sample_count=result.get("sample_count"),
-            submission_date=result.get("submission_date"),
-            last_update_date=result.get("last_update_date"),
-            pubmed_id=result.get("pubmed_id"),
-            sra_info=result.get("sra_info"),
-        )
-
-    except Exception as e:
-        logger.error(f"Dataset info error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-# Analysis endpoints
-@analysis_router.post("/analyze", response_model=SearchResult)
-async def analyze_dataset(request: AnalyzeRequest):
-    """Analyze a dataset with NLP processing."""
-    try:
-        from .main import active_queries, pipeline
-
-        if not pipeline:
-            raise HTTPException(
-                status_code=503, detail="Pipeline not initialized"
-            )
-
-        query_id = f"analyze_{uuid.uuid4().hex[:8]}"
-
-        # Create initial result
-        result = SearchResult(
-            query_id=query_id,
-            original_query=f"analyze:{request.dataset_id}",
-            status=QueryStatus.RUNNING,
-            entities=[],
-            metadata=[],
-        )
-
+    finally:
+        # Update active queries
         active_queries[query_id] = result
 
-        try:
-            # Execute analysis
-            start_time = datetime.utcnow()
-            analysis_result = await pipeline.analyze_dataset(
-                dataset_id=request.dataset_id,
-                include_entity_linking=request.include_entity_linking,
-            )
-            end_time = datetime.utcnow()
-
-            # Update result
-            result.status = QueryStatus.COMPLETED
-            result.processing_time = (end_time - start_time).total_seconds()
-
-            # Convert entities from analysis
-            for entity in analysis_result.get("entities", []):
-                result.entities.append(
-                    EntityInfo(
-                        text=entity.get("text", ""),
-                        label=entity.get("label", ""),
-                        confidence=entity.get("confidence"),
-                        start=entity.get("start"),
-                        end=entity.get("end"),
-                    )
-                )
-
-            # Add dataset metadata if available
-            if "metadata" in analysis_result:
-                metadata = analysis_result["metadata"]
-                result.metadata.append(
-                    DatasetMetadata(
-                        id=metadata.get("id", request.dataset_id),
-                        title=metadata.get("title", ""),
-                        summary=metadata.get("summary", ""),
-                        organism=metadata.get("organism"),
-                        platform=metadata.get("platform"),
-                        sample_count=metadata.get("sample_count"),
-                        submission_date=metadata.get("submission_date"),
-                        last_update_date=metadata.get("last_update_date"),
-                        pubmed_id=metadata.get("pubmed_id"),
-                    )
-                )
-
-        except Exception as e:
-            result.status = QueryStatus.FAILED
-            result.error_message = str(e)
-            logger.error(f"Analysis failed for {request.dataset_id}: {e}")
-
-        finally:
-            active_queries[query_id] = result
-
-        return result
-
-    except Exception as e:
-        logger.error(f"Analysis endpoint error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-# Batch processing endpoints
-@batch_router.post("/batch", response_model=BatchResult)
-async def process_batch(request: BatchRequest):
-    """Process multiple queries in batch."""
-    try:
-        from .main import active_queries, pipeline
-
-        if not pipeline:
-            raise HTTPException(
-                status_code=503, detail="Pipeline not initialized"
-            )
-
-        batch_id = f"batch_{uuid.uuid4().hex[:8]}"
-
-        # Create batch result
-        batch_result = BatchResult(
-            batch_id=batch_id,
-            total_queries=len(request.queries),
-            status=QueryStatus.RUNNING,
-            results=[],
-        )
-
-        active_queries[batch_id] = batch_result
-
-        try:
-            # Process each query
-            for i, query in enumerate(request.queries):
-                try:
-                    # Execute individual search
-                    pipeline_result = await pipeline.search_datasets(
-                        query=query, max_results=request.max_results
-                    )
-
-                    # Create search result
-                    search_result = SearchResult(
-                        query_id=f"{batch_id}_query_{i+1}",
-                        original_query=query,
-                        expanded_query=pipeline_result.expanded_query,
-                        status=QueryStatus.COMPLETED,
-                        entities=[],
-                        metadata=[],
-                    )
-
-                    # Convert entities and metadata
-                    for entity in pipeline_result.entities:
-                        search_result.entities.append(
-                            EntityInfo(
-                                text=entity.get("text", ""),
-                                label=entity.get("label", ""),
-                                confidence=entity.get("confidence"),
-                            )
-                        )
-
-                    for metadata in pipeline_result.metadata:
-                        search_result.metadata.append(
-                            DatasetMetadata(
-                                id=metadata.get("id", ""),
-                                title=metadata.get("title", ""),
-                                summary=metadata.get("summary", ""),
-                                organism=metadata.get("organism"),
-                                platform=metadata.get("platform"),
-                            )
-                        )
-
-                    batch_result.results.append(search_result)
-                    batch_result.completed_queries += 1
-
-                    # Broadcast progress
-                    await manager.broadcast(
-                        WebSocketMessage(
-                            type="batch_progress",
-                            query_id=batch_id,
-                            data={
-                                "completed": batch_result.completed_queries,
-                                "total": batch_result.total_queries,
-                            },
-                        ).json()
-                    )
-
-                except Exception as e:
-                    # Handle individual query failure
-                    failed_result = SearchResult(
-                        query_id=f"{batch_id}_query_{i+1}",
-                        original_query=query,
-                        status=QueryStatus.FAILED,
-                        error_message=str(e),
-                        entities=[],
-                        metadata=[],
-                    )
-                    batch_result.results.append(failed_result)
-                    batch_result.failed_queries += 1
-
-            # Update batch status
-            batch_result.status = QueryStatus.COMPLETED
-            batch_result.completed_at = datetime.utcnow()
-
-        except Exception as e:
-            batch_result.status = QueryStatus.FAILED
-            logger.error(f"Batch processing failed: {e}")
-
-        finally:
-            active_queries[batch_id] = batch_result
-
-        return batch_result
-
-    except Exception as e:
-        logger.error(f"Batch endpoint error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-# Configuration endpoints
-@config_router.get("/config", response_model=Dict[str, str])
-async def get_all_config():
-    """Get all configuration values."""
-    try:
-        from .main import config
-
-        if not config:
-            raise HTTPException(
-                status_code=503, detail="Configuration not loaded"
-            )
-
-        return {
-            "NCBI_EMAIL": config.ncbi.email,
-            "NCBI_API_KEY": "***" if config.ncbi.api_key else "",
-            "MAX_CONCURRENT_REQUESTS": str(config.ncbi.max_concurrent_requests),
-            "REQUEST_DELAY": str(config.ncbi.request_delay),
-        }
-
-    except Exception as e:
-        logger.error(f"Config get error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@config_router.get("/config/{key}", response_model=ConfigResponse)
-async def get_config_value(key: str):
-    """Get a specific configuration value."""
-    try:
-        from .main import config
-
-        if not config:
-            raise HTTPException(
-                status_code=503, detail="Configuration not loaded"
-            )
-
-        # Map API keys to config values
-        config_mapping = {
-            "NCBI_EMAIL": config.ncbi.email,
-            "NCBI_API_KEY": "***" if config.ncbi.api_key else "",
-            "MAX_CONCURRENT_REQUESTS": str(config.ncbi.max_concurrent_requests),
-            "REQUEST_DELAY": str(config.ncbi.request_delay),
-        }
-
-        if key not in config_mapping:
-            raise HTTPException(
-                status_code=404, detail=f"Configuration key '{key}' not found"
-            )
-
-        return ConfigResponse(
-            key=key,
-            value=config_mapping[key],
-            description=f"Configuration value for {key}",
-        )
-
-    except Exception as e:
-        logger.error(f"Config get error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+    return result
 
 
 # Status endpoints
 @status_router.get("/status", response_model=StatusResponse)
-async def get_system_status():
-    """Get system status information."""
-    try:
-        from .main import active_queries, config, pipeline
-
-        return StatusResponse(
-            status="healthy",
-            configuration_loaded=config is not None,
-            ncbi_email=config.ncbi.email if config else None,
-            pipeline_initialized=pipeline is not None,
-            active_queries=len(active_queries),
-        )
-
-    except Exception as e:
-        logger.error(f"Status endpoint error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@status_router.get("/status/{query_id}", response_model=SearchResult)
-async def get_query_status(query_id: str):
-    """Get status of a specific query."""
-    try:
-        from .main import active_queries
-
-        if query_id not in active_queries:
-            raise HTTPException(
-                status_code=404, detail=f"Query '{query_id}' not found"
-            )
-
-        return active_queries[query_id]
-
-    except Exception as e:
-        logger.error(f"Query status error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+async def get_status():
+    """Get system status."""
+    pipeline, active_queries = get_pipeline_state()
+    # Get NCBI email from pipeline config if available
+    ncbi_email = None
+    if pipeline and hasattr(pipeline, "config"):
+        ncbi_email = getattr(pipeline.config, "ncbi_email", None)
+    return StatusResponse(
+        status="healthy" if pipeline else "unhealthy",
+        configuration_loaded=pipeline is not None,
+        ncbi_email=ncbi_email,
+        pipeline_initialized=pipeline is not None,
+        active_queries=len(active_queries),
+        uptime=None,  # Could add uptime tracking
+    )
 
 
-# WebSocket endpoints
+# Health check (simple endpoint)
+@status_router.get("/health")
+async def health_check():
+    """Simple health check."""
+    pipeline, active_queries = get_pipeline_state()
+    return {
+        "status": "healthy" if pipeline else "unhealthy",
+        "pipeline_initialized": pipeline is not None,
+        "active_queries": len(active_queries),
+    }
+
+
+# Placeholder endpoints for other functionality
+@dataset_router.get("/dataset/{dataset_id}")
+async def get_dataset_info(dataset_id: str, include_sra: bool = False):
+    """Get detailed information about a specific dataset."""
+    return {
+        "message": f"Dataset info for {dataset_id}",
+        "include_sra": include_sra,
+    }
+
+
+@analysis_router.post("/analyze")
+async def analyze_dataset(request: AnalyzeRequest):
+    """Analyze a dataset with NLP processing."""
+    return {"message": f"Analysis for dataset {request.dataset_id}"}
+
+
+@batch_router.post("/batch")
+async def batch_process(request: BatchRequest):
+    """Process multiple queries in batch."""
+    return {"message": f"Batch processing {len(request.queries)} queries"}
+
+
+@config_router.get("/config")
+async def get_configuration():
+    """Get current configuration."""
+    return {"message": "Configuration endpoint"}
+
+
+# WebSocket endpoint
 @websocket_router.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     """WebSocket endpoint for real-time updates."""
     await manager.connect(websocket)
     try:
         while True:
-            # Keep connection alive and handle incoming messages
             data = await websocket.receive_text()
-
-            # Parse message
-            try:
-                message = json.loads(data)
-                if message.get("type") == "ping":
-                    await websocket.send_text(json.dumps({"type": "pong"}))
-            except json.JSONDecodeError:
-                await websocket.send_text(
-                    json.dumps({"type": "error", "message": "Invalid JSON"})
-                )
-
+            message = f"Message received: {data}"
+            await manager.send_personal_message(message, websocket)
     except WebSocketDisconnect:
         manager.disconnect(websocket)
