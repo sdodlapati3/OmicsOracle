@@ -106,7 +106,7 @@ class BiomedicalNER:
 
         Args:
             text: Input text to analyze
-            include_entity_linking: Whether to include entity linking information
+            include_entity_linking: Whether to include entity linking info
 
         Returns:
             Dictionary of categorized biomedical entities
@@ -208,7 +208,7 @@ class BiomedicalNER:
         if ent.label_ == "GENE":
             return True
 
-        # Short uppercase strings that are likely genes (but not diseases/organisms)
+        # Short uppercase strings that are likely genes (not diseases/organisms)
         return (
             len(text_lower) <= 8
             and text_lower.isupper()
@@ -672,7 +672,8 @@ class EnhancedBiologicalSynonymMapper:
 
         Args:
             term: Input term
-            entity_type: Type of entity (gene, disease, organism, tissue, cell_type, technique)
+            entity_type: Entity type (gene, disease, organism, tissue,
+                         cell_type, technique)
 
         Returns:
             Set of synonyms including the original term

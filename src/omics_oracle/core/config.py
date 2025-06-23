@@ -15,8 +15,12 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 import yaml
+from dotenv import load_dotenv
 
 from .exceptions import ConfigurationError
+
+# Load environment variables from .env file
+load_dotenv()
 
 
 class Environment(str, Enum):
@@ -42,9 +46,15 @@ class DatabaseConfig:
 class NCBIConfig:
     """NCBI API configuration."""
 
-    api_key: Optional[str] = None
-    email: Optional[str] = None
-    rate_limit: int = 3
+    api_key: Optional[str] = field(
+        default_factory=lambda: os.getenv("NCBI_API_KEY")
+    )
+    email: Optional[str] = field(
+        default_factory=lambda: os.getenv("NCBI_EMAIL")
+    )
+    rate_limit: int = field(
+        default_factory=lambda: int(os.getenv("NCBI_RATE_LIMIT", "3"))
+    )
     timeout: int = 30
     retries: int = 3
 
@@ -103,12 +113,12 @@ class Config:
     debug: bool = False
 
     # Service configurations
-    database: DatabaseConfig = field(default_factory=lambda: DatabaseConfig())
-    ncbi: NCBIConfig = field(default_factory=lambda: NCBIConfig())
-    nlp: NLPConfig = field(default_factory=lambda: NLPConfig())
-    logging: LoggingConfig = field(default_factory=lambda: LoggingConfig())
-    api: APIConfig = field(default_factory=lambda: APIConfig())
-    cache: CacheConfig = field(default_factory=lambda: CacheConfig())
+    database: DatabaseConfig = field(default_factory=DatabaseConfig)
+    ncbi: NCBIConfig = field(default_factory=NCBIConfig)
+    nlp: NLPConfig = field(default_factory=NLPConfig)
+    logging: LoggingConfig = field(default_factory=LoggingConfig)
+    api: APIConfig = field(default_factory=APIConfig)
+    cache: CacheConfig = field(default_factory=CacheConfig)
 
     def __post_init__(self) -> None:
         """Validate configuration after initialization."""
