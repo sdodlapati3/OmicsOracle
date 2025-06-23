@@ -288,13 +288,13 @@ class OmicsOracleWorkflowMonitor:
 
             if category not in fix_recommendations:
                 if category == "Unknown":
-                    fix_recommendations[
-                        category
-                    ] = "Review logs manually and check documentation"
+                    fix_recommendations[category] = (
+                        "Review logs manually and check documentation"
+                    )
                 else:
-                    fix_recommendations[
-                        category
-                    ] = f"Address {category} issues in the codebase"
+                    fix_recommendations[category] = (
+                        f"Address {category} issues in the codebase"
+                    )
 
         return fix_recommendations
 

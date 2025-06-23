@@ -154,6 +154,7 @@ ignore_missing_imports = true
 [tool.pytest.ini_options]
 minversion = "7.0"
 addopts = "-ra -q --strict-markers --strict-config"
+asyncio_mode = "auto"
 testpaths = [
     "tests",
 ]
@@ -161,6 +162,7 @@ markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
     "integration: marks tests as integration tests",
     "unit: marks tests as unit tests",
+    "asyncio: marks tests as async",
 ]
 python_files = [
     "test_*.py",

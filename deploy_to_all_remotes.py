@@ -7,11 +7,20 @@ import subprocess
 import sys
 from typing import Optional, Tuple
 
-# Account mapping for different remotes
+# Account mapping for different remotes with SSH key configuration
 REMOTE_ACCOUNTS = {
-    "origin": "sdodlapati3",
-    "backup": "sdodlapa",
-    "sanjeeva": "SanjeevaRDodlapati",
+    "origin": {
+        "username": "sdodlapati3",
+        "ssh_host": "github.com"
+    },
+    "backup": {
+        "username": "sdodlapa", 
+        "ssh_host": "github-sdodlapa"
+    },
+    "sanjeeva": {
+        "username": "SanjeevaRDodlapati",
+        "ssh_host": "github-sanjeeva"
+    },
 }
 
 
@@ -43,19 +52,67 @@ def get_current_branch() -> str:
     return "main"
 
 
+def update_remote_url(remote_name: str) -> bool:
+    """Update the remote URL to use the correct SSH host for the account"""
+    if remote_name not in REMOTE_ACCOUNTS:
+        return True  # Use default if not configured
+    
+    ssh_host = REMOTE_ACCOUNTS[remote_name]["ssh_host"]
+    username = REMOTE_ACCOUNTS[remote_name]["username"]
+    
+    # Get current remote URL
+    success, current_url = run_command(f"git remote get-url {remote_name}")
+    if not success:
+        print(f"[ERROR] Failed to get URL for remote {remote_name}")
+        return False
+    
+    current_url = current_url.strip()
+    
+    # Extract repository name from current URL
+    if "github.com" in current_url:
+        if current_url.startswith("git@"):
+            # SSH format: git@github.com:owner/repo.git
+            repo_part = current_url.split(":")[-1]
+        else:
+            # HTTPS format: https://github.com/owner/repo.git
+            repo_part = "/".join(current_url.split("/")[-2:])
+        
+        # Construct new SSH URL with correct host
+        new_url = f"git@{ssh_host}:{username}/{repo_part.split('/')[-1]}"
+        
+        # Update the remote URL
+        success, output = run_command(
+            f"git remote set-url {remote_name} {new_url}"
+        )
+        if success:
+            print(f"  [SSH] Updated {remote_name} URL to use {ssh_host}")
+            return True
+        else:
+            print(f"  [ERROR] Failed to update {remote_name} URL: {output}")
+            return False
+    
+    return True
+
+
 def push_to_remote(remote_name: str, branch: Optional[str] = None) -> bool:
-    """Push current branch to specified remote with proper account switching"""
+    """Push current branch to specified remote with proper SSH configuration"""
     if branch is None:
         branch = get_current_branch()
 
-    print(f"[PUSH] Pushing to remote '{remote_name}' " f"(branch: {branch})...")
+    print(
+        f"[PUSH] Pushing to remote '{remote_name}' (branch: {branch})..."
+    )
+
+    # Update remote URL to use correct SSH host
+    if not update_remote_url(remote_name):
+        return False
 
     # Switch to the appropriate GitHub account for this remote
     if remote_name in REMOTE_ACCOUNTS:
-        account = REMOTE_ACCOUNTS[remote_name]
+        account = REMOTE_ACCOUNTS[remote_name]["username"]
         if not switch_github_account(account):
             print(f"[WARN] Failed to switch account for " f"{remote_name}")
-            return False
+            # Continue anyway, SSH keys should handle authentication
 
     success, output = run_command(f"git push {remote_name} {branch}")
 
@@ -65,7 +122,9 @@ def push_to_remote(remote_name: str, branch: Optional[str] = None) -> bool:
     else:
         # Check for authentication/permission errors
         if "Permission denied" in output or "403" in output:
-            print(f"[SKIP] Skipping {remote_name}: " f"Authentication required")
+            print(
+                f"[SKIP] Skipping {remote_name}: Authentication required"
+            )
         else:
             print(f"[FAIL] Failed to push to {remote_name}: " f"{output}")
         return False

@@ -90,6 +90,9 @@ class CacheConfig:
     backend: str = "memory"  # memory, redis
     redis_url: Optional[str] = None
     default_ttl: int = 3600
+    directory: Path = field(
+        default_factory=lambda: Path.home() / ".omics_oracle" / "cache"
+    )
 
 
 @dataclass
