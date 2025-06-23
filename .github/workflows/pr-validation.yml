@@ -124,7 +124,7 @@ jobs:
 
       - name: Install Test Dependencies
         run: |
-          pip install --quiet pytest pytest-cov
+          pip install --quiet pytest pytest-asyncio pytest-cov
           pip install --quiet pydantic pyyaml click
           pip install --quiet -e .
 

@@ -43,13 +43,13 @@ class TestUnifiedGEOClient:
             "entrez_api_key",
             "cache_directory",
             "rate_limit",
-            "has_ncbi_client",
+            "has_entrez",
             "has_geoparse",
             "has_pysradb",
         }
 
         assert set(info.keys()) == expected_keys
-        assert info["has_ncbi_client"] in ["True", "False"]
+        assert info["has_entrez"] in ["True", "False"]
         assert info["has_geoparse"] in ["True", "False"]
         assert info["has_pysradb"] in ["True", "False"]
 

@@ -661,7 +661,7 @@ class UnifiedGEOClient:
             ),
             "cache_directory": str(self.config.cache.directory),
             "rate_limit": str(self.config.ncbi.rate_limit),
-            "has_ncbi_client": str(
+            "has_entrez": str(
                 hasattr(self, "ncbi_client") and self.ncbi_client is not None
             ),
             "has_geoparse": str(HAS_GEOPARSE),

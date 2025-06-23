@@ -48,7 +48,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip --quiet --no-warn-script-location
           # Install minimal core dependencies for speed
-          pip install --quiet black isort ruff pytest mypy pydantic pyyaml click
+          pip install --quiet black isort ruff pytest pytest-asyncio mypy pydantic pyyaml click
           pip install --quiet -e .
 
       - name: "[ASCII] ASCII Enforcement"
