@@ -110,7 +110,7 @@ class ASCIIEnforcer:
         if any(part in excluded_dirs for part in filepath.parts):
             return False
 
-        # Skip excluded file types
+        # Skip excluded file types (including Unicode-enabled formats)
         excluded_extensions = {
             ".md",
             ".rst",
@@ -119,12 +119,13 @@ class ASCIIEnforcer:
             ".png",
             ".jpg",
             ".jpeg",
-            ".html",  # Allow Unicode/emoji in HTML files for better UX
+            ".html",  # HTML files can contain emojis and Unicode
+            ".htm",  # Include .htm as well
         }
         if filepath.suffix.lower() in excluded_extensions:
             return False
 
-        # Include code files
+        # Include code files (excluding HTML which allows Unicode)
         code_extensions = {
             ".py",
             ".yml",

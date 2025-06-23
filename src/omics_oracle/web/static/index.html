@@ -56,6 +56,7 @@
             font-size: 16px;
             cursor: pointer;
             transition: background-color 0.3s;
+            margin-right: 10px;
         }
         button:hover {
             background-color: #2980b9;
@@ -63,6 +64,107 @@
         button:disabled {
             background-color: #bdc3c7;
             cursor: not-allowed;
+        }
+        .secondary-btn {
+            background-color: #95a5a6;
+        }
+        .secondary-btn:hover {
+            background-color: #7f8c8d;
+        }
+        .filter-toggle {
+            background-color: #e67e22;
+            width: 100%;
+            margin-bottom: 15px;
+        }
+        .filter-toggle:hover {
+            background-color: #d35400;
+        }
+        .form-row {
+            display: flex;
+            gap: 15px;
+            align-items: flex-end;
+        }
+        .half-width {
+            flex: 1;
+        }
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .advanced-filters {
+            background: #f8f9fa;
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 6px;
+            border: 1px solid #e1e8ed;
+        }
+        .export-buttons {
+            display: flex;
+            gap: 10px;
+            margin: 15px 0;
+            justify-content: center;
+        }
+        .export-btn {
+            background-color: #27ae60;
+            padding: 8px 16px;
+            font-size: 14px;
+        }
+        .export-btn:hover {
+            background-color: #229954;
+        }
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        .pagination button {
+            padding: 8px 12px;
+            font-size: 14px;
+        }
+        .search-history {
+            background: #f8f9fa;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 6px;
+            border-left: 4px solid #f39c12;
+        }
+        .history-item {
+            display: inline-block;
+            background: #ecf0f1;
+            padding: 4px 8px;
+            margin: 2px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .history-item:hover {
+            background: #d5dbdb;
+        }
+        /* Mobile responsiveness */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            .container {
+                padding: 15px;
+            }
+            .form-row {
+                flex-direction: column;
+                gap: 0;
+            }
+            .form-actions {
+                flex-direction: column;
+            }
+            .export-buttons {
+                flex-wrap: wrap;
+            }
+            .result-meta {
+                font-size: 12px;
+            }
         }
         .results {
             margin-top: 30px;
@@ -143,30 +245,107 @@
                     <label for="query">🔍 Search Query (Natural Language):</label>
                     <input type="text" id="query" name="query"
                            placeholder="e.g., breast cancer gene expression, COVID-19 RNA-seq data 💡"
+                           list="query-suggestions"
                            required>
+                    <datalist id="query-suggestions">
+                        <option value="breast cancer gene expression">
+                        <option value="lung cancer RNA-seq">
+                        <option value="diabetes gene expression">
+                        <option value="COVID-19 transcriptomics">
+                        <option value="brain methylation">
+                        <option value="heart disease microarray">
+                    </datalist>
+                </div>
+
+                <!-- Advanced Filters -->
+                <div class="advanced-filters" style="display: none;">
+                    <div class="form-row">
+                        <div class="form-group half-width">
+                            <label for="organism-filter">🧬 Organism:</label>
+                            <select id="organism-filter" name="organism">
+                                <option value="">Any organism</option>
+                                <option value="homo sapiens">Human</option>
+                                <option value="mus musculus">Mouse</option>
+                                <option value="rattus norvegicus">Rat</option>
+                                <option value="drosophila melanogaster">Fly</option>
+                                <option value="caenorhabditis elegans">Worm</option>
+                                <option value="saccharomyces cerevisiae">Yeast</option>
+                            </select>
+                        </div>
+                        <div class="form-group half-width">
+                            <label for="assay-filter">🔬 Assay Type:</label>
+                            <select id="assay-filter" name="assay_type">
+                                <option value="">Any assay</option>
+                                <option value="RNA-seq">RNA sequencing</option>
+                                <option value="microarray">Microarray</option>
+                                <option value="ChIP-seq">ChIP sequencing</option>
+                                <option value="ATAC-seq">ATAC sequencing</option>
+                                <option value="methylation">DNA methylation</option>
+                                <option value="proteomics">Proteomics</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group half-width">
+                            <label for="date-from">📅 From Date:</label>
+                            <input type="date" id="date-from" name="date_from">
+                        </div>
+                        <div class="form-group half-width">
+                            <label for="date-to">📅 To Date:</label>
+                            <input type="date" id="date-to" name="date_to">
+                        </div>
+                    </div>
                 </div>
 
                 <div class="form-group">
-                    <label for="max-results">📊 Maximum Results:</label>
-                    <input type="number" id="max-results" name="max_results"
-                           min="1" max="100" value="10">
+                    <button type="button" id="toggle-filters" class="filter-toggle">
+                        🎛️ Advanced Filters
+                    </button>
                 </div>
 
-                <div class="form-group">
-                    <label for="include-sra">🗃️ Include SRA Information:</label>
-                    <select id="include-sra" name="include_sra">
-                        <option value="false">No</option>
-                        <option value="true">Yes</option>
-                    </select>
+                <div class="form-row">
+                    <div class="form-group half-width">
+                        <label for="max-results">📊 Maximum Results:</label>
+                        <input type="number" id="max-results" name="max_results"
+                               min="1" max="100" value="10">
+                    </div>
+                    <div class="form-group half-width">
+                        <label for="include-sra">🗃️ Include SRA Information:</label>
+                        <select id="include-sra" name="include_sra">
+                            <option value="false">No</option>
+                            <option value="true">Yes</option>
+                        </select>
+                    </div>
                 </div>
 
-                <button type="submit" id="search-btn">🔎 Search Datasets</button>
+                <div class="form-actions">
+                    <button type="submit" id="search-btn">🔎 Search Datasets</button>
+                    <button type="button" id="clear-form" class="secondary-btn">🗑️ Clear</button>
+                </div>
             </form>
+        </div>
+
+        <div id="search-history" class="search-history" style="display: none;">
+            <strong>🕒 Recent Searches:</strong>
+            <div id="history-items"></div>
         </div>
 
         <div id="results" class="results" style="display: none;">
             <h2>📋 Search Results</h2>
+
+            <div class="export-buttons" id="export-buttons" style="display: none;">
+                <button class="export-btn" onclick="exportResults('json')">📄 Export JSON</button>
+                <button class="export-btn" onclick="exportResults('csv')">📊 Export CSV</button>
+                <button class="export-btn" onclick="exportResults('txt')">📝 Export TXT</button>
+            </div>
+
             <div id="results-content"></div>
+
+            <div class="pagination" id="pagination" style="display: none;">
+                <button id="prev-btn" onclick="changePage(-1)">⬅️ Previous</button>
+                <span id="page-info">Page 1 of 1</span>
+                <button id="next-btn" onclick="changePage(1)">Next ➡️</button>
+            </div>
         </div>
 
         <div class="api-links">
@@ -178,6 +357,190 @@
     </div>
 
     <script>
+        // Global variables
+        let currentResults = null;
+        let currentPage = 1;
+        let itemsPerPage = 10;
+        let searchHistory = JSON.parse(localStorage.getItem('omics_search_history') || '[]');
+        let websocket = null;
+        let reconnectAttempts = 0;
+        let maxReconnectAttempts = 5;
+
+        // Initialize page
+        window.addEventListener('DOMContentLoaded', function() {
+            checkStatus();
+            loadSearchHistory();
+            setupEventListeners();
+            initWebSocket();
+        });
+
+        // Initialize WebSocket connection
+        function initWebSocket() {
+            try {
+                const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                const wsUrl = `${protocol}//${window.location.host}/api/ws`;
+                websocket = new WebSocket(wsUrl);
+
+                websocket.onopen = function(event) {
+                    console.log('WebSocket connected');
+                    reconnectAttempts = 0;
+                    updateConnectionStatus(true);
+                };
+
+                websocket.onmessage = function(event) {
+                    const message = JSON.parse(event.data);
+                    handleWebSocketMessage(message);
+                };
+
+                websocket.onclose = function(event) {
+                    console.log('WebSocket disconnected');
+                    updateConnectionStatus(false);
+
+                    // Attempt to reconnect
+                    if (reconnectAttempts < maxReconnectAttempts) {
+                        reconnectAttempts++;
+                        setTimeout(() => {
+                            console.log(`Reconnecting... Attempt ${reconnectAttempts}`);
+                            initWebSocket();
+                        }, 3000 * reconnectAttempts);
+                    }
+                };
+
+                websocket.onerror = function(error) {
+                    console.error('WebSocket error:', error);
+                    updateConnectionStatus(false);
+                };
+
+            } catch (error) {
+                console.error('Failed to initialize WebSocket:', error);
+                updateConnectionStatus(false);
+            }
+        }
+
+        // Handle WebSocket messages
+        function handleWebSocketMessage(message) {
+            const statusText = document.getElementById('status-text');
+
+            switch (message.type) {
+                case 'query_started':
+                    showRealtimeStatus(`🚀 Query started: ${message.query}`);
+                    break;
+
+                case 'query_processing':
+                    showRealtimeStatus(`⚙️ ${message.message}`);
+                    break;
+
+                case 'query_completed':
+                    showRealtimeStatus(`✅ Query completed! Found ${message.results_count} results in ${message.processing_time.toFixed(2)}s`);
+                    break;
+
+                case 'query_error':
+                    showRealtimeStatus(`❌ Query failed: ${message.error}`, true);
+                    break;
+
+                case 'system_error':
+                    showRealtimeStatus(`🚨 System error: ${message.message}`, true);
+                    break;
+
+                case 'pong':
+                    // Keep-alive response
+                    break;
+
+                default:
+                    console.log('Unknown WebSocket message:', message);
+            }
+        }
+
+        // Show real-time status updates
+        function showRealtimeStatus(message, isError = false) {
+            const statusDiv = document.getElementById('status-info');
+            const statusColor = isError ? '#e74c3c' : '#3498db';
+
+            statusDiv.innerHTML = `
+                <strong>📡 Real-time:</strong>
+                <span style="color: ${statusColor};">${message}</span>
+            `;
+
+            // Clear after 5 seconds
+            setTimeout(() => {
+                checkStatus();
+            }, 5000);
+        }
+
+        // Update connection status indicator
+        function updateConnectionStatus(connected) {
+            const indicator = document.getElementById('ws-status') || createConnectionIndicator();
+            indicator.style.color = connected ? '#27ae60' : '#e74c3c';
+            indicator.textContent = connected ? '🟢 Live' : '🔴 Offline';
+        }
+
+        // Create connection status indicator
+        function createConnectionIndicator() {
+            const indicator = document.createElement('span');
+            indicator.id = 'ws-status';
+            indicator.style.cssText = 'float: right; font-size: 12px; margin-left: 10px;';
+            document.getElementById('status-info').appendChild(indicator);
+            return indicator;
+        }
+
+        // Send WebSocket message
+        function sendWebSocketMessage(message) {
+            if (websocket && websocket.readyState === WebSocket.OPEN) {
+                websocket.send(JSON.stringify(message));
+            }
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Advanced filters toggle
+            document.getElementById('toggle-filters').addEventListener('click', function() {
+                const filters = document.querySelector('.advanced-filters');
+                const isVisible = filters.style.display !== 'none';
+                filters.style.display = isVisible ? 'none' : 'block';
+                this.textContent = isVisible ? '🎛️ Advanced Filters' : '🎛️ Hide Filters';
+            });
+
+            // Clear form button
+            document.getElementById('clear-form').addEventListener('click', function() {
+                document.getElementById('search-form').reset();
+                document.querySelector('.advanced-filters').style.display = 'none';
+                document.getElementById('toggle-filters').textContent = '🎛️ Advanced Filters';
+                hideResults();
+            });
+
+            // Form submission
+            document.getElementById('search-form').addEventListener('submit', handleSearch);
+        }
+
+        // Load and display search history
+        function loadSearchHistory() {
+            if (searchHistory.length > 0) {
+                const historyDiv = document.getElementById('search-history');
+                const historyItems = document.getElementById('history-items');
+
+                historyItems.innerHTML = searchHistory.slice(0, 10).map(query =>
+                    `<span class="history-item" onclick="useHistoryQuery('${query}')">${query}</span>`
+                ).join('');
+
+                historyDiv.style.display = 'block';
+            }
+        }
+
+        // Use query from history
+        function useHistoryQuery(query) {
+            document.getElementById('query').value = query;
+        }
+
+        // Add query to history
+        function addToHistory(query) {
+            if (!searchHistory.includes(query)) {
+                searchHistory.unshift(query);
+                searchHistory = searchHistory.slice(0, 20); // Keep only last 20
+                localStorage.setItem('omics_search_history', JSON.stringify(searchHistory));
+                loadSearchHistory();
+            }
+        }
+
         // Check system status on page load
         async function checkStatus() {
             try {
@@ -202,8 +565,8 @@
             }
         }
 
-        // Handle form submission
-        document.getElementById('search-form').addEventListener('submit', async (e) => {
+        // Handle form submission with WebSocket notifications
+        async function handleSearch(e) {
             e.preventDefault();
 
             const formData = new FormData(e.target);
@@ -214,15 +577,17 @@
                 output_format: 'json'
             };
 
-            // Show loading state
-            const resultsDiv = document.getElementById('results');
-            const resultsContent = document.getElementById('results-content');
-            const searchBtn = document.getElementById('search-btn');
+            // Add advanced filters if specified
+            if (formData.get('organism')) searchData.organism = formData.get('organism');
+            if (formData.get('assay_type')) searchData.assay_type = formData.get('assay_type');
+            if (formData.get('date_from')) searchData.date_from = formData.get('date_from');
+            if (formData.get('date_to')) searchData.date_to = formData.get('date_to');
 
-            resultsDiv.style.display = 'block';
-            resultsContent.innerHTML = '<div class="loading">🔍 Searching datasets... ⏳</div>';
-            searchBtn.disabled = true;
-            searchBtn.textContent = '🔄 Searching...';
+            // Add to search history
+            addToHistory(searchData.query);
+
+            // Show loading state
+            showLoadingState();
 
             try {
                 const response = await fetch('/api/search', {
@@ -239,23 +604,54 @@
                     throw new Error(result.message || 'Search failed');
                 }
 
-                // Display results
+                // Store results and display
+                currentResults = result;
+                currentPage = 1;
+                itemsPerPage = parseInt(formData.get('max_results'));
                 displayResults(result);
 
             } catch (error) {
-                resultsContent.innerHTML = `
-                    <div class="error">
-                        ❌ Search failed: ${error.message}
-                    </div>
-                `;
+                showError(error.message);
             } finally {
-                searchBtn.disabled = false;
-                searchBtn.textContent = '🔎 Search Datasets';
+                resetSearchButton();
             }
-        });
+        }
+
+        function showLoadingState() {
+            const resultsDiv = document.getElementById('results');
+            const resultsContent = document.getElementById('results-content');
+            const searchBtn = document.getElementById('search-btn');
+
+            resultsDiv.style.display = 'block';
+            resultsContent.innerHTML = '<div class="loading">🔍 Searching datasets... ⏳</div>';
+            searchBtn.disabled = true;
+            searchBtn.textContent = '🔄 Searching...';
+        }
+
+        function resetSearchButton() {
+            const searchBtn = document.getElementById('search-btn');
+            searchBtn.disabled = false;
+            searchBtn.textContent = '🔎 Search Datasets';
+        }
+
+        function showError(message) {
+            const resultsContent = document.getElementById('results-content');
+            resultsContent.innerHTML = `
+                <div class="error">
+                    ❌ Search failed: ${message}
+                </div>
+            `;
+        }
+
+        function hideResults() {
+            document.getElementById('results').style.display = 'none';
+            document.getElementById('export-buttons').style.display = 'none';
+            document.getElementById('pagination').style.display = 'none';
+        }
 
         function displayResults(result) {
             const resultsContent = document.getElementById('results-content');
+            const exportButtons = document.getElementById('export-buttons');
 
             if (result.metadata && result.metadata.length > 0) {
                 let html = `
@@ -268,7 +664,11 @@
                 // Show extracted entities if available
                 if (result.entities && result.entities.length > 0) {
                     html += '<div style="margin: 15px 0;"><strong>🏷️ Extracted Entities:</strong> ';
-                    html += result.entities.map(e => `<span style="background: #e8f4f8; padding: 2px 6px; border-radius: 3px; margin: 2px;">${e.text} (${e.label})</span>`).join(' ');
+                    html += result.entities.map(e =>
+                        `<span style="background: #e8f4f8; padding: 2px 6px; border-radius: 3px; margin: 2px;">
+                            ${e.text} (${e.label})
+                        </span>`
+                    ).join(' ');
                     html += '</div>';
                 }
 
@@ -282,6 +682,7 @@
                                 🧬 Organism: ${dataset.organism || 'Unknown'} |
                                 🧪 Samples: ${dataset.sample_count || 'Unknown'} |
                                 🔬 Platform: ${dataset.platform || 'Unknown'}
+                                ${dataset.publication_date ? `| 📅 ${dataset.publication_date}` : ''}
                             </div>
                             <div class="result-summary">${dataset.summary}</div>
                         </div>
@@ -289,17 +690,71 @@
                 });
 
                 resultsContent.innerHTML = html;
+                exportButtons.style.display = 'flex';
             } else {
                 resultsContent.innerHTML = `
                     <div class="error">
                         ℹ️ No datasets found for query: "${result.original_query}"
                     </div>
                 `;
+                exportButtons.style.display = 'none';
             }
         }
 
-        // Check status on page load
-        checkStatus();
+        // Export functionality
+        function exportResults(format) {
+            if (!currentResults || !currentResults.metadata) {
+                alert('No results to export');
+                return;
+            }
+
+            let content, filename, mimeType;
+            const timestamp = new Date().toISOString().split('T')[0];
+
+            switch (format) {
+                case 'json':
+                    content = JSON.stringify(currentResults, null, 2);
+                    filename = `omics_oracle_results_${timestamp}.json`;
+                    mimeType = 'application/json';
+                    break;
+
+                case 'csv':
+                    const headers = ['ID', 'Title', 'Organism', 'Samples', 'Platform', 'Summary'];
+                    const rows = currentResults.metadata.map(d => [
+                        d.id, d.title, d.organism || '', d.sample_count || '',
+                        d.platform || '', d.summary.replace(/"/g, '""')
+                    ]);
+                    content = [headers, ...rows].map(row =>
+                        row.map(cell => `"${cell}"`).join(',')
+                    ).join('\n');
+                    filename = `omics_oracle_results_${timestamp}.csv`;
+                    mimeType = 'text/csv';
+                    break;
+
+                case 'txt':
+                    content = currentResults.metadata.map(d =>
+                        `ID: ${d.id}\nTitle: ${d.title}\nOrganism: ${d.organism || 'Unknown'}\nSamples: ${d.sample_count || 'Unknown'}\nPlatform: ${d.platform || 'Unknown'}\nSummary: ${d.summary}\n${'='.repeat(80)}\n`
+                    ).join('\n');
+                    filename = `omics_oracle_results_${timestamp}.txt`;
+                    mimeType = 'text/plain';
+                    break;
+            }
+
+            const blob = new Blob([content], { type: mimeType });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // Send periodic ping to keep WebSocket alive
+        setInterval(() => {
+            sendWebSocketMessage({ action: 'ping' });
+        }, 30000);
 
         // Refresh status every 30 seconds
         setInterval(checkStatus, 30000);

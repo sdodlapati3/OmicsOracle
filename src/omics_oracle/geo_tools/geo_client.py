@@ -418,6 +418,45 @@ class UnifiedGEOClient:
         if hasattr(self, "ncbi_client") and self.ncbi_client:
             await self.ncbi_client.close()
 
+    def _convert_ncbi_id_to_gse(self, ncbi_id: str) -> str:
+        """
+        Convert NCBI numeric ID to GSE format.
+
+        NCBI returns IDs like '200096615' where:
+        - '200' is a prefix for GEO series
+        - '096615' is the actual GSE number (GSE96615)
+
+        Args:
+            ncbi_id: NCBI numeric ID (e.g., '200096615')
+
+        Returns:
+            GSE format ID (e.g., 'GSE96615')
+        """
+        if not ncbi_id.isdigit():
+            return ncbi_id  # Already in correct format
+
+        # Handle GEO series IDs that start with 200
+        if ncbi_id.startswith("200") and len(ncbi_id) > 3:
+            # Remove '200' prefix and any leading zeros
+            gse_number = ncbi_id[3:].lstrip("0")
+            if gse_number:  # Make sure we don't have an empty string
+                return f"GSE{gse_number}"
+
+        # For other numeric IDs, try to identify the pattern
+        # This is a fallback for other potential prefixes
+        if len(ncbi_id) >= 6:
+            # Try to find a reasonable GSE number
+            for prefix_len in [3, 2, 1]:
+                if len(ncbi_id) > prefix_len:
+                    candidate = ncbi_id[prefix_len:].lstrip("0")
+                    # Reasonable GSE number
+                    if candidate and len(candidate) >= 3:
+                        return f"GSE{candidate}"
+
+        # If all else fails, return as-is (will likely fail downstream)
+        logger.warning(f"Could not convert NCBI ID {ncbi_id} to GSE format")
+        return ncbi_id
+
     async def search_geo_series(
         self,
         query: str,
@@ -459,13 +498,20 @@ class UnifiedGEOClient:
         try:
             results = await retry_with_backoff(_search)
 
-            # Cache results
-            self._cache_data(cache_key, results)
+            # Convert NCBI numeric IDs to GSE format
+            gse_results = []
+            for ncbi_id in results:
+                gse_id = self._convert_ncbi_id_to_gse(ncbi_id)
+                gse_results.append(gse_id)
+                logger.debug(f"Converted NCBI ID {ncbi_id} -> {gse_id}")
+
+            # Cache results (cache the converted GSE IDs)
+            self._cache_data(cache_key, gse_results)
 
             logger.info(
-                "Found %d GEO series for query: %s", len(results), query
+                "Found %d GEO series for query: %s", len(gse_results), query
             )
-            return results
+            return gse_results
 
         except NCBIAPIError as e:
             raise GEOClientError(f"Failed to search GEO: {e}") from e

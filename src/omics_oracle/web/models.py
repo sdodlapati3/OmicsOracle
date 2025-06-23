@@ -8,7 +8,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 
 class QueryStatus(str, Enum):
@@ -44,7 +44,8 @@ class SearchRequest(BaseModel):
         default=OutputFormat.JSON, description="Output format"
     )
 
-    @validator("query")
+    @field_validator("query")
+    @classmethod
     def query_must_not_be_empty(cls, v):
         """Validate query is not empty."""
         if not v.strip():
@@ -60,7 +61,8 @@ class DatasetInfoRequest(BaseModel):
         default=False, description="Include SRA information"
     )
 
-    @validator("dataset_id")
+    @field_validator("dataset_id")
+    @classmethod
     def validate_dataset_id(cls, v):
         """Validate dataset ID format."""
         if not v.startswith(("GSE", "GDS", "GPL", "GSM")):
@@ -91,7 +93,8 @@ class BatchRequest(BaseModel):
         default=OutputFormat.JSON, description="Output format"
     )
 
-    @validator("queries")
+    @field_validator("queries")
+    @classmethod
     def validate_queries(cls, v):
         """Validate queries list."""
         if not v:

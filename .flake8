@@ -1,0 +1,21 @@
+[flake8]
+max-line-length = 100
+max-complexity = 15
+ignore =
+    # Allow long lines in specific contexts
+    E501
+extend-ignore = E402
+per-file-ignores =
+    # Allow E402 in web main files that need path modification
+    src/omics_oracle/web/main*.py:E402
+    # Allow E402 in test files
+    tests/*:E402
+exclude =
+    .git,
+    __pycache__,
+    .venv,
+    venv,
+    .eggs,
+    *.egg,
+    build,
+    dist

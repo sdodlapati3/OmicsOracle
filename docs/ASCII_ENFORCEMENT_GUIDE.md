@@ -20,9 +20,15 @@ OmicsOracle enforces strict ASCII-only characters (0x00-0x7F) in all code files,
 - **Python files** (`.py`)
 - **Configuration files** (`.yml`, `.yaml`, `.json`, `.toml`, `.ini`, `.cfg`, `.conf`)
 - **Shell scripts** (`.sh`, `.bash`, `.zsh`)
-- **Web files** (`.js`, `.ts`, `.html`, `.css`, `.xml`)
+- **Web scripts** (`.js`, `.ts`, `.css`, `.xml`)
 - **Build files** (`Dockerfile`, `Makefile`, `requirements*.txt`)
 - **Database files** (`.sql`)
+
+### 🌐 Unicode-Allowed Files (Web Interface)
+- **HTML files** (`.html`, `.htm`) - Modern web interfaces legitimately use emojis and Unicode
+- **Markdown files** (`.md`, `.rst`, `.tex`)
+- **Documentation directories** (`docs/`, `README*`)
+- **Research papers and PDFs** (extracted content)
 
 ### 📝 Unicode-Allowed Files (Documentation)
 - **Markdown files** (`.md`, `.rst`, `.tex`)
