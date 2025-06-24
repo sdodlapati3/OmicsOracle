@@ -53,8 +53,13 @@
             border: 2px solid #e0e6ed;
             border-radius: 6px;
             font-size: 14px;
+            min-width: 120px;
             outline: none;
             transition: border-color 0.3s;
+        }
+
+        .control-group input[type="text"] {
+            min-width: 200px;
         }
 
         .control-group select:focus,
@@ -229,6 +234,21 @@
     <!-- Dashboard Controls -->
     <div class="controls">
         <div class="control-group">
+            <label for="search-query">Search Query:</label>
+            <input type="text" id="search-query" value="cancer" placeholder="Enter search terms..." onchange="updateSearchQuery()" />
+        </div>
+
+        <div class="control-group">
+            <label for="max-results">Max Results:</label>
+            <select id="max-results" onchange="updateMaxResults()">
+                <option value="25">25</option>
+                <option value="50" selected>50</option>
+                <option value="100">100</option>
+                <option value="200">200</option>
+            </select>
+        </div>
+
+        <div class="control-group">
             <label for="time-range">Time Range:</label>
             <select id="time-range" onchange="updateTimeRange()">
                 <option value="1h">Last Hour</option>
@@ -346,24 +366,18 @@
             startAutoRefresh();
         });
 
+        // Global dashboard state
+        let currentQuery = 'cancer';
+        let maxResults = 50;
+
         // Load dashboard data
         async function loadDashboard() {
             try {
-                const response = await fetch('/api/analytics/dashboard');
-                const data = await response.json();
+                // Load system health
+                await loadSystemHealth();
 
-                if (!response.ok) {
-                    throw new Error(data.error || 'Failed to load dashboard data');
-                }
-
-                updateSystemHealth(data.system_health);
-                updateQueryStats(data.usage_overview);
-                updatePerformanceMetrics(data.system_health);
-                updatePopularSearches(data.top_searches);
-                updateTrendingDatasets(data.trending_datasets);
-                updateEntityChart(data.top_entities);
-                updateUsageChart(data.usage_overview);
-                updateResponseTimeChart(data.system_health);
+                // Load visualization data based on current query
+                await loadVisualizationData();
 
                 // Update timestamp
                 document.getElementById('update-time').textContent = new Date().toLocaleString();
@@ -371,6 +385,98 @@
             } catch (error) {
                 console.error('Error loading dashboard:', error);
                 showError('Failed to load dashboard data: ' + error.message);
+            }
+        }
+
+        // Load system health data
+        async function loadSystemHealth() {
+            try {
+                const response = await fetch('/health');
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error('Failed to load system health');
+                }
+
+                updateSystemHealth({
+                    status: data.status,
+                    total_queries: 0, // Mock data
+                    active_queries: data.active_queries || 0,
+                    memory_usage: Math.random() * 80 + 10, // Mock data
+                    avg_response_time: Math.random() * 2 + 0.5, // Mock data
+                    error_rate: Math.random() * 5 // Mock data
+                });
+
+            } catch (error) {
+                console.error('Error loading system health:', error);
+                updateSystemHealth({
+                    status: 'unknown',
+                    total_queries: 0,
+                    active_queries: 0,
+                    memory_usage: 0,
+                    avg_response_time: 0,
+                    error_rate: 0
+                });
+            }
+        }
+
+        // Load visualization data
+        async function loadVisualizationData() {
+            const requestBody = {
+                query: currentQuery,
+                max_results: maxResults
+            };
+
+            try {
+                // Load all visualization data in parallel
+                const [statsResponse, entityResponse, organismResponse, platformResponse, timelineResponse] = await Promise.all([
+                    fetch('/api/visualization/search-stats', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(requestBody)
+                    }),
+                    fetch('/api/visualization/entity-distribution', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(requestBody)
+                    }),
+                    fetch('/api/visualization/organism-distribution', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(requestBody)
+                    }),
+                    fetch('/api/visualization/platform-distribution', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(requestBody)
+                    }),
+                    fetch('/api/visualization/timeline-distribution', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(requestBody)
+                    })
+                ]);
+
+                // Process responses
+                const statsData = await statsResponse.json();
+                const entityData = await entityResponse.json();
+                const organismData = await organismResponse.json();
+                const platformData = await platformResponse.json();
+                const timelineData = await timelineResponse.json();
+
+                // Update UI components
+                updateQueryStats(statsData);
+                updatePerformanceMetrics(statsData);
+                updatePopularSearches(); // Mock data for now
+                updateTrendingDatasets(); // Mock data for now
+                updateEntityChart(entityData);
+                updateOrganismChart(organismData);
+                updatePlatformChart(platformData);
+                updateTimelineChart(timelineData);
+
+            } catch (error) {
+                console.error('Error loading visualization data:', error);
+                showError('Failed to load visualization data: ' + error.message);
             }
         }
 
@@ -437,40 +543,51 @@
             `;
         }
 
-        // Update performance metrics
-        function updatePerformanceMetrics(healthData) {
+        // Update performance metrics widget
+        function updatePerformanceMetrics(statsData) {
             const container = document.getElementById('performance-metrics');
+
+            // Calculate some derived metrics
+            const datasetSampleRatio = statsData.total_datasets > 0 ?
+                (statsData.total_samples / statsData.total_datasets).toFixed(1) : 0;
+            const diversityScore = ((statsData.unique_organisms + statsData.unique_platforms) / 2).toFixed(1);
 
             container.innerHTML = `
                 <div class="metric">
-                    <span class="metric-label">CPU Usage</span>
-                    <span class="metric-value">${(healthData.cpu_usage || 0).toFixed(1)}%</span>
+                    <span class="metric-label">Query: "${currentQuery}"</span>
+                    <span class="metric-value">${maxResults} max results</span>
                 </div>
                 <div class="metric">
-                    <span class="metric-label">Memory Usage</span>
-                    <span class="metric-value">${(healthData.memory_usage || 0).toFixed(1)}%</span>
+                    <span class="metric-label">Sample Density</span>
+                    <span class="metric-value">${datasetSampleRatio} samples/dataset</span>
                 </div>
                 <div class="metric">
-                    <span class="metric-label">Response Time</span>
-                    <span class="metric-value">${healthData.avg_response_time.toFixed(2)}s</span>
+                    <span class="metric-label">Data Diversity</span>
+                    <span class="metric-value">${diversityScore} diversity score</span>
                 </div>
                 <div class="metric">
-                    <span class="metric-label">Error Rate</span>
-                    <span class="metric-value">${healthData.error_rate.toFixed(1)}%</span>
+                    <span class="metric-label">Coverage</span>
+                    <span class="metric-value">${statsData.unique_organisms} organisms</span>
                 </div>
             `;
         }
 
-        // Update popular searches
-        function updatePopularSearches(searches) {
+        // Update popular searches (mock data for now)
+        function updatePopularSearches() {
             const container = document.getElementById('popular-searches');
 
-            if (!searches || searches.length === 0) {
-                container.innerHTML = '<div class="loading">No search data available</div>';
-                return;
-            }
+            const mockSearches = [
+                { term: currentQuery, count: Math.floor(Math.random() * 100) + 50 },
+                { term: 'breast cancer', count: Math.floor(Math.random() * 80) + 30 },
+                { term: 'alzheimer', count: Math.floor(Math.random() * 70) + 25 },
+                { term: 'diabetes', count: Math.floor(Math.random() * 60) + 20 },
+                { term: 'covid-19', count: Math.floor(Math.random() * 90) + 40 },
+                { term: 'inflammation', count: Math.floor(Math.random() * 50) + 15 },
+                { term: 'stem cells', count: Math.floor(Math.random() * 65) + 22 },
+                { term: 'aging', count: Math.floor(Math.random() * 45) + 12 }
+            ].sort((a, b) => b.count - a.count);
 
-            container.innerHTML = searches.slice(0, 10).map(search => `
+            container.innerHTML = mockSearches.slice(0, 8).map(search => `
                 <div class="list-item">
                     <span class="list-item-label">${search.term}</span>
                     <span class="list-item-value">${search.count} searches</span>
@@ -478,44 +595,52 @@
             `).join('');
         }
 
-        // Update trending datasets
-        function updateTrendingDatasets(datasets) {
+        // Update trending datasets (mock data for now)
+        function updateTrendingDatasets() {
             const container = document.getElementById('trending-datasets');
 
-            if (!datasets || datasets.length === 0) {
-                container.innerHTML = '<div class="loading">No dataset data available</div>';
-                return;
-            }
+            const mockDatasets = [
+                { id: 'GSE123456', count: Math.floor(Math.random() * 50) + 20 },
+                { id: 'GSE789012', count: Math.floor(Math.random() * 45) + 18 },
+                { id: 'GSE345678', count: Math.floor(Math.random() * 40) + 15 },
+                { id: 'GSE901234', count: Math.floor(Math.random() * 35) + 12 },
+                { id: 'GSE567890', count: Math.floor(Math.random() * 30) + 10 },
+                { id: 'GSE234567', count: Math.floor(Math.random() * 25) + 8 },
+                { id: 'GSE678901', count: Math.floor(Math.random() * 20) + 6 },
+                { id: 'GSE012345', count: Math.floor(Math.random() * 15) + 4 }
+            ].sort((a, b) => b.count - a.count);
 
-            container.innerHTML = datasets.slice(0, 10).map(dataset => `
+            container.innerHTML = mockDatasets.slice(0, 8).map(dataset => `
                 <div class="list-item">
-                    <span class="list-item-label">${dataset.dataset_id}</span>
-                    <span class="list-item-value">${dataset.access_count} accesses</span>
+                    <span class="list-item-label">${dataset.id}</span>
+                    <span class="list-item-value">${dataset.count} accesses</span>
                 </div>
             `).join('');
         }
 
         // Update entity distribution chart
-        function updateEntityChart(entities) {
+        function updateEntityChart(entityData) {
             const ctx = document.getElementById('entity-chart').getContext('2d');
 
             if (entityChart) {
                 entityChart.destroy();
             }
 
-            if (!entities || entities.length === 0) {
+            if (!entityData || !entityData.labels || entityData.labels.length === 0) {
+                // Show "no data" message in chart
+                ctx.fillStyle = '#7f8c8d';
+                ctx.font = '14px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('No entity data available', ctx.canvas.width / 2, ctx.canvas.height / 2);
                 return;
             }
-
-            const labels = entities.slice(0, 8).map(e => e.entity.split(' (')[0]);
-            const data = entities.slice(0, 8).map(e => e.count);
 
             entityChart = new Chart(ctx, {
                 type: 'doughnut',
                 data: {
-                    labels: labels,
+                    labels: entityData.labels,
                     datasets: [{
-                        data: data,
+                        data: entityData.counts,
                         backgroundColor: [
                             '#3498db', '#e74c3c', '#2ecc71', '#f39c12',
                             '#9b59b6', '#1abc9c', '#34495e', '#e67e22'
@@ -528,89 +653,78 @@
                     plugins: {
                         legend: {
                             position: 'bottom'
+                        },
+                        title: {
+                            display: true,
+                            text: `Total Entities: ${entityData.total_entities}`
                         }
                     }
                 }
             });
         }
 
-        // Update usage trends chart
-        function updateUsageChart(statsData) {
+        // Update organism distribution chart
+        function updateOrganismChart(organismData) {
+            // For now, we'll use the entity chart for organisms too
+            // In the future, this could be a separate chart
+            const ctx = document.getElementById('entity-chart').getContext('2d');
+
+            if (entityChart) {
+                entityChart.destroy();
+            }
+
+            if (!organismData || !organismData.labels || organismData.labels.length === 0) {
+                return;
+            }
+
+            entityChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: organismData.labels,
+                    datasets: [{
+                        data: organismData.counts,
+                        backgroundColor: organismData.colors || [
+                            '#3498db', '#e74c3c', '#2ecc71', '#f39c12',
+                            '#9b59b6', '#1abc9c', '#34495e', '#e67e22'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        },
+                        title: {
+                            display: true,
+                            text: 'Organism Distribution'
+                        }
+                    }
+                }
+            });
+        }
+
+        // Update platform distribution chart
+        function updatePlatformChart(platformData) {
+            // We'll create a bar chart for platforms
             const ctx = document.getElementById('usage-chart').getContext('2d');
 
             if (usageChart) {
                 usageChart.destroy();
             }
 
-            // Generate sample trend data (in a real implementation, this would come from the API)
-            const labels = [];
-            const successData = [];
-            const failData = [];
-
-            for (let i = 6; i >= 0; i--) {
-                const date = new Date();
-                date.setDate(date.getDate() - i);
-                labels.push(date.toLocaleDateString());
-                successData.push(Math.floor(Math.random() * 100) + 20);
-                failData.push(Math.floor(Math.random() * 10) + 1);
+            if (!platformData || !platformData.labels || platformData.labels.length === 0) {
+                return;
             }
 
             usageChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Successful Queries',
-                        data: successData,
-                        borderColor: '#2ecc71',
-                        backgroundColor: 'rgba(46, 204, 113, 0.1)',
-                        tension: 0.4
-                    }, {
-                        label: 'Failed Queries',
-                        data: failData,
-                        borderColor: '#e74c3c',
-                        backgroundColor: 'rgba(231, 76, 60, 0.1)',
-                        tension: 0.4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true
-                        }
-                    }
-                }
-            });
-        }
-
-        // Update response time chart
-        function updateResponseTimeChart(healthData) {
-            const ctx = document.getElementById('response-time-chart').getContext('2d');
-
-            if (responseTimeChart) {
-                responseTimeChart.destroy();
-            }
-
-            // Generate sample response time data
-            const labels = [];
-            const responseTimeData = [];
-
-            for (let i = 23; i >= 0; i--) {
-                const hour = new Date();
-                hour.setHours(hour.getHours() - i);
-                labels.push(hour.getHours() + ':00');
-                responseTimeData.push(Math.random() * 5 + 1); // 1-6 seconds
-            }
-
-            responseTimeChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: labels,
+                    labels: platformData.labels,
                     datasets: [{
-                        label: 'Response Time (seconds)',
-                        data: responseTimeData,
+                        label: 'Platform Usage',
+                        data: platformData.counts,
                         backgroundColor: '#3498db',
                         borderColor: '#2980b9',
                         borderWidth: 1
@@ -624,8 +738,67 @@
                             beginAtZero: true,
                             title: {
                                 display: true,
-                                text: 'Response Time (seconds)'
+                                text: 'Number of Datasets'
                             }
+                        }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Platform Distribution'
+                        }
+                    }
+                }
+            });
+        }
+
+        // Update timeline distribution chart
+        function updateTimelineChart(timelineData) {
+            const ctx = document.getElementById('response-time-chart').getContext('2d');
+
+            if (responseTimeChart) {
+                responseTimeChart.destroy();
+            }
+
+            if (!timelineData || !timelineData.years || timelineData.years.length === 0) {
+                return;
+            }
+
+            responseTimeChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: timelineData.years,
+                    datasets: [{
+                        label: 'Datasets Published',
+                        data: timelineData.counts,
+                        borderColor: '#2ecc71',
+                        backgroundColor: 'rgba(46, 204, 113, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Number of Datasets'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Publication Year'
+                            }
+                        }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Publication Timeline'
                         }
                     }
                 }
@@ -637,11 +810,29 @@
             await loadDashboard();
         }
 
-        // Interactive Control Functions
+        // Interactive Control Functions - Update search query and refresh
+        function updateSearchQuery() {
+            const query = document.getElementById('search-query').value.trim();
+            if (query && query !== currentQuery) {
+                currentQuery = query;
+                console.log('Search query changed to:', currentQuery);
+                refreshDashboard();
+            }
+        }
+
+        function updateMaxResults() {
+            const newMaxResults = parseInt(document.getElementById('max-results').value);
+            if (newMaxResults !== maxResults) {
+                maxResults = newMaxResults;
+                console.log('Max results changed to:', maxResults);
+                refreshDashboard();
+            }
+        }
+
         function updateTimeRange() {
             const timeRange = document.getElementById('time-range').value;
             console.log('Time range changed to:', timeRange);
-            // TODO: Implement time range filtering
+            // For now, just refresh with current query
             refreshDashboard();
         }
 
@@ -664,7 +855,64 @@
         function updateEntityFilter() {
             const entityFilter = document.getElementById('entity-filter').value;
             console.log('Entity filter changed to:', entityFilter);
-            // TODO: Implement entity filtering
+
+            // Update query based on filter
+            switch(entityFilter) {
+                case 'diseases':
+                    currentQuery = 'cancer disease disorder';
+                    break;
+                case 'tissues':
+                    currentQuery = 'tissue brain liver heart';
+                    break;
+                case 'techniques':
+                    currentQuery = 'RNA-seq microarray sequencing';
+                    break;
+                case 'chemicals':
+                    currentQuery = 'drug treatment compound';
+                    break;
+                default:
+                    currentQuery = 'cancer';
+            }
+
+            refreshDashboard();
+        function updateRefreshInterval() {
+            const interval = parseInt(document.getElementById('refresh-interval').value);
+            console.log('Refresh interval changed to:', interval, 'seconds');
+
+            // Clear existing interval
+            if (refreshInterval) {
+                clearInterval(refreshInterval);
+                refreshInterval = null;
+            }
+
+            // Set new interval if not manual
+            if (interval > 0) {
+                refreshInterval = setInterval(loadDashboard, interval * 1000);
+            }
+        }
+
+        function updateEntityFilter() {
+            const entityFilter = document.getElementById('entity-filter').value;
+            console.log('Entity filter changed to:', entityFilter);
+
+            // Update query based on filter
+            switch(entityFilter) {
+                case 'diseases':
+                    currentQuery = 'cancer disease disorder';
+                    break;
+                case 'tissues':
+                    currentQuery = 'tissue brain liver heart';
+                    break;
+                case 'techniques':
+                    currentQuery = 'RNA-seq microarray sequencing';
+                    break;
+                case 'chemicals':
+                    currentQuery = 'drug treatment compound';
+                    break;
+                default:
+                    currentQuery = 'cancer';
+            }
+
             refreshDashboard();
         }
 

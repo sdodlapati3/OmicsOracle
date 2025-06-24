@@ -44,6 +44,20 @@ class SearchRequest(BaseModel):
         default=OutputFormat.JSON, description="Output format"
     )
 
+    # Advanced filter parameters
+    organism: Optional[str] = Field(
+        default=None, description="Organism filter (e.g., 'homo sapiens')"
+    )
+    assay_type: Optional[str] = Field(
+        default=None, description="Assay type filter (e.g., 'RNA-seq')"
+    )
+    date_from: Optional[str] = Field(
+        default=None, description="Start date filter (YYYY-MM-DD)"
+    )
+    date_to: Optional[str] = Field(
+        default=None, description="End date filter (YYYY-MM-DD)"
+    )
+
     @field_validator("query")
     @classmethod
     def query_must_not_be_empty(cls, v):
@@ -156,6 +170,9 @@ class SearchResult(BaseModel):
     metadata: List[DatasetMetadata] = Field(
         default=[], description="Dataset metadata"
     )
+    ai_summaries: Optional[Dict[str, Any]] = Field(
+        None, description="AI-generated summaries"
+    )
     error_message: Optional[str] = Field(None, description="Error message")
     created_at: datetime = Field(
         default_factory=datetime.utcnow, description="Creation timestamp"
@@ -228,3 +245,84 @@ class WebSocketMessage(BaseModel):
     timestamp: datetime = Field(
         default_factory=datetime.utcnow, description="Message timestamp"
     )
+
+
+class AISummary(BaseModel):
+    """AI-generated summary of a dataset."""
+
+    overview: Optional[str] = Field(None, description="High-level overview")
+    methodology: Optional[str] = Field(None, description="Methodology summary")
+    significance: Optional[str] = Field(
+        None, description="Research significance"
+    )
+    technical_details: Optional[str] = Field(
+        None, description="Technical details"
+    )
+    brief: Optional[str] = Field(None, description="Brief summary")
+
+
+class BatchAISummary(BaseModel):
+    """AI-generated summary for batch results."""
+
+    query: str = Field(..., description="Original query")
+    total_datasets: int = Field(..., description="Total datasets found")
+    total_samples: int = Field(
+        ..., description="Total samples across all datasets"
+    )
+    organisms: List[str] = Field(default=[], description="List of organisms")
+    platforms: List[str] = Field(default=[], description="List of platforms")
+    study_types: List[str] = Field(
+        default=[], description="List of study types"
+    )
+    overview: str = Field(..., description="Batch overview summary")
+
+
+class SummarizeRequest(BaseModel):
+    """Request model for AI summarization."""
+
+    query: str = Field(..., description="Search query (natural language)")
+    max_results: int = Field(
+        default=5,
+        ge=1,
+        le=20,
+        description="Maximum number of results to summarize",
+    )
+    summary_type: str = Field(
+        default="comprehensive",
+        description="Type of summary (brief, comprehensive, technical)",
+    )
+    include_individual: bool = Field(
+        default=True, description="Include individual dataset summaries"
+    )
+
+    # Advanced filter parameters (same as SearchRequest)
+    organism: Optional[str] = Field(
+        default=None, description="Organism filter (e.g., 'homo sapiens')"
+    )
+    assay_type: Optional[str] = Field(
+        default=None, description="Assay type filter (e.g., 'RNA-seq')"
+    )
+    date_from: Optional[str] = Field(
+        default=None, description="Start date filter (YYYY-MM-DD)"
+    )
+    date_to: Optional[str] = Field(
+        default=None, description="End date filter (YYYY-MM-DD)"
+    )
+
+    @field_validator("query")
+    @classmethod
+    def query_must_not_be_empty(cls, v):
+        """Validate query is not empty."""
+        if not v.strip():
+            raise ValueError("Query cannot be empty")
+        return v.strip()
+
+    @field_validator("summary_type")
+    @classmethod
+    def validate_summary_type(cls, v):
+        """Validate summary type."""
+        if v not in ["brief", "comprehensive", "technical"]:
+            raise ValueError(
+                "Summary type must be one of: brief, comprehensive, technical"
+            )
+        return v

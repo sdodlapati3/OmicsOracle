@@ -558,6 +558,165 @@ def interactive(ctx, max_results: int):
     asyncio.run(run_interactive())
 
 
+@cli.command()
+@click.argument("query")
+@click.option(
+    "--max-results", default=5, help="Maximum number of results to analyze"
+)
+@click.option(
+    "--summary-type",
+    type=click.Choice(["brief", "comprehensive", "technical"]),
+    default="comprehensive",
+    help="Type of AI summary to generate",
+)
+@click.option(
+    "--output-format",
+    type=click.Choice(["text", "json"]),
+    default="text",
+    help="Output format",
+)
+@click.pass_context
+def summarize(
+    ctx, query: str, max_results: int, summary_type: str, output_format: str
+):
+    """Generate AI-powered summaries of genomics datasets using natural language queries.
+
+    Example:
+        omics-oracle summarize "diabetes pancreatic beta cells" --max-results 3
+        omics-oracle summarize "cancer stem cells" --summary-type brief
+    """
+    config = ctx.obj["config"]
+    verbose = ctx.obj["verbose"]
+
+    if verbose:
+        click.echo(f"Starting AI summarization for query: '{query}'")
+
+    async def run_summarization():
+        oracle = OmicsOracle(config)
+
+        try:
+            # Process the query
+            if verbose:
+                click.echo("🔍 Processing query through pipeline...")
+
+            result = await oracle.process_query(
+                query, max_results=max_results, result_format=ResultFormat.JSON
+            )
+
+            if result.is_failed:
+                click.echo(f"❌ Query failed: {result.error}", err=True)
+                sys.exit(1)
+
+            if not result.metadata:
+                click.echo("No datasets found for the given query.")
+                return
+
+            if verbose:
+                click.echo(f"📊 Found {len(result.metadata)} datasets")
+                click.echo("🤖 Generating AI summaries...")
+
+            # Display results based on format
+            if output_format == "json":
+                output = {
+                    "query": query,
+                    "summary_type": summary_type,
+                    "total_results": len(result.metadata),
+                    "ai_summaries": result.ai_summaries,
+                    "datasets": result.metadata,
+                }
+                click.echo(json.dumps(output, indent=2, default=str))
+            else:
+                # Text format
+                click.echo("🌟 OmicsOracle AI-Powered Dataset Summaries")
+                click.echo("=" * 60)
+                click.echo(f"Query: {query}")
+                click.echo(f"Summary Type: {summary_type}")
+                click.echo(f"Results: {len(result.metadata)} datasets")
+                click.echo()
+
+                # Display batch summary if available
+                if result.ai_summaries.get("batch_summary"):
+                    batch = result.ai_summaries["batch_summary"]
+                    click.echo("📋 BATCH OVERVIEW:")
+                    click.echo("-" * 40)
+                    click.echo(
+                        f"Total Datasets: {batch.get('total_datasets', 0)}"
+                    )
+                    click.echo(
+                        f"Total Samples: {batch.get('total_samples', 0)}"
+                    )
+                    click.echo(
+                        f"Organisms: {', '.join(batch.get('organisms', []))}"
+                    )
+                    click.echo(
+                        f"Platforms: {', '.join(batch.get('platforms', []))}"
+                    )
+                    click.echo()
+                    click.echo(f"Summary: {batch.get('overview', 'N/A')}")
+                    click.echo()
+
+                # Display brief overview if available
+                if result.ai_summaries.get("brief_overview"):
+                    click.echo("🎯 KEY INSIGHTS:")
+                    click.echo("-" * 40)
+                    for summary_key, content in result.ai_summaries[
+                        "brief_overview"
+                    ].items():
+                        if content:
+                            click.echo(
+                                f"{summary_key.replace('_', ' ').title()}: {content}"
+                            )
+                    click.echo()
+
+                # Display individual summaries
+                if result.ai_summaries.get("individual_summaries"):
+                    click.echo("📚 INDIVIDUAL DATASET SUMMARIES:")
+                    click.echo("=" * 50)
+
+                    for i, summary_data in enumerate(
+                        result.ai_summaries["individual_summaries"], 1
+                    ):
+                        click.echo(
+                            f"\n🔬 Dataset {i}: {summary_data.get('accession', 'Unknown')}"
+                        )
+                        click.echo("-" * 40)
+
+                        dataset_summaries = summary_data.get("summary", {})
+                        for summary_key, content in dataset_summaries.items():
+                            if content:
+                                click.echo(
+                                    f"\n{summary_key.replace('_', ' ').title()}:"
+                                )
+                                click.echo(content)
+                                click.echo()
+
+                # Display any errors
+                if result.ai_summaries.get("error"):
+                    click.echo(
+                        f"⚠️  AI Summarization Error: {result.ai_summaries['error']}"
+                    )
+
+                click.echo(
+                    "\n💡 Tip: Use --output-format json for machine-readable output"
+                )
+                click.echo(
+                    "💡 Try different --summary-type options: brief, comprehensive, technical"
+                )
+
+        except Exception as e:
+            click.echo(f"❌ Error during summarization: {e}", err=True)
+            if verbose:
+                import traceback
+
+                traceback.print_exc()
+            sys.exit(1)
+        finally:
+            await oracle.close()
+
+    # Run the async function
+    asyncio.run(run_summarization())
+
+
 def format_summary(result) -> str:
     """Format query result as a human-readable summary"""
     lines = [

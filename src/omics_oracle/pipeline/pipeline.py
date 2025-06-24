@@ -16,6 +16,7 @@ from ..core.exceptions import OmicsOracleException
 from ..geo_tools.geo_client import UnifiedGEOClient
 from ..nlp.biomedical_ner import BiomedicalNER, EnhancedBiologicalSynonymMapper
 from ..nlp.prompt_interpreter import PromptInterpreter
+from ..services.summarizer import SummarizationService
 
 logger = logging.getLogger(__name__)
 
@@ -55,6 +56,7 @@ class QueryResult:
     expanded_query: Optional[str] = None
     geo_ids: List[str] = field(default_factory=list)
     metadata: List[Dict[str, Any]] = field(default_factory=list)
+    ai_summaries: Dict[str, Any] = field(default_factory=dict)
     error: Optional[str] = None
     processing_steps: List[Dict[str, Any]] = field(default_factory=list)
 
@@ -110,6 +112,7 @@ class OmicsOracle:
         self.nlp_interpreter = PromptInterpreter()
         self.biomedical_ner = BiomedicalNER()
         self.synonym_mapper = EnhancedBiologicalSynonymMapper()
+        self.summarizer = SummarizationService(self.config)
 
         # Pipeline state
         self._active_queries: Dict[str, QueryResult] = {}
@@ -321,11 +324,15 @@ class OmicsOracle:
 
         result.metadata = metadata_list
 
+        # Generate AI summaries for the results
+        await self._generate_ai_summaries(result)
+
         result.add_step(
             "metadata_processing",
             {
                 "processed_count": len(metadata_list),
                 "total_geo_ids": len(result.geo_ids),
+                "ai_summaries_generated": bool(result.ai_summaries),
             },
         )
 
@@ -440,3 +447,165 @@ class OmicsOracle:
         """Clean up resources."""
         await self.geo_client.close()
         logger.info("OmicsOracle pipeline closed")
+
+    async def _generate_ai_summaries(self, result: QueryResult) -> None:
+        """Generate AI-powered summaries for the query results."""
+        logger.debug("Generating AI summaries: %s", result.query_id)
+
+        if not result.metadata:
+            logger.debug("No metadata available for summarization")
+            return
+
+        try:
+            # Generate batch summary for all results
+            batch_summary = self.summarizer.summarize_batch_results(
+                [{"metadata": metadata} for metadata in result.metadata],
+                result.original_query,
+            )
+            result.ai_summaries["batch_summary"] = batch_summary
+
+            # Generate individual summaries for top results (limit to 5 for performance)
+            top_results = result.metadata[:5]
+            individual_summaries = []
+
+            for metadata in top_results:
+                try:
+                    # Generate comprehensive summary for each dataset
+                    summary = self.summarizer.summarize_dataset(
+                        metadata,
+                        query_context=result.original_query,
+                        summary_type="comprehensive",
+                    )
+                    individual_summaries.append(
+                        {
+                            "accession": metadata.get("accession", "Unknown"),
+                            "summary": summary,
+                        }
+                    )
+                except Exception as e:
+                    logger.warning(
+                        "Failed to summarize dataset %s: %s",
+                        metadata.get("accession", "Unknown"),
+                        str(e),
+                    )
+                    continue
+
+            result.ai_summaries["individual_summaries"] = individual_summaries
+
+            # Generate a brief overall summary
+            if len(result.metadata) > 0:
+                first_result = result.metadata[0]
+                brief_summary = self.summarizer.summarize_dataset(
+                    first_result,
+                    query_context=result.original_query,
+                    summary_type="brief",
+                )
+                result.ai_summaries["brief_overview"] = brief_summary
+
+            logger.debug(
+                "AI summaries generated successfully: %s", result.query_id
+            )
+
+        except Exception as e:
+            logger.error(
+                "Failed to generate AI summaries: %s - %s",
+                result.query_id,
+                str(e),
+            )
+            # Don't fail the entire pipeline if summarization fails
+            result.ai_summaries["error"] = f"Summarization failed: {str(e)}"
+
+    async def search_datasets(
+        self,
+        query: str,
+        max_results: int = 100,
+        include_sra: bool = False,
+        organism: Optional[str] = None,
+        assay_type: Optional[str] = None,
+        date_from: Optional[str] = None,
+        date_to: Optional[str] = None,
+    ) -> QueryResult:
+        """
+        Search for datasets with optional filters.
+
+        This is a wrapper around process_query that adds filtering capabilities.
+
+        Args:
+            query: Natural language query
+            max_results: Maximum number of results to return
+            include_sra: Whether to include SRA metadata
+            organism: Organism filter (e.g., 'homo sapiens')
+            assay_type: Assay type filter (e.g., 'RNA-seq')
+            date_from: Start date filter (YYYY-MM-DD)
+            date_to: End date filter (YYYY-MM-DD)
+
+        Returns:
+            QueryResult object with processing results
+        """
+        # For now, we'll process the query and then filter results
+        # In a more advanced implementation, these filters could be
+        # passed to the GEO search to reduce the initial result set
+
+        result = await self.process_query(
+            query=query,
+            max_results=max_results
+            * 2,  # Get more results to allow for filtering
+            include_sra=include_sra,
+        )
+
+        # Apply filters to the results
+        if any([organism, assay_type, date_from, date_to]):
+            filtered_metadata = []
+
+            for dataset in result.metadata:
+                # Apply organism filter
+                if organism and organism.lower() not in (
+                    dataset.get("organism", "").lower()
+                ):
+                    continue
+
+                # Apply assay type filter (check in title, summary, or platform)
+                if assay_type:
+                    assay_text = f"{dataset.get('title', '')} {dataset.get('summary', '')} {dataset.get('platform', '')}".lower()
+                    if assay_type.lower() not in assay_text:
+                        continue
+
+                # Apply date filters
+                pub_date = dataset.get("publication_date", "")
+                if date_from and pub_date and pub_date < date_from:
+                    continue
+                if date_to and pub_date and pub_date > date_to:
+                    continue
+
+                filtered_metadata.append(dataset)
+
+                # Stop when we have enough results
+                if len(filtered_metadata) >= max_results:
+                    break
+
+            result.metadata = filtered_metadata
+
+            # Update result summary
+            result.add_step(
+                "filtering",
+                {
+                    "applied_filters": {
+                        "organism": organism,
+                        "assay_type": assay_type,
+                        "date_from": date_from,
+                        "date_to": date_to,
+                    },
+                    "filtered_count": len(filtered_metadata),
+                },
+            )
+
+            logger.info(
+                "Applied filters to query %s: %d -> %d results",
+                result.query_id,
+                len(result.metadata)
+                if not any([organism, assay_type, date_from, date_to])
+                else "unknown",
+                len(filtered_metadata),
+            )
+
+        return result
