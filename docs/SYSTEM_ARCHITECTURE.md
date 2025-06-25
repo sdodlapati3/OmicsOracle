@@ -1,277 +1,341 @@
 # OmicsOracle System Architecture
 
-**Version:** 1.0.0
-**Date:** June 22, 2025
-**Status:** Phase 1.2 Implementation
+**Version:** 2.0
+**Date:** June 25, 2025
+**Status:** Production Architecture
 
-## Architecture Overview
+---
 
-OmicsOracle follows a modular, layered architecture designed for scalability, maintainability, and scientific rigor.
+## 🏗️ Architecture Overview
 
-## System Components
+OmicsOracle follows a modular, layered architecture designed for scalability, maintainability, and scientific rigor. The system is built with microservices principles while maintaining simplicity for research workflows.
+
+### High-Level Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        User Interfaces                          │
+├─────────────────┬─────────────────┬─────────────────┬───────────┤
+│   CLI Interface │   Web Interface │   API Interface │  Mobile   │
+│   (Click-based) │   (React/Flask) │   (FastAPI)     │  (Future) │
+└─────────────────┴─────────────────┴─────────────────┴───────────┘
+                                │
+┌─────────────────────────────────────────────────────────────────┐
+│                     Application Layer                           │
+├─────────────────┬─────────────────┬─────────────────┬───────────┤
+│   Query Router  │   Auth Manager  │   Rate Limiter  │  Monitor  │
+└─────────────────┴─────────────────┴─────────────────┴───────────┘
+                                │
+┌─────────────────────────────────────────────────────────────────┐
+│                      Service Layer                              │
+├─────────────────┬─────────────────┬─────────────────┬───────────┤
+│   GEO Service   │   NLP Service   │  Cache Service  │  AI Agent │
+│                 │                 │                 │  Service  │
+└─────────────────┴─────────────────┴─────────────────┴───────────┘
+                                │
+┌─────────────────────────────────────────────────────────────────┐
+│                       Data Layer                                │
+├─────────────────┬─────────────────┬─────────────────┬───────────┤
+│   GEO Database  │   Cache Store   │   Config Store  │  Logs     │
+│   (External)    │   (SQLite/File) │   (YAML/JSON)   │  (Files)  │
+└─────────────────┴─────────────────┴─────────────────┴───────────┘
+```
+
+---
+
+## 📦 System Components
 
 ### 1. Core Layer
 
-```text
+```
 src/omics_oracle/core/
 ├── __init__.py
 ├── config.py          # Configuration management
 ├── exceptions.py      # Custom exception classes
 ├── logging.py         # Logging infrastructure
-├── models.py          # Data models and schemas
-├── types.py           # Type definitions
-└── validators.py      # Input validation
+└── models.py          # Data models and schemas
 ```
+
+**Responsibilities:**
+- Configuration management across environments
+- Centralized exception handling
+- Structured logging and monitoring
+- Core data models and validation
 
 ### 2. GEO Tools Layer
 
-```text
+```
 src/omics_oracle/geo_tools/
 ├── __init__.py
-├── ncbi_client.py     # NCBI API client (entrezpy)
-├── geo_parser.py      # GEO data parsing (GEOparse)
-├── sra_client.py      # SRA integration (pysradb)
+├── ncbi_client.py     # NCBI API client
+├── geo_parser.py      # GEO data parsing
 ├── metadata_extractor.py  # Metadata extraction
 └── validators.py      # GEO-specific validation
 ```
 
+**Responsibilities:**
+- NCBI API integration with rate limiting
+- GEO dataset parsing and normalization
+- Metadata extraction and standardization
+- Data quality validation
+
 ### 3. NLP Processing Layer
 
-```text
+```
 src/omics_oracle/nlp/
 ├── __init__.py
 ├── preprocessor.py    # Text preprocessing
 ├── summarizer.py      # AI summarization
 ├── classifier.py      # Content classification
-├── entity_extractor.py  # Scientific entity extraction
-└── models.py         # NLP model definitions
+└── entity_extractor.py  # Scientific entity extraction
 ```
+
+**Responsibilities:**
+- Natural language query processing
+- AI-powered dataset summarization
+- Scientific entity recognition
+- Content classification and tagging
 
 ### 4. API Layer
 
-```text
+```
 src/omics_oracle/api/
 ├── __init__.py
-├── app.py            # FastAPI application
-├── endpoints/
-│   ├── __init__.py
-│   ├── search.py     # Search endpoints
-│   ├── metadata.py   # Metadata endpoints
-│   └── health.py     # Health check endpoints
-├── models/           # Pydantic models
-└── middleware/       # API middleware
+├── main.py           # FastAPI application
+└── endpoints/        # API endpoint definitions
 ```
+
+**Responsibilities:**
+- RESTful API endpoints
+- Request/response validation
+- Authentication and authorization
+- API documentation (OpenAPI/Swagger)
 
 ### 5. CLI Layer
 
-```text
+```
 src/omics_oracle/cli/
 ├── __init__.py
 ├── main.py           # CLI entry point
-├── commands/
-│   ├── __init__.py
-│   ├── search.py     # Search commands
-│   ├── config.py     # Configuration commands
-│   └── validate.py   # Validation commands
+├── commands/         # Command implementations
 └── utils.py          # CLI utilities
 ```
 
-### 6. Database Layer
+**Responsibilities:**
+- Command-line interface
+- Interactive query processing
+- Batch operations
+- Configuration management
 
-```text
-src/omics_oracle/database/
+### 6. Web Interface Layer
+
+```
+src/omics_oracle/web/
 ├── __init__.py
-├── models.py         # SQLAlchemy models
-├── connection.py     # Database connection
-├── migrations/       # Database migrations
-└── repositories/     # Data access layer
+├── app.py            # Web application
+├── routes/           # Web routes
+├── templates/        # HTML templates
+└── static/           # CSS/JS assets
 ```
 
-## Data Flow Architecture
+**Responsibilities:**
+- Web-based user interface
+- Interactive search and visualization
+- Real-time query processing
+- Export and sharing capabilities
 
-```text
-User Query → CLI/API → Query Processor → GEO Client → NCBI APIs
-                                            ↓
-Results ← Summarizer ← NLP Pipeline ← Metadata Extractor ← GEO Data
+---
+
+## 🔄 Data Flow Architecture
+
+### Query Processing Pipeline
+
+```
+1. User Input
+   ├── CLI: Natural language query
+   ├── Web: Form-based or natural language
+   └── API: JSON-formatted query
+
+2. Query Preprocessing
+   ├── Input validation and sanitization
+   ├── Natural language parsing
+   ├── Query intent classification
+   └── Parameter extraction
+
+3. Data Retrieval
+   ├── Cache lookup for existing results
+   ├── GEO database query construction
+   ├── NCBI API requests with rate limiting
+   └── Response validation and parsing
+
+4. Data Processing
+   ├── Metadata extraction and normalization
+   ├── Scientific entity recognition
+   ├── Content classification
+   └── Quality assessment
+
+5. AI Enhancement
+   ├── Context-aware summarization
+   ├── Related dataset suggestions
+   ├── Research trend analysis
+   └── Citation and reference extraction
+
+6. Response Generation
+   ├── Format-specific output generation
+   ├── Caching of processed results
+   ├── Response validation
+   └── Delivery to user interface
 ```
 
-## Configuration System
+### Caching Strategy
 
-### Environment-based Configuration
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    Multi-Level Caching                      │
+├─────────────────┬─────────────────┬─────────────────────────┤
+│   L1: Memory    │   L2: SQLite    │   L3: File System      │
+│   - Query cache │   - Summaries   │   - Raw GEO data       │
+│   - Session     │   - Metadata    │   - Export files       │
+│   - User prefs  │   - Analytics   │   - Logs & metrics     │
+└─────────────────┴─────────────────┴─────────────────────────┘
+```
 
-- `config/development.yml` - Development settings
-- `config/production.yml` - Production settings
-- `config/testing.yml` - Testing settings
-- `.env` - Environment variables
+**Cache Invalidation:**
+- Time-based expiration (24h for GEO data, 1h for summaries)
+- Version-based invalidation for configuration changes
+- Manual cache clearing for development and testing
+- Intelligent cache warming for popular queries
 
-### Configuration Schema
+---
+
+## 🔧 Configuration Management
+
+### Environment-Based Configuration
 
 ```yaml
-# Base configuration structure
-database:
-  url: "${DATABASE_URL}"
-  pool_size: 10
+# config/base.yml - Base configuration
+app:
+  name: "OmicsOracle"
+  version: "2.0.0"
+  debug: false
+
+# config/development.yml - Development overrides
+app:
+  debug: true
+  log_level: "DEBUG"
 
 ncbi:
-  api_key: "${NCBI_API_KEY}"
-  email: "${NCBI_EMAIL}"
-  rate_limit: 3
+  rate_limit: 1  # Slower for development
+  timeout: 30
 
-nlp:
-  model: "en_core_sci_sm"
-  batch_size: 32
-  max_tokens: 512
+# config/production.yml - Production overrides
+app:
+  log_level: "INFO"
+
+ncbi:
+  rate_limit: 3  # NCBI recommended limit
+  timeout: 10
 
 logging:
   level: "INFO"
   format: "json"
-  file: "logs/omics_oracle.log"
+  handlers:
+    - file
+    - syslog
 ```
-
-## Quality Assurance Architecture
-
-### Testing Strategy
-
-- **Unit Tests:** Component-level testing
-- **Integration Tests:** API and database testing
-- **End-to-End Tests:** Complete workflow testing
-- **Performance Tests:** Load and stress testing
-
-### Quality Gates
-
-1. **Code Quality:** Black, isort, flake8
-2. **Type Safety:** mypy type checking
-3. **Security:** bandit security scanning
-4. **ASCII Compliance:** Custom ASCII enforcer
-5. **Test Coverage:** pytest-cov (>90% target)
-
-## Deployment Architecture
-
-### Development Environment
-
-- Local SQLite database
-- Local file storage
-- Development API server
-- Mock external services
-
-### Production Environment
-
-- PostgreSQL database
-- Redis caching layer
-- Load balancer
-- Containerized deployment
-
-## API Schema Design
-
-### Core Endpoints
-
-```text
-GET /api/v1/search
-POST /api/v1/search/advanced
-GET /api/v1/metadata/{geo_id}
-GET /api/v1/health
-```
-
-### Request/Response Models
-
-```python
-class SearchRequest(BaseModel):
-    query: str
-    filters: Optional[Dict[str, Any]] = None
-    limit: int = Field(default=10, le=100)
-
-class MetadataResponse(BaseModel):
-    geo_id: str
-    title: str
-    summary: str
-    organism: str
-    platform: str
-    samples: int
-    created_date: datetime
-```
-
-## Error Handling Strategy
-
-### Exception Hierarchy
-
-```text
-OmicsOracleException
-├── ValidationError
-├── ConfigurationError
-├── GEOClientError
-├── NLPProcessingError
-└── DatabaseError
-```
-
-### Error Response Format
-
-```json
-{
-  "error": {
-    "code": "VALIDATION_ERROR",
-    "message": "Invalid search query",
-    "details": {
-      "field": "query",
-      "reason": "Query must be at least 3 characters"
-    }
-  }
-}
-```
-
-## Performance Considerations
-
-### Caching Strategy
-
-- **API Response Caching:** Redis for search results
-- **Database Query Caching:** SQLAlchemy query cache
-- **NLP Model Caching:** In-memory model loading
-
-### Rate Limiting
-
-- **NCBI API:** 3 requests per second
-- **API Endpoints:** 100 requests per minute per IP
-- **Database Connections:** Connection pooling
-
-## Security Architecture
-
-### Authentication & Authorization
-
-- API key authentication for production
-- Role-based access control
-- Request signing for sensitive operations
-
-### Data Protection
-
-- Input sanitization and validation
-- SQL injection prevention
-- XSS protection
-- Rate limiting and DDoS protection
-
-## Monitoring & Observability
-
-### Logging Strategy
-
-- Structured JSON logging
-- Request/response logging
-- Error tracking and alerting
-- Performance metrics
-
-### Health Checks
-
-- Database connectivity
-- External API availability
-- System resource utilization
-- Cache health status
-
-## Next Steps (Phase 1.2)
-
-1. **Implement Core Configuration System**
-2. **Create Base Models and Types**
-3. **Set up Logging Infrastructure**
-4. **Create Database Schema**
-5. **Implement Basic CLI Interface**
-6. **Set up Development Environment**
 
 ---
 
-This architecture document will be updated as we progress through implementation phases.
+## 🛡️ Security Architecture
+
+### Authentication & Authorization
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    Security Layers                          │
+├─────────────────┬─────────────────┬─────────────────────────┤
+│   Input Val.    │   Rate Limiting │   Access Control       │
+│   - Schema val. │   - Per IP      │   - Role-based         │
+│   - Sanitization│   - Per user    │   - Resource-level     │
+│   - Type safety │   - Per endpoint│   - Time-based         │
+└─────────────────┴─────────────────┴─────────────────────────┘
+```
+
+### Data Protection
+
+- **Encryption at Rest**: SQLite database encryption
+- **Encryption in Transit**: HTTPS/TLS for all communications
+- **API Key Management**: Secure storage and rotation
+- **Input Validation**: Comprehensive schema validation
+- **Rate Limiting**: Protection against abuse and DoS
+- **Audit Logging**: Complete activity tracking
+
+---
+
+## 📊 Monitoring & Observability
+
+### Metrics Collection
+
+```python
+# Key metrics tracked
+class SystemMetrics:
+    - query_response_time_ms
+    - query_success_rate
+    - cache_hit_rate
+    - api_request_count
+    - error_rate_by_type
+    - active_users
+    - system_resource_usage
+```
+
+### Health Checks
+
+```python
+# Health check endpoints
+@app.get("/health")
+async def health_check():
+    return {
+        "status": "healthy",
+        "timestamp": datetime.utcnow(),
+        "version": app.version,
+        "services": {
+            "ncbi_api": await check_ncbi_connectivity(),
+            "cache": await check_cache_status(),
+            "nlp": await check_nlp_models()
+        }
+    }
+```
+
+---
+
+## 🚀 Deployment Architecture
+
+### Development Environment
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                 Development Setup                           │
+├─────────────────┬─────────────────┬─────────────────────────┤
+│   Local Python │   Docker Compose│   VS Code               │
+│   - venv        │   - All services│   - Dev container       │
+│   - Hot reload  │   - Databases   │   - Extensions          │
+│   - Debug mode  │   - Monitoring  │   - Debugging           │
+└─────────────────┴─────────────────┴─────────────────────────┘
+```
+
+### Production Environment
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                 Production Stack                            │
+├─────────────────┬─────────────────┬─────────────────────────┤
+│   Container     │   Load Balancer │   Monitoring            │
+│   - Docker      │   - Nginx       │   - Prometheus          │
+│   - Multi-stage │   - SSL/TLS     │   - Grafana             │
+│   - Health check│   - Rate limit  │   - Alerting            │
+└─────────────────┴─────────────────┴─────────────────────────┘
+```
+
+---
+
+*This architecture document serves as the technical blueprint for OmicsOracle. Update it as the system evolves.*
