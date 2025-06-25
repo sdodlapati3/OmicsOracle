@@ -16,6 +16,7 @@ from ..core.exceptions import OmicsOracleException
 from ..geo_tools.geo_client import UnifiedGEOClient
 from ..nlp.biomedical_ner import BiomedicalNER, EnhancedBiologicalSynonymMapper
 from ..nlp.prompt_interpreter import PromptInterpreter
+from ..services.improved_search import ImprovedSearchService
 from ..services.summarizer import SummarizationService
 
 logger = logging.getLogger(__name__)
@@ -113,6 +114,11 @@ class OmicsOracle:
         self.biomedical_ner = BiomedicalNER()
         self.synonym_mapper = EnhancedBiologicalSynonymMapper()
         self.summarizer = SummarizationService(self.config)
+
+        # Initialize improved search service
+        self.search_service = ImprovedSearchService(
+            self.geo_client, self.biomedical_ner, self.synonym_mapper
+        )
 
         # Pipeline state
         self._active_queries: Dict[str, QueryResult] = {}
@@ -222,7 +228,7 @@ class OmicsOracle:
             },
         )
 
-        # Extract biomedical entities
+        # Initial entity extraction (will be enhanced during search)
         entities = self.biomedical_ner.extract_biomedical_entities(
             result.original_query
         )
@@ -230,67 +236,64 @@ class OmicsOracle:
 
         result.add_step("entity_extraction", {"entities": entities})
 
-        # Expand query with synonyms
-        expanded_terms = set()
-        for entity_type, entity_list in entities.items():
-            for entity in entity_list:
-                entity_text = entity["text"].lower()
-                synonyms = self.synonym_mapper.get_synonyms(
-                    entity_text, entity_type
-                )
-                expanded_terms.update(synonyms)
-
-        if expanded_terms:
-            result.expanded_query = " ".join(
-                [result.original_query] + list(expanded_terms)[:10]
-            )
-        else:
-            result.expanded_query = result.original_query
-
-        result.add_step(
-            "query_expansion",
-            {
-                "original": result.original_query,
-                "expanded": result.expanded_query,
-                "added_terms": list(expanded_terms)[:10],
-            },
-        )
+        # Basic query expansion for compatibility
+        result.expanded_query = result.original_query
 
         logger.debug("Query parsing completed for: %s", result.query_id)
 
     async def _search_geo_data(
         self, result: QueryResult, max_results: int
     ) -> None:
-        """Search GEO database for relevant data."""
+        """Search GEO database for relevant data using improved search."""
         logger.debug("Searching GEO data: %s", result.query_id)
 
-        # Use expanded query for better search results
-        search_query = result.expanded_query or result.original_query
-
         try:
-            # Search for GEO series IDs
-            geo_ids = await self.geo_client.search_geo_series(
-                search_query, max_results=max_results
+            # Use improved search service for better results
+            (
+                geo_ids,
+                search_metadata,
+            ) = await self.search_service.search_with_multiple_strategies(
+                result.original_query, max_results=max_results
             )
+
             result.geo_ids = geo_ids
+            result.expanded_query = search_metadata.get(
+                "original_query", result.original_query
+            )
+
+            # Update entities with enhanced extraction
+            if "enhanced_entities" in search_metadata:
+                result.entities = search_metadata["enhanced_entities"]
 
             result.add_step(
-                "geo_search",
+                "improved_geo_search",
                 {
-                    "search_query": search_query,
+                    "original_query": result.original_query,
+                    "strategies_tried": search_metadata.get(
+                        "strategies_tried", 0
+                    ),
+                    "successful_strategies": search_metadata.get(
+                        "successful_strategies", 0
+                    ),
+                    "strategy_details": search_metadata.get(
+                        "strategy_details", {}
+                    ),
                     "geo_ids": geo_ids,
                     "count": len(geo_ids),
                 },
             )
 
             logger.debug(
-                "GEO search completed: %s (found %d results)",
+                "Improved GEO search completed: %s (found %d results using %d strategies)",
                 result.query_id,
                 len(geo_ids),
+                search_metadata.get("successful_strategies", 0),
             )
 
         except Exception as e:
-            logger.error("GEO search failed: %s - %s", result.query_id, str(e))
+            logger.error(
+                "Improved GEO search failed: %s - %s", result.query_id, str(e)
+            )
             result.add_step("geo_search_error", {"error": str(e)})
             # Continue with empty results rather than failing completely
             result.geo_ids = []
@@ -518,7 +521,7 @@ class OmicsOracle:
     async def search_datasets(
         self,
         query: str,
-        max_results: int = 100,
+        max_results: int = 20,
         include_sra: bool = False,
         organism: Optional[str] = None,
         assay_type: Optional[str] = None,
@@ -526,9 +529,9 @@ class OmicsOracle:
         date_to: Optional[str] = None,
     ) -> QueryResult:
         """
-        Search for datasets with optional filters.
+        Search datasets using improved search strategies.
 
-        This is a wrapper around process_query that adds filtering capabilities.
+        This method is optimized for web interface usage with enhanced search capabilities.
 
         Args:
             query: Natural language query
@@ -542,70 +545,103 @@ class OmicsOracle:
         Returns:
             QueryResult object with processing results
         """
-        # For now, we'll process the query and then filter results
-        # In a more advanced implementation, these filters could be
-        # passed to the GEO search to reduce the initial result set
+        logger.info("Starting improved dataset search for: %s", query)
 
-        result = await self.process_query(
-            query=query,
-            max_results=max_results
-            * 2,  # Get more results to allow for filtering
-            include_sra=include_sra,
+        query_id = self._generate_query_id()
+        result = QueryResult(
+            query_id=query_id,
+            original_query=query,
+            status=QueryStatus.PENDING,
+            start_time=datetime.now(),
         )
 
-        # Apply filters to the results
-        if any([organism, assay_type, date_from, date_to]):
-            filtered_metadata = []
+        try:
+            result.status = QueryStatus.SEARCHING
 
-            for dataset in result.metadata:
-                # Apply organism filter
-                if organism and organism.lower() not in (
-                    dataset.get("organism", "").lower()
-                ):
-                    continue
-
-                # Apply assay type filter (check in title, summary, or platform)
-                if assay_type:
-                    assay_text = f"{dataset.get('title', '')} {dataset.get('summary', '')} {dataset.get('platform', '')}".lower()
-                    if assay_type.lower() not in assay_text:
-                        continue
-
-                # Apply date filters
-                pub_date = dataset.get("publication_date", "")
-                if date_from and pub_date and pub_date < date_from:
-                    continue
-                if date_to and pub_date and pub_date > date_to:
-                    continue
-
-                filtered_metadata.append(dataset)
-
-                # Stop when we have enough results
-                if len(filtered_metadata) >= max_results:
-                    break
-
-            result.metadata = filtered_metadata
-
-            # Update result summary
-            result.add_step(
-                "filtering",
-                {
-                    "applied_filters": {
-                        "organism": organism,
-                        "assay_type": assay_type,
-                        "date_from": date_from,
-                        "date_to": date_to,
-                    },
-                    "filtered_count": len(filtered_metadata),
-                },
+            # Use improved search service
+            (
+                geo_ids,
+                search_metadata,
+            ) = await self.search_service.search_with_multiple_strategies(
+                query,
+                max_results=max_results * 2,  # Get more to allow for filtering
             )
 
+            result.geo_ids = geo_ids
+            result.entities = search_metadata.get("enhanced_entities", {})
+            result.expanded_query = search_metadata.get("original_query", query)
+
+            # Add search metadata to processing steps
+            result.add_step("improved_search", search_metadata)
+
+            # Process metadata for found datasets
+            result.status = QueryStatus.PROCESSING
+            await self._process_results(result, include_sra)
+
+            # Apply filters if provided
+            if any([organism, assay_type, date_from, date_to]):
+                filtered_metadata = []
+
+                for dataset in result.metadata:
+                    # Apply organism filter
+                    if organism and organism.lower() not in (
+                        dataset.get("organism", "").lower()
+                    ):
+                        continue
+
+                    # Apply assay type filter (check in title, summary, or platform)
+                    if assay_type:
+                        assay_text = f"{dataset.get('title', '')} {dataset.get('summary', '')} {dataset.get('platform', '')}".lower()
+                        if assay_type.lower() not in assay_text:
+                            continue
+
+                    # Apply date filters
+                    pub_date = dataset.get("publication_date", "")
+                    if date_from and pub_date and pub_date < date_from:
+                        continue
+                    if date_to and pub_date and pub_date > date_to:
+                        continue
+
+                    filtered_metadata.append(dataset)
+
+                    # Stop when we have enough results
+                    if len(filtered_metadata) >= max_results:
+                        break
+
+                result.metadata = filtered_metadata[:max_results]
+
+                # Update result summary
+                result.add_step(
+                    "filtering",
+                    {
+                        "applied_filters": {
+                            "organism": organism,
+                            "assay_type": assay_type,
+                            "date_from": date_from,
+                            "date_to": date_to,
+                        },
+                        "filtered_count": len(filtered_metadata),
+                    },
+                )
+            else:
+                # No filters, just limit results
+                result.metadata = result.metadata[:max_results]
+
+            result.status = QueryStatus.COMPLETED
+            result.end_time = datetime.now()
+
             logger.info(
-                "Applied filters to query %s: %d -> %d results",
-                result.query_id,
-                len(result.metadata)
-                if not any([organism, assay_type, date_from, date_to])
-                else "unknown",
-                len(filtered_metadata),
+                "Improved dataset search completed: %s (found %d results)",
+                query_id,
+                len(result.metadata),
+            )
+
+        except Exception as e:
+            result.status = QueryStatus.FAILED
+            result.error = str(e)
+            result.end_time = datetime.now()
+            logger.error(
+                "Improved dataset search failed: %s - %s", query_id, str(e)
             )
 
         return result
