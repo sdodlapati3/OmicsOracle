@@ -35,7 +35,7 @@ search_analytics = {
     "search_history": [],
 }
 
-# Common search suggestions
+# Enhanced search suggestions for auto-complete
 SEARCH_SUGGESTIONS = {
     "cancer": [
         "breast cancer BRCA1",
@@ -43,6 +43,10 @@ SEARCH_SUGGESTIONS = {
         "colorectal cancer genomics",
         "cancer biomarkers",
         "tumor suppressor genes",
+        "ovarian cancer BRCA",
+        "prostate cancer genomics",
+        "pancreatic cancer KRAS",
+        "liver cancer HCC",
     ],
     "rna": [
         "RNA-seq differential expression",
@@ -50,6 +54,9 @@ SEARCH_SUGGESTIONS = {
         "RNA sequencing data",
         "microRNA cancer",
         "long non-coding RNA",
+        "single-cell RNA-seq",
+        "RNA splicing variants",
+        "RNA expression profiling",
     ],
     "brain": [
         "brain tumor genomics",
@@ -57,6 +64,9 @@ SEARCH_SUGGESTIONS = {
         "neuroblastoma RNA-seq",
         "glioblastoma expression",
         "brain development transcriptome",
+        "alzheimer's disease pathology",
+        "parkinson's disease genetics",
+        "autism spectrum disorder",
     ],
     "diabetes": [
         "diabetes insulin resistance",
@@ -64,6 +74,8 @@ SEARCH_SUGGESTIONS = {
         "diabetic nephropathy",
         "pancreatic beta cells",
         "glucose metabolism",
+        "type 1 diabetes genetics",
+        "insulin signaling pathway",
     ],
     "heart": [
         "cardiac hypertrophy",
@@ -71,8 +83,40 @@ SEARCH_SUGGESTIONS = {
         "cardiovascular disease",
         "myocardial infarction",
         "cardiac development",
+        "atherosclerosis",
+        "arrhythmia genetics",
+    ],
+    "immune": [
+        "immune system response",
+        "autoimmune disease genetics",
+        "T cell activation",
+        "immunotherapy biomarkers",
+        "inflammation genomics",
+        "cytokine signaling",
     ],
 }
+
+# Popular search terms for quick filters
+QUICK_FILTER_TERMS = [
+    "Cancer",
+    "RNA-seq",
+    "Brain",
+    "Diabetes",
+    "Heart Disease",
+    "Immune System",
+    "BRCA1",
+    "Transcriptome",
+]
+
+# Example searches to show users
+EXAMPLE_SEARCHES = [
+    "BRCA1 breast cancer",
+    "RNA-seq brain tumor",
+    "diabetes insulin resistance",
+    "heart failure genomics",
+    "immune system COVID-19",
+    "alzheimer's disease pathology",
+]
 
 # Try to import OmicsOracle components
 OMICS_AVAILABLE = False
@@ -278,6 +322,124 @@ HTML_TEMPLATE = """
             font-size: 14px;
             margin: 0 15px;
         }
+
+        /* Enhanced Search Interface Styles */
+        .search-container {
+            position: relative;
+        }
+
+        .search-suggestions {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #ddd;
+            border-top: none;
+            border-radius: 0 0 6px 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+        }
+
+        .suggestion-item {
+            padding: 10px 15px;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background-color 0.2s;
+        }
+
+        .suggestion-item:hover, .suggestion-item.active {
+            background-color: #f8f9fa;
+        }
+
+        .suggestion-item:last-child {
+            border-bottom: none;
+        }
+
+        .quick-filters {
+            margin: 15px 0;
+        }
+
+        .quick-filters-label {
+            font-size: 14px;
+            color: #6c757d;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .filter-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .filter-tag {
+            background: #e9ecef;
+            color: #495057;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid #dee2e6;
+        }
+
+        .filter-tag:hover {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .search-helpers {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 10px 0;
+            font-size: 13px;
+            color: #6c757d;
+        }
+
+        .example-searches, .search-history {
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        .example-searches:hover, .search-history:hover {
+            color: #667eea;
+        }
+
+        .search-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            max-height: 150px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+        }
+
+        .dropdown-item {
+            padding: 8px 15px;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 14px;
+        }
+
+        .dropdown-item:hover {
+            background-color: #f8f9fa;
+        }
+
+        .dropdown-item:last-child {
+            border-bottom: none;
+        }
     </style>
 </head>
 <body>
@@ -299,24 +461,28 @@ HTML_TEMPLATE = """
             <form class="search-form" id="searchForm" method="post" action="/search">
                 <div class="form-group">
                     <label for="query">Search Query</label>
-                    <input type="text" id="query" name="query"
-                           placeholder="e.g., BRCA1 breast cancer, RNA-seq brain tumor..."
-                           required>
+                    <div class="search-container">
+                        <input type="text" id="query" name="query"
+                               placeholder="e.g., BRCA1 breast cancer, RNA-seq brain tumor..."
+                               autocomplete="off"
+                               required>
+                        <div id="searchSuggestions" class="search-suggestions"></div>
+                    </div>
                 </div>
 
-                <!-- Maximum Results dropdown commented out for cleaner interface -->
-                <!-- Future: implement pagination instead of dropdown -->
-                <!--
-                <div class="form-group">
-                    <label for="max_results">Maximum Results</label>
-                    <select id="max_results" name="max_results">
-                        <option value="5">5 results</option>
-                        <option value="10" selected>10 results</option>
-                        <option value="20">20 results</option>
-                        <option value="50">50 results</option>
-                    </select>
+                <!-- Quick Filters -->
+                <div class="quick-filters">
+                    <span class="quick-filters-label">Quick search topics:</span>
+                    <div class="filter-tags" id="quickFilters">
+                        <!-- Quick filter tags will be loaded here -->
+                    </div>
                 </div>
-                -->
+
+                <!-- Search Helpers -->
+                <div class="search-helpers">
+                    <span class="example-searches" id="showExamples">View example searches</span>
+                    <span class="search-history" id="showHistory">Recent searches</span>
+                </div>
 
                 <!-- Hidden fields for pagination -->
                 <input type="hidden" id="max_results" name="max_results" value="10">
@@ -335,6 +501,193 @@ HTML_TEMPLATE = """
     </div>
 
     <script>
+        // Enhanced Search Interface JavaScript
+        let suggestionIndex = -1;
+        let suggestions = [];
+
+        // Initialize enhanced search features when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            loadQuickFilters();
+            setupSearchInput();
+            setupSearchHelpers();
+        });
+
+        // Load quick filter tags
+        async function loadQuickFilters() {
+            try {
+                const response = await fetch('/api/quick-filters');
+                const data = await response.json();
+                const filtersContainer = document.getElementById('quickFilters');
+
+                data.filters.forEach(filter => {
+                    const tag = document.createElement('span');
+                    tag.className = 'filter-tag';
+                    tag.textContent = filter;
+                    tag.onclick = () => {
+                        document.getElementById('query').value = filter;
+                        document.getElementById('query').focus();
+                    };
+                    filtersContainer.appendChild(tag);
+                });
+            } catch (error) {
+                console.log('Quick filters not available');
+            }
+        }
+
+        // Setup search input with autocomplete
+        function setupSearchInput() {
+            const queryInput = document.getElementById('query');
+            const suggestionsDiv = document.getElementById('searchSuggestions');
+
+            queryInput.addEventListener('input', async function(e) {
+                const query = e.target.value;
+                if (query.length < 2) {
+                    hideSuggestions();
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`/api/search-suggestions?q=${encodeURIComponent(query)}`);
+                    const data = await response.json();
+                    suggestions = data.suggestions || [];
+                    showSuggestions(suggestions);
+                } catch (error) {
+                    console.log('Suggestions not available');
+                }
+            });
+
+            queryInput.addEventListener('keydown', function(e) {
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    suggestionIndex = Math.min(suggestionIndex + 1, suggestions.length - 1);
+                    highlightSuggestion();
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    suggestionIndex = Math.max(suggestionIndex - 1, -1);
+                    highlightSuggestion();
+                } else if (e.key === 'Enter' && suggestionIndex >= 0) {
+                    e.preventDefault();
+                    selectSuggestion(suggestions[suggestionIndex]);
+                } else if (e.key === 'Escape') {
+                    hideSuggestions();
+                }
+            });
+
+            queryInput.addEventListener('blur', function() {
+                // Delay hiding to allow clicks on suggestions
+                setTimeout(hideSuggestions, 200);
+            });
+        }
+
+        function showSuggestions(suggestions) {
+            const suggestionsDiv = document.getElementById('searchSuggestions');
+            if (suggestions.length === 0) {
+                hideSuggestions();
+                return;
+            }
+
+            suggestionsDiv.innerHTML = '';
+            suggestions.forEach((suggestion, index) => {
+                const item = document.createElement('div');
+                item.className = 'suggestion-item';
+                item.textContent = suggestion;
+                item.onclick = () => selectSuggestion(suggestion);
+                suggestionsDiv.appendChild(item);
+            });
+
+            suggestionsDiv.style.display = 'block';
+            suggestionIndex = -1;
+        }
+
+        function hideSuggestions() {
+            document.getElementById('searchSuggestions').style.display = 'none';
+            suggestionIndex = -1;
+        }
+
+        function highlightSuggestion() {
+            const items = document.querySelectorAll('.suggestion-item');
+            items.forEach((item, index) => {
+                item.classList.toggle('active', index === suggestionIndex);
+            });
+        }
+
+        function selectSuggestion(suggestion) {
+            document.getElementById('query').value = suggestion;
+            hideSuggestions();
+            document.getElementById('query').focus();
+        }
+
+        // Setup search helper links
+        function setupSearchHelpers() {
+            document.getElementById('showExamples').addEventListener('click', showExampleSearches);
+            document.getElementById('showHistory').addEventListener('click', showSearchHistory);
+        }
+
+        async function showExampleSearches() {
+            try {
+                const response = await fetch('/api/example-searches');
+                const data = await response.json();
+                showDropdown(data.examples, 'Example Searches');
+            } catch (error) {
+                console.log('Examples not available');
+            }
+        }
+
+        async function showSearchHistory() {
+            try {
+                const response = await fetch('/api/search-history');
+                const data = await response.json();
+                if (data.history.length > 0) {
+                    showDropdown(data.history, 'Recent Searches');
+                } else {
+                    alert('No recent searches found');
+                }
+            } catch (error) {
+                console.log('Search history not available');
+            }
+        }
+
+        function showDropdown(items, title) {
+            // Remove existing dropdown
+            const existing = document.querySelector('.search-dropdown');
+            if (existing) existing.remove();
+
+            const dropdown = document.createElement('div');
+            dropdown.className = 'search-dropdown';
+            dropdown.style.display = 'block';
+
+            items.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'dropdown-item';
+                div.textContent = item;
+                div.onclick = () => {
+                    document.getElementById('query').value = item;
+                    dropdown.remove();
+                    document.getElementById('query').focus();
+                };
+                dropdown.appendChild(div);
+            });
+
+            // Position dropdown near the helpers
+            const helpers = document.querySelector('.search-helpers');
+            helpers.style.position = 'relative';
+            helpers.appendChild(dropdown);
+
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                if (dropdown.parentNode) dropdown.remove();
+            }, 5000);
+
+            // Hide on click outside
+            document.addEventListener('click', function hideDropdown(e) {
+                if (!dropdown.contains(e.target) && !helpers.contains(e.target)) {
+                    dropdown.remove();
+                    document.removeEventListener('click', hideDropdown);
+                }
+            });
+        }
+
+        // Original search form handler
         document.getElementById('searchForm').addEventListener('submit', async function(e) {
             e.preventDefault();
 
@@ -432,41 +785,41 @@ HTML_TEMPLATE = """
             const hasNext = pagination.has_next || false;
 
             let paginationHtml = '<div class="pagination">';
-            
+
             // Previous button
             paginationHtml += `<button onclick="goToPage(${currentPage - 1})" ${!hasPrevious ? 'disabled' : ''}>← Previous</button>`;
-            
+
             // Page numbers (show current page and nearby pages)
             const startPage = Math.max(1, currentPage - 2);
             const endPage = Math.min(totalPages, currentPage + 2);
-            
+
             if (startPage > 1) {
                 paginationHtml += `<button onclick="goToPage(1)">1</button>`;
                 if (startPage > 2) {
                     paginationHtml += '<span class="pagination-info">...</span>';
                 }
             }
-            
+
             for (let i = startPage; i <= endPage; i++) {
                 const activeClass = i === currentPage ? 'active' : '';
                 paginationHtml += `<button class="${activeClass}" onclick="goToPage(${i})">${i}</button>`;
             }
-            
+
             if (endPage < totalPages) {
                 if (endPage < totalPages - 1) {
                     paginationHtml += '<span class="pagination-info">...</span>';
                 }
                 paginationHtml += `<button onclick="goToPage(${totalPages})">${totalPages}</button>`;
             }
-            
+
             // Next button
             paginationHtml += `<button onclick="goToPage(${currentPage + 1})" ${!hasNext ? 'disabled' : ''}>Next →</button>`;
-            
+
             // Page info
             paginationHtml += `<span class="pagination-info">Page ${currentPage} of ${totalPages}</span>`;
-            
+
             paginationHtml += '</div>';
-            
+
             return paginationHtml;
         }
 
@@ -499,14 +852,16 @@ async def search(
     query: str = Form(...),
     max_results: int = Form(10),
     page: int = Form(1),
-    page_size: int = Form(10)
+    page_size: int = Form(10),
 ):
     """Handle search requests with pagination support"""
     try:
         # Calculate pagination parameters
         offset = (page - 1) * page_size
-        
-        logger.info(f"Search request: '{query}' (page: {page}, page_size: {page_size}, offset: {offset})")
+
+        logger.info(
+            f"Search request: '{query}' (page: {page}, page_size: {page_size}, offset: {offset})"
+        )
 
         # Update search analytics
         update_search_analytics(query)
@@ -523,7 +878,7 @@ async def search(
                 # Process results with AI-enhanced summaries
                 processed_results = []
                 total_count = 0
-                
+
                 if hasattr(results, "metadata") and results.metadata:
                     total_count = len(results.metadata)
                     ai_summaries = getattr(results, "ai_summaries", {})
@@ -544,7 +899,7 @@ async def search(
                     start_idx = offset
                     end_idx = offset + page_size
                     paginated_metadata = results.metadata[start_idx:end_idx]
-                    
+
                     for i, result in enumerate(paginated_metadata):
                         # First, try to get the AI summary to potentially extract metadata from it
                         ai_summary = None
@@ -813,8 +1168,10 @@ async def search(
                 total_available = total_count
                 has_more = (offset + page_size) < total_count
                 current_page = page
-                total_pages = (total_count + page_size - 1) // page_size  # Ceiling division
-                
+                total_pages = (
+                    total_count + page_size - 1
+                ) // page_size  # Ceiling division
+
                 return JSONResponse(
                     {
                         "results": processed_results,
@@ -826,7 +1183,9 @@ async def search(
                             "has_next": has_more,
                             "has_previous": current_page > 1,
                             "start_index": offset + 1,
-                            "end_index": min(offset + page_size, total_available)
+                            "end_index": min(
+                                offset + page_size, total_available
+                            ),
                         },
                         "total_count": total_available,  # Keep for backward compatibility
                         "displayed_count": len(processed_results),
@@ -889,26 +1248,58 @@ async def get_stats():
 
 @app.get("/api/search-suggestions")
 async def get_search_suggestions(q: str = ""):
-    """Get search suggestions based on query"""
+    """Enhanced search suggestions with smart matching"""
     suggestions = []
     query_lower = q.lower()
 
-    # Find matching suggestions
+    # Find matching suggestions from predefined categories
     for term, term_suggestions in SEARCH_SUGGESTIONS.items():
         if term in query_lower or query_lower in term:
             suggestions.extend(term_suggestions)
 
-    # If no specific matches, provide general suggestions
-    if len(suggestions) == 0:
-        suggestions = [
-            "breast cancer BRCA1",
-            "RNA-seq differential expression",
-            "brain tumor genomics",
-            "diabetes insulin resistance",
-            "lung cancer mutations",
-        ]
+    # Also check for partial matches in suggestions themselves
+    for category_suggestions in SEARCH_SUGGESTIONS.values():
+        for suggestion in category_suggestions:
+            if (
+                query_lower in suggestion.lower()
+                and suggestion not in suggestions
+            ):
+                suggestions.append(suggestion)
 
-    return {"query": q, "suggestions": suggestions, "status": "success"}
+    # If no specific matches, provide example searches
+    if len(suggestions) == 0:
+        suggestions = EXAMPLE_SEARCHES
+
+    # Limit to top 8 suggestions
+    return {"query": q, "suggestions": suggestions[:8], "status": "success"}
+
+
+@app.get("/api/quick-filters")
+async def get_quick_filters():
+    """Get quick filter terms for search interface"""
+    return {"filters": QUICK_FILTER_TERMS, "status": "success"}
+
+
+@app.get("/api/search-history")
+async def get_search_history():
+    """Get recent search history"""
+    recent_searches = search_analytics.get("recent_queries", [])
+    # Return last 10 unique searches
+    unique_searches = []
+    seen = set()
+    for search in reversed(recent_searches):
+        query = search.get("query", "")
+        if query not in seen and len(unique_searches) < 10:
+            unique_searches.append(query)
+            seen.add(query)
+
+    return {"history": unique_searches, "status": "success"}
+
+
+@app.get("/api/example-searches")
+async def get_example_searches():
+    """Get example search queries for user guidance"""
+    return {"examples": EXAMPLE_SEARCHES, "status": "success"}
 
 
 @app.get("/api/samples/{geo_id}")

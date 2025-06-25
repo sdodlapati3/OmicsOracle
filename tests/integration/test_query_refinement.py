@@ -13,9 +13,7 @@ from pathlib import Path
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from omics_oracle.services.query_analysis import (
-    QueryAnalysisService,
-)
+from omics_oracle.services.query_analysis import QueryAnalysisService
 
 
 async def test_query_analysis_service():
@@ -167,15 +165,17 @@ def test_edge_cases():
     # Test very long query
     try:
         long_query = " ".join(["term"] * 100)
-        analysis = service.analyze_failed_query(long_query, 0)
-        print("  ✅ Long query handled")
+        service.analyze_failed_query(long_query, 0)
+        print("  Long query handled")
     except Exception as e:
-        print(f"  ❌ Long query failed: {e}")
+        print(f"  Long query failed: {e}")
 
     # Test special characters
     try:
         special_query = "cancer & tumor | disease (human)"
-        _ = service.analyze_failed_query(special_query, 0)  # Use _ to indicate intentionally unused
+        _ = service.analyze_failed_query(
+            special_query, 0
+        )  # Use _ to indicate intentionally unused
         print("  ✅ Special characters handled")
     except Exception as e:
         print(f"  ❌ Special characters failed: {e}")

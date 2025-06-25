@@ -30,7 +30,7 @@ pytest tests/
 # Integration tests
 pytest tests/integration/
 
-# System tests  
+# System tests
 pytest tests/system/
 
 # Interface tests
