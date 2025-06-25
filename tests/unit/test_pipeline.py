@@ -119,6 +119,7 @@ class TestOmicsOracle:
             patch(
                 "omics_oracle.pipeline.pipeline.EnhancedBiologicalSynonymMapper"
             ),
+            patch("omics_oracle.pipeline.pipeline.ImprovedSearchService"),
         ):
             oracle = OmicsOracle(mock_config)
             # Mock the components
@@ -126,6 +127,7 @@ class TestOmicsOracle:
             oracle.nlp_interpreter = MagicMock()
             oracle.biomedical_ner = MagicMock()
             oracle.synonym_mapper = MagicMock()
+            oracle.search_service = AsyncMock()
 
             return oracle
 
@@ -169,12 +171,30 @@ class TestOmicsOracle:
             "BRCA1",
             "breast cancer 1",
         ]
-        mock_oracle.geo_client.search_geo_series.return_value = ["GSE123456"]
-        mock_oracle.geo_client.get_geo_metadata.return_value = {
-            "accession": "GSE123456",
-            "title": "BRCA1 expression study",
-            "summary": "Analysis of BRCA1 expression in breast cancer",
-        }
+        # Mock the search service that actually does the searching
+        mock_oracle.search_service.search_with_multiple_strategies = AsyncMock(
+            return_value=(
+                ["GSE123456"],  # geo_ids
+                {  # search_metadata
+                    "original_query": "BRCA1 expression in cancer",
+                    "strategies_tried": 1,
+                    "successful_strategies": 1,
+                    "strategy_details": {"original": {"count": 1}},
+                    "enhanced_entities": {
+                        "genes": [{"text": "BRCA1", "start": 0, "end": 5}]
+                    },
+                },
+            )
+        )
+
+        # Mock geo_client for metadata fetching
+        mock_oracle.geo_client.get_geo_metadata = AsyncMock(
+            return_value={
+                "accession": "GSE123456",
+                "title": "BRCA1 expression study",
+                "summary": "Analysis of BRCA1 expression in breast cancer",
+            }
+        )
 
         # Process query
         result = await mock_oracle.process_query("BRCA1 expression in cancer")

@@ -49,6 +49,7 @@ class TestPubMedIntegration:
         assert params["db"] == "pubmed"
         assert params["term"] == "test"
 
+    @pytest.mark.asyncio
     @patch("aiohttp.ClientSession")
     @patch("aiohttp.TCPConnector")
     async def test_context_manager(self, mock_connector, mock_session):
@@ -152,8 +153,7 @@ class TestPubMedIntegration:
             await self.pubmed.search_papers("GSE12345")
 
     @pytest.mark.asyncio
-    @patch("aiohttp.ClientSession.get")
-    async def test_search_papers_success(self, mock_get):
+    async def test_search_papers_success(self):
         """Test successful paper search."""
         # Mock response XML
         mock_xml = """
@@ -165,12 +165,22 @@ class TestPubMedIntegration:
         </eSearchResult>
         """
 
+        # Create a proper async context manager mock
         mock_response = AsyncMock()
         mock_response.raise_for_status = Mock()
         mock_response.text = AsyncMock(return_value=mock_xml)
-        mock_get.return_value.__aenter__.return_value = mock_response
 
-        self.pubmed.session = AsyncMock()
+        # Create async context manager
+        mock_context_manager = AsyncMock()
+        mock_context_manager.__aenter__ = AsyncMock(return_value=mock_response)
+        mock_context_manager.__aexit__ = AsyncMock(return_value=None)
+
+        # Create proper session mock
+        mock_session = AsyncMock()
+        mock_session.get = Mock(return_value=mock_context_manager)
+
+        # Replace the session
+        self.pubmed.session = mock_session
 
         pmids = await self.pubmed.search_papers("GSE12345", max_results=10)
 
@@ -209,8 +219,7 @@ class TestPubMedIntegration:
         assert papers == []
 
     @pytest.mark.asyncio
-    @patch("aiohttp.ClientSession.get")
-    async def test_fetch_paper_details_success(self, mock_get):
+    async def test_fetch_paper_details_success(self):
         """Test successful paper details fetching."""
         mock_xml = """
         <PubmedArticleSet>
@@ -225,12 +234,22 @@ class TestPubMedIntegration:
         </PubmedArticleSet>
         """
 
+        # Create a proper async context manager mock
         mock_response = AsyncMock()
         mock_response.raise_for_status = Mock()
         mock_response.text = AsyncMock(return_value=mock_xml)
-        mock_get.return_value.__aenter__.return_value = mock_response
 
-        self.pubmed.session = AsyncMock()
+        # Create async context manager
+        mock_context_manager = AsyncMock()
+        mock_context_manager.__aenter__ = AsyncMock(return_value=mock_response)
+        mock_context_manager.__aexit__ = AsyncMock(return_value=None)
+
+        # Create proper session mock
+        mock_session = AsyncMock()
+        mock_session.get = Mock(return_value=mock_context_manager)
+
+        # Replace the session
+        self.pubmed.session = mock_session
 
         papers = await self.pubmed.fetch_paper_details(["12345678"])
 
