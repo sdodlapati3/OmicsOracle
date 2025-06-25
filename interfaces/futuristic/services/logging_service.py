@@ -5,7 +5,6 @@ Provides structured logging with different levels, file rotation,
 and real-time updates for the futuristic interface
 """
 
-import json
 import logging
 import logging.handlers
 from datetime import datetime
@@ -99,7 +98,7 @@ class FuturisticLogger:
 
             loop = asyncio.get_event_loop()
             loop.create_task(self._send_update("INFO", message, extra))
-        except:
+        except Exception:
             pass
 
     def warning(self, message: str, extra: Dict = None):
@@ -111,7 +110,7 @@ class FuturisticLogger:
 
             loop = asyncio.get_event_loop()
             loop.create_task(self._send_update("WARNING", message, extra))
-        except:
+        except Exception:
             pass
 
     def error(self, message: str, extra: Dict = None):
@@ -123,7 +122,7 @@ class FuturisticLogger:
 
             loop = asyncio.get_event_loop()
             loop.create_task(self._send_update("ERROR", message, extra))
-        except:
+        except Exception:
             pass
 
     def critical(self, message: str, extra: Dict = None):
@@ -135,7 +134,7 @@ class FuturisticLogger:
 
             loop = asyncio.get_event_loop()
             loop.create_task(self._send_update("CRITICAL", message, extra))
-        except:
+        except Exception:
             pass
 
     def debug(self, message: str, extra: Dict = None):
@@ -146,7 +145,7 @@ class FuturisticLogger:
 
             loop = asyncio.get_event_loop()
             loop.create_task(self._send_update("DEBUG", message, extra))
-        except:
+        except Exception:
             pass
 
     def get_stats(self) -> Dict:

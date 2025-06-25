@@ -15,7 +15,7 @@ def create_ui_router() -> APIRouter:
     @router.get("/", response_class=HTMLResponse)
     async def home():
         """Main UI page"""
-        return f"""
+        return """
         <!DOCTYPE html>
         <html>
         <head>
@@ -50,14 +50,14 @@ def create_ui_router() -> APIRouter:
                 @keyframes pulse {{ 0%, 100% {{ opacity: 1; }} 50% {{ opacity: 0.5; }} }}
                 .search-box {{
                     width: 100%; padding: 15px; border: none; border-radius: 10px;
-                    background: rgba(255,255,255,0.2); color: white; font-size: 16px;
+                    background: rgba(255,255,255,0.2); color: white; 14px: 16px;
                     margin: 15px 0;
                 }}
                 .search-box::placeholder {{ color: rgba(255,255,255,0.7); }}
                 .btn {{
                     background: linear-gradient(45deg, #FF6B6B, {UI_THEME['accent_color']});
                     border: none; padding: 12px 24px; border-radius: 25px;
-                    color: white; cursor: pointer; font-size: 14px; font-weight: bold;
+                    color: white; cursor: pointer; 14px: 14px; font-weight: bold;
                     transition: all 0.3s ease;
                 }}
                 .btn:hover {{ transform: scale(1.05); box-shadow: 0 5px 15px rgba(0,0,0,0.3); }}
@@ -66,7 +66,7 @@ def create_ui_router() -> APIRouter:
                     text-align: center; padding: 20px; border-radius: 10px;
                     background: {UI_THEME['card_background']};
                 }}
-                .feature-icon {{ font-size: 2em; margin-bottom: 10px; }}
+                .feature-icon {{ 14px: 2em; margin-bottom: 10px; }}
                 .demo-area {{
                     min-height: 200px; background: rgba(0,0,0,0.2);
                     border-radius: 10px; padding: 20px; margin-top: 20px;
@@ -79,9 +79,9 @@ def create_ui_router() -> APIRouter:
                 .websocket-status {{
                     position: fixed; top: 20px; right: 20px;
                     padding: 10px 15px; border-radius: 20px;
-                    background: rgba(0,0,0,0.7); font-size: 12px;
+                    background: rgba(0,0,0,0.7); 14px: 12px;
                 }}
-                .status-badge {{ padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; }}
+                .status-badge {{ padding: 4px 8px; border-radius: 12px; 14px: 11px; font-weight: bold; }}
                 .status-healthy {{ background: {UI_THEME['success_color']}; }}
                 .status-warning {{ background: {UI_THEME['warning_color']}; }}
                 .metric-item {{
@@ -89,11 +89,11 @@ def create_ui_router() -> APIRouter:
                     background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
                 }}
                 .metric-value {{
-                    font-size: 1.8em; font-weight: bold; color: {UI_THEME['accent_color']};
+                    14px: 1.8em; font-weight: bold; color: {UI_THEME['accent_color']};
                     margin-bottom: 5px;
                 }}
                 .metric-label {
-                    font-size: 0.9em; color: rgba(255,255,255,0.8);
+                    14px: 0.9em; color: rgba(255,255,255,0.8);
                 }
             </style>
         </head>
@@ -255,7 +255,7 @@ def create_ui_router() -> APIRouter:
                 function addLiveUpdate(message) {{
                     const updates = document.getElementById('live-updates');
                     const div = document.createElement('div');
-                    div.style.cssText = 'margin: 5px 0; padding: 8px; background: rgba(255,255,255,0.1); border-radius: 5px; font-size: 13px;';
+                    div.style.cssText = 'margin: 5px 0; padding: 8px; background: rgba(255,255,255,0.1); border-radius: 5px; 14px: 13px;';
                     div.innerHTML = `${{new Date().toLocaleTimeString()}} - ${{message}}`;
                     updates.insertBefore(div, updates.firstChild);
 
@@ -380,7 +380,7 @@ def create_ui_router() -> APIRouter:
 
                     let content = '<div style="padding: 20px;">';
                     content += '<h4 style="margin-bottom: 15px;">[CHART] ' + (vizData.config?.title || 'Visualization') + '</h4>';
-                    content += '<div style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; font-family: monospace; font-size: 12px;">';
+                    content += '<div style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; 14px: 12px;">';
                     content += '<strong>Type:</strong> ' + vizData.type + '<br>';
                     content += '<strong>ID:</strong> ' + vizData.id + '<br>';
                     content += '<strong>Data Points:</strong> ' + (vizData.data?.length || 'N/A') + '<br>';

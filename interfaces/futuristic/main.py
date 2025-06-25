@@ -11,7 +11,6 @@ This module implements a cutting-edge interface with:
 The existing interface remains fully functional as a fallback.
 """
 
-import asyncio
 import logging
 
 # Import existing OmicsOracle components
@@ -406,7 +405,9 @@ async def legacy_search(request: FuturisticSearchRequest) -> SearchResponse:
     try:
         # Use existing pipeline
         if legacy_pipeline:
-            result = await legacy_pipeline.process_query(request.query)
+            # Process query with legacy system
+            # result = await legacy_pipeline.process_query(request.query)
+            await legacy_pipeline.process_query(request.query)
 
             return SearchResponse(
                 job_id=str(uuid.uuid4()),

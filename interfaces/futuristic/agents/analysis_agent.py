@@ -5,7 +5,6 @@ Handles advanced data analysis and AI-powered insights
 """
 
 import logging
-from datetime import datetime
 from typing import Dict, List, Optional
 
 from ..models.futuristic_models import AgentMessage, AgentType, AnalysisInsight
@@ -183,7 +182,7 @@ class AnalysisAgent(BaseAgent):
                         year = pub_date[:4]
                         if year.isdigit():
                             dates.append(int(year))
-                except:
+                except Exception:
                     continue
 
         if len(dates) < 2:

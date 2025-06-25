@@ -5,7 +5,6 @@ Provides interactive charts, network visualizations, and real-time plots
 using modern web technologies and D3.js integration
 """
 
-import asyncio
 import json
 from datetime import datetime
 from enum import Enum
@@ -82,7 +81,9 @@ class EnhancedVisualizationService:
             "gradient": ["#3b82f6", "#6366f1", "#8b5cf6", "#a855f7", "#c084fc"],
         }
 
-        futuristic_logger.info("[DESIGN] Enhanced Visualization Service initialized")
+        futuristic_logger.info(
+            "[DESIGN] Enhanced Visualization Service initialized"
+        )
 
     def add_update_callback(self, callback):
         """Add callback for real-time visualization updates"""

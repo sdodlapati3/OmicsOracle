@@ -49,8 +49,8 @@ try:
                 .container { max-width: 800px; margin: 0 auto; padding: 40px; }
                 .card { background: rgba(255,255,255,0.1); border-radius: 15px; padding: 30px; margin: 20px 0; backdrop-filter: blur(10px); }
                 .status { display: inline-block; padding: 5px 15px; border-radius: 20px; background: #4CAF50; margin: 5px; }
-                h1 { font-size: 3em; text-align: center; margin-bottom: 10px; }
-                .emoji { font-size: 1.5em; }
+                h1 { 14px: 3em; text-align: center; margin-bottom: 10px; }
+                .emoji { 14px: 1.5em; }
             </style>
         </head>
         <body>

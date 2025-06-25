@@ -4,7 +4,6 @@ WebSocket Manager for Futuristic Interface
 Manages real-time WebSocket connections and message broadcasting
 """
 
-import asyncio
 import json
 import logging
 from datetime import datetime
@@ -95,7 +94,9 @@ class WebSocketManager:
                 await connection.send_text(json.dumps(message, default=str))
                 successful_sends += 1
             except Exception as e:
-                logger.error(f"[ERROR] Failed to send message to {client_id}: {e}")
+                logger.error(
+                    f"[ERROR] Failed to send message to {client_id}: {e}"
+                )
                 failed_connections.append(connection)
 
         # Clean up failed connections
@@ -112,7 +113,9 @@ class WebSocketManager:
             if await self.send_personal_message(message, client_id):
                 sent_count += 1
 
-        logger.info(f"[BROADCAST] Broadcast message sent to {sent_count} clients")
+        logger.info(
+            f"[BROADCAST] Broadcast message sent to {sent_count} clients"
+        )
         return sent_count
 
     async def send_to_multiple_clients(
@@ -168,7 +171,7 @@ class WebSocketManager:
                     for connection in self.active_connections[client_id].copy():
                         try:
                             await connection.close()
-                        except:
+                        except Exception:
                             pass
 
                     # Clean up
@@ -176,7 +179,9 @@ class WebSocketManager:
                     del self.connection_metadata[client_id]
                     cleaned_count += 1
 
-                    logger.info(f"[CLEANUP] Cleaned up inactive client: {client_id}")
+                    logger.info(
+                        f"[CLEANUP] Cleaned up inactive client: {client_id}"
+                    )
 
         return cleaned_count
 
@@ -283,7 +288,7 @@ class WebSocketManager:
             for connection in connections:
                 try:
                     await connection.close()
-                except:
+                except Exception:
                     pass
 
         # Clear all data

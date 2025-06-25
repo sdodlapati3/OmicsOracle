@@ -31,7 +31,7 @@ class ConnectionManager:
         """Send message to specific WebSocket"""
         try:
             await websocket.send_json(message)
-        except:
+        except Exception:
             self.disconnect(websocket)
 
     async def broadcast(self, message: dict):
@@ -40,7 +40,7 @@ class ConnectionManager:
         for connection in self.active_connections:
             try:
                 await connection.send_json(message)
-            except:
+            except Exception:
                 disconnected.append(connection)
 
         # Remove disconnected clients

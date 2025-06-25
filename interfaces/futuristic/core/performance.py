@@ -2,7 +2,6 @@
 Performance monitoring and metrics collection for the futuristic interface
 """
 
-import asyncio
 import logging
 import time
 from collections import defaultdict, deque
@@ -182,9 +181,10 @@ class PerformanceTracker:
         recent_requests = [
             r for r in self.request_history if r.timestamp > recent_cutoff
         ]
-        recent_metrics = [
-            m for m in self.metrics_history if m.timestamp > recent_cutoff
-        ]
+        # recent_metrics calculated but currently unused
+        # recent_metrics = [
+        #     m for m in self.metrics_history if m.timestamp > recent_cutoff
+        # ]
 
         # Calculate request rates
         total_requests = len(self.request_history)

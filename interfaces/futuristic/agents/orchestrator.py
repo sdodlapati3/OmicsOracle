@@ -8,17 +8,13 @@ import asyncio
 import logging
 import uuid
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 from ..models.futuristic_models import (
     AgentMessage,
-    AgentStatus,
-    AnalysisInsight,
     JobStatus,
     SearchJob,
-    SearchResult,
     SystemMetrics,
-    VisualizationData,
 )
 from .base import AgentRegistry, BaseAgent, MessageType
 
