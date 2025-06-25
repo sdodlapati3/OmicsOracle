@@ -157,10 +157,10 @@ def test_edge_cases():
 
     # Test empty query
     try:
-        analysis = service.analyze_failed_query("", 0)
-        print("  ✅ Empty query handled")
+        service.analyze_failed_query("", 0)
+        print("  Empty query handled")
     except Exception as e:
-        print(f"  ❌ Empty query failed: {e}")
+        print(f"  Empty query failed: {e}")
 
     # Test very long query
     try:

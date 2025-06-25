@@ -930,11 +930,11 @@ async def search(
                                 )
 
                                 # Only use non-empty values
-                                if extracted_geo_id:
+                                if extracted_geo_id and extracted_geo_id.strip():
                                     geo_id = extracted_geo_id
-                                if extracted_organism:
+                                if extracted_organism and extracted_organism.strip():
                                     organism = extracted_organism
-                                if extracted_sample_count:
+                                if extracted_sample_count and str(extracted_sample_count).strip():
                                     sample_count = extracted_sample_count
                             except Exception as e:
                                 logger.warning(f"Dict access failed: {e}")
@@ -951,24 +951,81 @@ async def search(
                                 logger.warning(f"Attr access failed: {e}")
 
                         # Approach 3: Extract organism and sample_count if not found
-                        if not organism or organism == "Unknown":
+                        if not organism or organism == "Unknown" or organism == "":
                             try:
                                 organism = (
                                     getattr(result, "organism", None)
                                     or getattr(result, "species", None)
                                     or getattr(result, "taxon", None)
                                 )
-                            except Exception:
+                                
+                                # If still empty, try to extract from text fields
+                                if not organism or organism == "":
+                                    # Try to extract organism from summary, title, or overall_design
+                                    text_to_search = (
+                                        result.get("summary", "") + " " 
+                                        + result.get("title", "") + " " 
+                                        + result.get("overall_design", "")
+                                    ).lower()
+                                    
+                                    # Common organism patterns
+                                    organism_patterns = {
+                                        r'\bhuman\b|\bhomo sapiens\b': 'Homo sapiens',
+                                        r'\bmouse\b|\bmus musculus\b': 'Mus musculus',
+                                        r'\brat\b|\brattus norvegicus\b': 'Rattus norvegicus',
+                                        r'\byeast\b|\bsaccharomyces cerevisiae\b': 'Saccharomyces cerevisiae',
+                                        r'\be\.?\s*coli\b|\bescherichia coli\b': 'Escherichia coli',
+                                        r'\bdrosophila\b|\bdrosophila melanogaster\b': 'Drosophila melanogaster',
+                                        r'\bc\.?\s*elegans\b|\bcaenorhabditis elegans\b': 'Caenorhabditis elegans',
+                                        r'\bzebrafish\b|\bdanio rerio\b': 'Danio rerio',
+                                        r'\barabidopsis\b|\barabidopsis thaliana\b': 'Arabidopsis thaliana',
+                                    }
+                                    
+                                    import re
+                                    for pattern, organism_name in organism_patterns.items():
+                                        if re.search(pattern, text_to_search):
+                                            organism = organism_name
+                                            logger.info(f"Extracted organism from text: {organism}")
+                                            break
+                                    
+                                    # If still not found, check if it's likely human based on context
+                                    if not organism or organism == "":
+                                        human_indicators = [
+                                            'patient', 'clinical', 'hospital', 'covid-19', 'disease',
+                                            'blood', 'plasma', 'serum', 'biopsy', 'tumor', 'cancer'
+                                        ]
+                                        if any(indicator in text_to_search for indicator in human_indicators):
+                                            organism = "Homo sapiens"
+                                            logger.info("Inferred human organism from clinical context")
+                                            
+                            except Exception as e:
+                                logger.warning(f"Organism extraction failed: {e}")
                                 pass
 
-                        if not sample_count or sample_count == "Unknown":
+                        if not sample_count or sample_count == "Unknown" or sample_count == "":
                             try:
                                 sample_count = (
                                     getattr(result, "sample_count", None)
                                     or getattr(result, "n_samples", None)
                                     or getattr(result, "samples", None)
                                 )
-                            except Exception:
+                                
+                                # If samples is a list, get its length
+                                if isinstance(sample_count, list):
+                                    sample_count = len(sample_count)
+                                elif isinstance(sample_count, str) and sample_count.startswith('['):
+                                    # Handle string representations of lists
+                                    import ast
+                                    try:
+                                        sample_list = ast.literal_eval(sample_count)
+                                        if isinstance(sample_list, list):
+                                            sample_count = len(sample_list)
+                                    except Exception:
+                                        # If we can't parse it, try to count commas + 1
+                                        sample_count = sample_count.count(',') + 1 if ',' in sample_count else 1
+                                        
+                            except Exception as e:
+                                logger.warning(f"Sample count extraction failed: {e}")
                                 pass
 
                         # Approach 4: Extract from AI summary ONLY if direct extraction completely failed
@@ -1059,37 +1116,36 @@ async def search(
                                 "summary"
                             )
                             # Validate that this summary isn't generic for a different dataset
-                            if potential_summary and isinstance(
-                                potential_summary, dict
-                            ):
+                            if potential_summary:
                                 summary_text = str(potential_summary)
-                                # Check if summary mentions a different specific GEO ID
-                                other_geo_ids = [
-                                    "GSE297209",
-                                    "GSE284759",
-                                    "GSE289246",
-                                ]
-                                mentions_other_geo = any(
-                                    other_id in summary_text
-                                    and other_id != geo_id
-                                    for other_id in other_geo_ids
+                                # Check if summary mentions a different specific GEO ID than current
+                                # Extract any GEO IDs mentioned in the summary
+                                import re
+                                mentioned_geo_ids = re.findall(r'GSE\d+', summary_text)
+                                
+                                # If the summary mentions a specific GEO ID and it doesn't match current dataset
+                                mentions_different_geo = any(
+                                    mentioned_id != geo_id and mentioned_id in summary_text
+                                    for mentioned_id in mentioned_geo_ids
                                 )
-                                if not mentions_other_geo:
+                                
+                                if not mentions_different_geo:
                                     ai_summary = potential_summary
                                     logger.info(
                                         f"Dataset {geo_id}: Using positional AI summary"
                                     )
                                 else:
                                     logger.warning(
-                                        f"Dataset {geo_id}: Rejecting positional summary mentioning {[oid for oid in other_geo_ids if oid in summary_text]}"
+                                        f"Dataset {geo_id}: Rejecting positional summary mentioning {mentioned_geo_ids}"
                                     )
 
                         # Final fallback: use brief overview only if no individual summaries worked
-                        if not ai_summary and not individual_summaries:
+                        # and only if we haven't used it for previous results
+                        if not ai_summary and not individual_summaries and i == 0:
                             ai_summary = ai_summaries.get("brief_overview")
                             if ai_summary:
                                 logger.info(
-                                    f"Dataset {geo_id}: Using brief overview as fallback"
+                                    f"Dataset {geo_id}: Using brief overview as fallback for first result only"
                                 )
 
                         # Process the AI summary safely
@@ -1107,9 +1163,6 @@ async def search(
 
                             # Enhanced generic summary detection
                             generic_indicators = [
-                                "GSE297209",
-                                "GSE284759",
-                                "GSE289246",
                                 "does not specifically address",
                                 "does not directly address",
                             ]
@@ -1124,17 +1177,17 @@ async def search(
                                     for indicator in generic_indicators
                                 )
 
-                                # Also check if it mentions a different GEO ID
-                                for indicator in generic_indicators[
-                                    :3
-                                ]:  # GEO IDs
-                                    if (
-                                        indicator in summary_text
-                                        and geo_id != indicator
-                                        and geo_id != "unknown"
-                                    ):
-                                        is_generic = True
-                                        break
+                                # Also check if it mentions a different GEO ID than current dataset
+                                import re
+                                mentioned_geo_ids = re.findall(r'GSE\d+', summary_text)
+                                if mentioned_geo_ids:
+                                    for mentioned_id in mentioned_geo_ids:
+                                        if mentioned_id != geo_id and geo_id != "unknown":
+                                            is_generic = True
+                                            logger.warning(
+                                                f"AI summary for {geo_id} mentions different dataset {mentioned_id}"
+                                            )
+                                            break
 
                             if is_generic:
                                 logger.warning(
@@ -1145,6 +1198,10 @@ async def search(
 
                         else:
                             display_summary = original_summary
+                            
+                        # Final check: ensure we have some description
+                        if not display_summary or display_summary == "No description available":
+                            display_summary = f"Dataset {geo_id}: Genomic dataset with {sample_count} samples from {organism}. Further details available upon access."
 
                         processed_results.append(
                             {
