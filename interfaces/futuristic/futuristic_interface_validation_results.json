@@ -1,0 +1,146 @@
+{
+  "summary": {
+    "total_tests": 19,
+    "passed_tests": 18,
+    "failed_tests": 1,
+    "success_rate": 94.73684210526315,
+    "execution_time_seconds": 2.0458192825317383,
+    "overall_status": "FAIL"
+  },
+  "detailed_results": [
+    {
+      "suite": "Basic Connectivity",
+      "test": "Main page loads",
+      "passed": true,
+      "details": "Main page loads successfully",
+      "timestamp": "2025-06-25T15:30:01.004713"
+    },
+    {
+      "suite": "Basic Connectivity",
+      "test": "API documentation",
+      "passed": true,
+      "details": "API docs accessible",
+      "timestamp": "2025-06-25T15:30:01.004726"
+    },
+    {
+      "suite": "Static Files",
+      "test": "CSS file serving",
+      "passed": true,
+      "details": "Status: 200, Type: text/css; charset=utf-8",
+      "timestamp": "2025-06-25T15:30:01.007572"
+    },
+    {
+      "suite": "Static Files",
+      "test": "JavaScript file serving",
+      "passed": true,
+      "details": "Status: 200, Type: text/javascript; charset=utf-8",
+      "timestamp": "2025-06-25T15:30:01.007583"
+    },
+    {
+      "suite": "API Endpoints",
+      "test": "Agents endpoint",
+      "passed": true,
+      "details": "Status: 200",
+      "timestamp": "2025-06-25T15:30:02.029548"
+    },
+    {
+      "suite": "API Endpoints",
+      "test": "Search endpoint (POST)",
+      "passed": true,
+      "details": "Status: 200",
+      "timestamp": "2025-06-25T15:30:02.029562"
+    },
+    {
+      "suite": "API Endpoints",
+      "test": "Visualization endpoint (POST)",
+      "passed": true,
+      "details": "Status: 200",
+      "timestamp": "2025-06-25T15:30:02.029567"
+    },
+    {
+      "suite": "API Endpoints",
+      "test": "Performance endpoint",
+      "passed": true,
+      "details": "Status: 200",
+      "timestamp": "2025-06-25T15:30:02.029571"
+    },
+    {
+      "suite": "API Endpoints",
+      "test": "Performance endpoints stats",
+      "passed": true,
+      "details": "Status: 200",
+      "timestamp": "2025-06-25T15:30:02.029576"
+    },
+    {
+      "suite": "API Endpoints",
+      "test": "Performance agents stats",
+      "passed": true,
+      "details": "Status: 200",
+      "timestamp": "2025-06-25T15:30:02.029580"
+    },
+    {
+      "suite": "Health Monitoring",
+      "test": "Health monitoring",
+      "passed": true,
+      "details": "Health status: healthy",
+      "timestamp": "2025-06-25T15:30:02.032209"
+    },
+    {
+      "suite": "Health Monitoring",
+      "test": "Quick health check",
+      "passed": true,
+      "details": "Quick health check successful",
+      "timestamp": "2025-06-25T15:30:02.032220"
+    },
+    {
+      "suite": "Performance Tracking",
+      "test": "Performance metrics",
+      "passed": true,
+      "details": "Performance tracking active, uptime: 88.5s",
+      "timestamp": "2025-06-25T15:30:02.033133"
+    },
+    {
+      "suite": "Search Functionality",
+      "test": "Search functionality",
+      "passed": true,
+      "details": "Search returned 3 results",
+      "timestamp": "2025-06-25T15:30:03.036371"
+    },
+    {
+      "suite": "Agent System",
+      "test": "Agent system status",
+      "passed": true,
+      "details": "Found 3 agents",
+      "timestamp": "2025-06-25T15:30:03.037330"
+    },
+    {
+      "suite": "Visualization System",
+      "test": "Visualization creation",
+      "passed": true,
+      "details": "Visualization created: scatter_0",
+      "timestamp": "2025-06-25T15:30:03.038865"
+    },
+    {
+      "suite": "WebSocket Connection",
+      "test": "WebSocket endpoint",
+      "passed": false,
+      "details": "WebSocket endpoint available (returns 426 for HTTP)",
+      "timestamp": "2025-06-25T15:30:03.039591"
+    },
+    {
+      "suite": "Error Handling",
+      "test": "404 error handling",
+      "passed": true,
+      "details": "Returns proper 404 status",
+      "timestamp": "2025-06-25T15:30:03.041140"
+    },
+    {
+      "suite": "Error Handling",
+      "test": "Invalid data handling",
+      "passed": true,
+      "details": "Returns error status 422 for invalid data",
+      "timestamp": "2025-06-25T15:30:03.041152"
+    }
+  ],
+  "timestamp": "2025-06-25T15:30:03.041182"
+}

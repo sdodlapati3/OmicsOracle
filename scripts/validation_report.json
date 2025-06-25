@@ -1,0 +1,94 @@
+{
+  "timestamp": 1750878258.978886,
+  "tests": {
+    "unit": {
+      "success": false,
+      "output": "============================= test session starts ==============================\nplatform darwin -- Python 3.11.6, pytest-8.4.1, pluggy-1.6.0 -- /Users/sanjeevadodlapati/Downloads/Repos/OmicsOracle/venv/bin/python\ncachedir: .pytest_cache\nrootdir: /Users/sanjeevadodlapati/Downloads/Repos/OmicsOracle\nconfigfile: pyproject.toml\nplugins: anyio-4.9.0, langsmith-0.4.1, cov-6.2.1, asyncio-1.0.0\nasyncio: mode=Mode.STRICT, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function\ncollecting ... collected 0 items\n\n============================ no tests ran in 0.01s =============================\n",
+      "errors": "ERROR: file or directory not found: tests/unit/integrations/\n\n",
+      "coverage": 0
+    },
+    "quality": {
+      "ruff": {
+        "success": false,
+        "stdout": "[\n  {\n    \"cell\": null,\n    \"code\": \"E902\",\n    \"end_location\": {\n      \"column\": 1,\n      \"row\": 1\n    },\n    \"filename\": \"/Users/sanjeevadodlapati/Downloads/Repos/OmicsOracle/scripts/src/omics_oracle/integrations\",\n    \"fix\": null,\n    \"location\": {\n      \"column\": 1,\n      \"row\": 1\n    },\n    \"message\": \"No such file or directory (os error 2)\",\n    \"noqa_row\": null,\n    \"url\": \"https://docs.astral.sh/ruff/rules/io-error\"\n  }\n]",
+        "stderr": "",
+        "returncode": 1
+      },
+      "mypy": {
+        "success": false,
+        "stdout": "",
+        "stderr": "usage: mypy [-h] [-v] [-V] [more options; see below]\n            [-m MODULE] [-p PACKAGE] [-c PROGRAM_TEXT] [files ...]\nmypy: error: unrecognized arguments: --json-report mypy-report.json\n",
+        "returncode": 2
+      },
+      "black": {
+        "success": false,
+        "stdout": "",
+        "stderr": "Usage: python -m black [OPTIONS] SRC ...\nTry 'python -m black -h' for help.\n\nError: Invalid value for 'SRC ...': Path 'src/omics_oracle/integrations/' does not exist.\n",
+        "returncode": 2
+      }
+    },
+    "integration": {
+      "pubmed": {
+        "success": true,
+        "papers_found": 3,
+        "response_time": 0.904608964920044,
+        "has_citation_info": true
+      },
+      "citations": {
+        "bibtex": {
+          "success": true,
+          "length": 268,
+          "response_time": 0.002026796340942383
+        },
+        "ris": {
+          "success": true,
+          "length": 198,
+          "response_time": 0.00010704994201660156
+        },
+        "csl-json": {
+          "success": true,
+          "length": 446,
+          "response_time": 0.0001659393310546875
+        },
+        "endnote": {
+          "success": true,
+          "length": 510,
+          "response_time": 4.506111145019531e-05
+        }
+      }
+    }
+  },
+  "performance": {
+    "batch_processing": {
+      "datasets_processed": 10,
+      "total_time": 0.00019598007202148438,
+      "avg_time_per_dataset": 1.9598007202148438e-05,
+      "success": true
+    },
+    "citation_generation": {
+      "datasets_processed": 50,
+      "total_time": 0.0008490085601806641,
+      "avg_time_per_dataset": 1.698017120361328e-05,
+      "output_size": 14980,
+      "success": true
+    }
+  },
+  "security": {
+    "secret_scan": {
+      "issues_found": 0,
+      "issues": [],
+      "success": true
+    },
+    "permissions": {
+      "issues_found": 0,
+      "issues": [],
+      "success": true
+    }
+  },
+  "overall_status": "FAIL",
+  "issues": [
+    "Unit tests failed",
+    "Test coverage too low: 0%",
+    "Linting issues found"
+  ]
+}
