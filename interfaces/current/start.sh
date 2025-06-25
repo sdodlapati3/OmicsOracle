@@ -6,8 +6,8 @@
 echo "🚀 Starting OmicsOracle STABLE Web Interface..."
 echo "================================================"
 
-# Get the project root directory
-PROJECT_ROOT="$(dirname "$(pwd)")"
+# Get the project root directory (go up two levels from interfaces/current/)
+PROJECT_ROOT="$(dirname "$(dirname "$(pwd)")")"
 VENV_PATH="$PROJECT_ROOT/venv"
 
 # Activate virtual environment

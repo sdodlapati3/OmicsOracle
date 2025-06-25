@@ -7,23 +7,19 @@ A minimalist, reliable web interface that actually works.
 No mock data, no complex dependencies, just functionality.
 """
 
-import asyncio
-import json
 import logging
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List
+
+import uvicorn
+from fastapi import FastAPI, Form
+from fastapi.responses import HTMLResponse, JSONResponse
 
 # Add the project root to Python path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 sys.path.insert(0, str(project_root / "src"))
-
-import uvicorn
-from fastapi import FastAPI, Form, Request
-from fastapi.responses import HTMLResponse, JSONResponse
-from fastapi.templating import Jinja2Templates
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -248,6 +244,40 @@ HTML_TEMPLATE = """
             border-radius: 8px;
             margin-bottom: 20px;
         }
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-top: 20px;
+            padding: 20px;
+        }
+        .pagination button {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        .pagination button:hover:not(:disabled) {
+            background: #e9ecef;
+        }
+        .pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .pagination button.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        .pagination-info {
+            color: #6c757d;
+            font-size: 14px;
+            margin: 0 15px;
+        }
     </style>
 </head>
 <body>
@@ -288,8 +318,10 @@ HTML_TEMPLATE = """
                 </div>
                 -->
 
-                <!-- Hidden field with default value -->
+                <!-- Hidden fields for pagination -->
                 <input type="hidden" id="max_results" name="max_results" value="10">
+                <input type="hidden" id="page" name="page" value="1">
+                <input type="hidden" id="page_size" name="page_size" value="10">
 
                 <button type="submit" class="btn" id="searchBtn">
                     🔍 Search Datasets
@@ -342,12 +374,18 @@ HTML_TEMPLATE = """
             const results = document.getElementById('results');
 
             if (data.results && data.results.length > 0) {
-                // Improved count display showing X of Y results
-                const totalCount = data.total_count || data.results.length;
+                // Extract pagination info
+                const pagination = data.pagination || {};
+                const totalCount = pagination.total_results || data.total_count || data.results.length;
                 const displayedCount = data.results.length;
+                const currentPage = pagination.current_page || 1;
+                const totalPages = pagination.total_pages || 1;
 
+                // Improved count display with pagination info
                 let countMessage;
-                if (totalCount === displayedCount) {
+                if (totalPages > 1) {
+                    countMessage = `✅ Showing ${pagination.start_index || 1}-${pagination.end_index || displayedCount} of ${totalCount} datasets (Page ${currentPage} of ${totalPages})`;
+                } else if (totalCount === displayedCount) {
                     countMessage = `✅ Found ${totalCount} dataset${totalCount !== 1 ? 's' : ''}`;
                 } else {
                     countMessage = `✅ Showing ${displayedCount} of ${totalCount} datasets`;
@@ -356,14 +394,14 @@ HTML_TEMPLATE = """
                 let html = `<div class="success">${countMessage}</div>`;
 
                 data.results.forEach((result, index) => {
-                    const resultNumber = index + 1;
+                    const globalIndex = ((currentPage - 1) * (pagination.page_size || 10)) + index + 1;
                     const aiIndicator = result.ai_enhanced ? '<span style="color: #28a745; font-weight: bold;">🤖 AI Enhanced</span> | ' : '';
                     const samplesBtn = result.id !== 'unknown' ?
                         `<button class="btn-samples" onclick="showSamples('${result.id}')">📋 View Samples</button>` : '';
 
                     html += `
                         <div class="result-item">
-                            <div class="result-number">${resultNumber}</div>
+                            <div class="result-number">${globalIndex}</div>
                             <div class="result-title">${result.title}</div>
                             <div class="result-meta">
                                 ${aiIndicator}ID: ${result.id} |
@@ -376,10 +414,65 @@ HTML_TEMPLATE = """
                     `;
                 });
 
+                // Add pagination controls if more than one page
+                if (totalPages > 1) {
+                    html += createPaginationControls(pagination);
+                }
+
                 results.innerHTML = html;
             } else {
                 results.innerHTML = '<div class="error">No datasets found for your query. Try different keywords.</div>';
             }
+        }
+
+        function createPaginationControls(pagination) {
+            const currentPage = pagination.current_page || 1;
+            const totalPages = pagination.total_pages || 1;
+            const hasPrevious = pagination.has_previous || false;
+            const hasNext = pagination.has_next || false;
+
+            let paginationHtml = '<div class="pagination">';
+            
+            // Previous button
+            paginationHtml += `<button onclick="goToPage(${currentPage - 1})" ${!hasPrevious ? 'disabled' : ''}>← Previous</button>`;
+            
+            // Page numbers (show current page and nearby pages)
+            const startPage = Math.max(1, currentPage - 2);
+            const endPage = Math.min(totalPages, currentPage + 2);
+            
+            if (startPage > 1) {
+                paginationHtml += `<button onclick="goToPage(1)">1</button>`;
+                if (startPage > 2) {
+                    paginationHtml += '<span class="pagination-info">...</span>';
+                }
+            }
+            
+            for (let i = startPage; i <= endPage; i++) {
+                const activeClass = i === currentPage ? 'active' : '';
+                paginationHtml += `<button class="${activeClass}" onclick="goToPage(${i})">${i}</button>`;
+            }
+            
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) {
+                    paginationHtml += '<span class="pagination-info">...</span>';
+                }
+                paginationHtml += `<button onclick="goToPage(${totalPages})">${totalPages}</button>`;
+            }
+            
+            // Next button
+            paginationHtml += `<button onclick="goToPage(${currentPage + 1})" ${!hasNext ? 'disabled' : ''}>Next →</button>`;
+            
+            // Page info
+            paginationHtml += `<span class="pagination-info">Page ${currentPage} of ${totalPages}</span>`;
+            
+            paginationHtml += '</div>';
+            
+            return paginationHtml;
+        }
+
+        function goToPage(page) {
+            document.getElementById('page').value = page;
+            document.getElementById('searchForm').dispatchEvent(new Event('submit'));
         }
 
         function displayError(message) {
@@ -402,10 +495,18 @@ async def home():
 
 
 @app.post("/search")
-async def search(query: str = Form(...), max_results: int = Form(10)):
-    """Handle search requests"""
+async def search(
+    query: str = Form(...),
+    max_results: int = Form(10),
+    page: int = Form(1),
+    page_size: int = Form(10)
+):
+    """Handle search requests with pagination support"""
     try:
-        logger.info(f"Search request: '{query}' (max_results: {max_results})")
+        # Calculate pagination parameters
+        offset = (page - 1) * page_size
+        
+        logger.info(f"Search request: '{query}' (page: {page}, page_size: {page_size}, offset: {offset})")
 
         # Update search analytics
         update_search_analytics(query)
@@ -413,14 +514,18 @@ async def search(query: str = Form(...), max_results: int = Form(10)):
         if OMICS_AVAILABLE and pipeline:
             # Use real OmicsOracle pipeline
             try:
-                # Run the search
+                # Run the search with extended results for pagination
+                total_results_requested = max(max_results, page * page_size)
                 results = await pipeline.process_query(
-                    query, max_results=max_results
+                    query, max_results=total_results_requested
                 )
 
                 # Process results with AI-enhanced summaries
                 processed_results = []
+                total_count = 0
+                
                 if hasattr(results, "metadata") and results.metadata:
+                    total_count = len(results.metadata)
                     ai_summaries = getattr(results, "ai_summaries", {})
                     individual_summaries = ai_summaries.get(
                         "individual_summaries", []
@@ -435,7 +540,12 @@ async def search(query: str = Form(...), max_results: int = Form(10)):
                         f"AI summaries keys: {list(ai_summaries.keys())}"
                     )
 
-                    for i, result in enumerate(results.metadata[:max_results]):
+                    # Apply pagination to results
+                    start_idx = offset
+                    end_idx = offset + page_size
+                    paginated_metadata = results.metadata[start_idx:end_idx]
+                    
+                    for i, result in enumerate(paginated_metadata):
                         # First, try to get the AI summary to potentially extract metadata from it
                         ai_summary = None
                         if i < len(individual_summaries):
@@ -699,19 +809,26 @@ async def search(query: str = Form(...), max_results: int = Form(10)):
                             }
                         )
 
-                # Get the actual total count from pipeline if available
-                actual_total_count = len(processed_results)
-                if hasattr(results, "metadata") and hasattr(
-                    results.metadata, "__len__"
-                ):
-                    actual_total_count = len(results.metadata)
-                elif hasattr(results, "total_count"):
-                    actual_total_count = results.total_count
-
+                # Calculate pagination metadata
+                total_available = total_count
+                has_more = (offset + page_size) < total_count
+                current_page = page
+                total_pages = (total_count + page_size - 1) // page_size  # Ceiling division
+                
                 return JSONResponse(
                     {
                         "results": processed_results,
-                        "total_count": actual_total_count,
+                        "pagination": {
+                            "current_page": current_page,
+                            "page_size": page_size,
+                            "total_results": total_available,
+                            "total_pages": total_pages,
+                            "has_next": has_more,
+                            "has_previous": current_page > 1,
+                            "start_index": offset + 1,
+                            "end_index": min(offset + page_size, total_available)
+                        },
+                        "total_count": total_available,  # Keep for backward compatibility
                         "displayed_count": len(processed_results),
                         "query": query,
                         "status": "success",
@@ -1017,11 +1134,9 @@ async def debug_search(query: str = Form(...), max_results: int = Form(2)):
 
 
 if __name__ == "__main__":
-    import uvicorn
-
     print("🚀 Starting OmicsOracle Web Interface...")
-    print(f"🌐 Interface will be available at: http://localhost:8888")
-    print(f"🔍 Health check: http://localhost:8888/health")
+    print("🌐 Interface will be available at: http://localhost:8888")
+    print("🔍 Health check: http://localhost:8888/health")
     print("=" * 50)
 
     # Run the server on localhost:8888 instead of 0.0.0.0:8888

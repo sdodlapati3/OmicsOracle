@@ -7,7 +7,6 @@ to ensure they're working correctly.
 """
 
 import asyncio
-import json
 import sys
 from pathlib import Path
 
@@ -16,8 +15,6 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from omics_oracle.services.query_analysis import (
     QueryAnalysisService,
-    QueryIssue,
-    SuggestionType,
 )
 
 
@@ -178,7 +175,7 @@ def test_edge_cases():
     # Test special characters
     try:
         special_query = "cancer & tumor | disease (human)"
-        analysis = service.analyze_failed_query(special_query, 0)
+        _ = service.analyze_failed_query(special_query, 0)  # Use _ to indicate intentionally unused
         print("  ✅ Special characters handled")
     except Exception as e:
         print(f"  ❌ Special characters failed: {e}")

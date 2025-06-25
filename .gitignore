@@ -175,3 +175,19 @@ temp/
 
 # Auto-generated files
 src/omics_oracle/_version.py
+
+# Log files
+*.log
+backend.log
+frontend.log
+
+# Test results and temporary files
+test_results/
+test-results/
+
+# Archive and legacy files
+archive/
+
+# Temporary utility outputs
+utils/temp/
+utils/output/
