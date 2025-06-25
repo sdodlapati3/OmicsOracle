@@ -4,10 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OmicsOracle - {{ title_suffix if title_suffix else 'Modern Interface' }}</title>
-    
+
     <!-- Modernized CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
-    
+
     <!-- Chart.js for data visualization -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -72,7 +72,7 @@
                             {% set total_count = results.pagination.total_results if results.pagination else results.results|length %}
                             ✅ Found {{ total_count }} dataset{{ 's' if total_count != 1 else '' }}
                         </div>
-                        
+
                         {% for result in results.results %}
                         <div class="result-item" data-geo-id="{{ result.id }}" data-result-id="{{ result.id }}">
                             <div class="result-number">{{ loop.index }}</div>
@@ -98,7 +98,7 @@
                                 <span class="meta-badge">ID: {{ result.id }}</span>
                             </div>
                             <div class="result-summary collapsed">{{ result.summary }}</div>
-                            
+
                             <div class="result-details">
                                 <div class="detail-grid">
                                     <div class="detail-item">
@@ -118,16 +118,16 @@
                                         <div class="detail-value">{{ result.platform if result.platform else 'Unknown' }}</div>
                                     </div>
                                 </div>
-                                
+
                                 <div class="result-actions">
                                     {% if result.id and result.id != 'unknown' %}
                                         <button class="btn-action primary" onclick="showSamples('{{ result.id }}', event)">📋 View Samples</button>
                                     {% endif %}
-                                    
+
                                     {% if result.id and result.id.startswith('GSE') %}
                                         <a href="https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc={{ result.id }}" target="_blank" rel="noopener" class="btn-action">🔗 View on GEO</a>
                                     {% endif %}
-                                    
+
                                     <button class="btn-action" onclick="saveToFavorites('{{ result.id }}', event)">⭐ Save</button>
                                     <button class="btn-action" onclick="exportResult('{{ result.id }}', event)">📥 Export</button>
                                 </div>

@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  ExclamationTriangleIcon, 
+import {
+  ExclamationTriangleIcon,
   MagnifyingGlassIcon,
   SparklesIcon,
-  XMarkIcon 
+  XMarkIcon
 } from '@heroicons/react/24/outline';
 import QuerySuggestions from './QuerySuggestions';
 import AlternativeQueries from './AlternativeQueries';
@@ -165,7 +165,7 @@ export const QueryRefinementContainer: React.FC<QueryRefinementContainerProps> =
 
   const handleSuggestionClick = (suggestion: QuerySuggestion) => {
     onQueryRefined(suggestion.suggested_query);
-    
+
     // Submit feedback
     onFeedbackSubmitted({
       original_query: originalQuery,
@@ -177,7 +177,7 @@ export const QueryRefinementContainer: React.FC<QueryRefinementContainerProps> =
 
   const handleSimilarQueryClick = (query: SimilarQuery) => {
     onQueryRefined(query.query);
-    
+
     // Submit feedback
     onFeedbackSubmitted({
       original_query: originalQuery,

@@ -3,9 +3,9 @@ import { ChevronRightIcon } from '@heroicons/react/24/outline';
 import type { ResultsListProps, SearchResult } from '../types';
 import LoadingSpinner from './LoadingSpinner';
 
-const ResultCard: React.FC<{ result: SearchResult; onClick?: () => void }> = ({ 
-  result, 
-  onClick 
+const ResultCard: React.FC<{ result: SearchResult; onClick?: () => void }> = ({
+  result,
+  onClick
 }) => {
   return (
     <div
@@ -22,13 +22,13 @@ const ResultCard: React.FC<{ result: SearchResult; onClick?: () => void }> = ({
               {result.id}
             </span>
           </div>
-          
+
           {result.summary && (
             <p className="mt-2 text-sm text-gray-600 line-clamp-3">
               {result.summary}
             </p>
           )}
-          
+
           <div className="mt-3 flex flex-wrap gap-2">
             {result.organism && (
               <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-700">
@@ -46,7 +46,7 @@ const ResultCard: React.FC<{ result: SearchResult; onClick?: () => void }> = ({
               </span>
             )}
           </div>
-          
+
           <div className="mt-3 text-xs text-gray-500 space-y-1">
             {result.submission_date && (
               <div>📅 Submitted: {new Date(result.submission_date).toLocaleDateString()}</div>
@@ -56,18 +56,18 @@ const ResultCard: React.FC<{ result: SearchResult; onClick?: () => void }> = ({
             )}
           </div>
         </div>
-        
+
         <ChevronRightIcon className="h-5 w-5 text-gray-400 flex-shrink-0 ml-4" />
       </div>
     </div>
   );
 };
 
-const ResultsList: React.FC<ResultsListProps> = ({ 
-  results, 
-  loading = false, 
+const ResultsList: React.FC<ResultsListProps> = ({
+  results,
+  loading = false,
   error = null,
-  onResultClick 
+  onResultClick
 }) => {
   if (loading) {
     return (
@@ -114,7 +114,7 @@ const ResultsList: React.FC<ResultsListProps> = ({
           Search Results ({results.length})
         </h2>
       </div>
-      
+
       <div className="grid gap-4">
         {results.map((result) => (
           <ResultCard

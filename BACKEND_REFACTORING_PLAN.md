@@ -136,18 +136,18 @@ interfaces/modern/
 ```python
 class SearchService:
     """Handles all search-related operations"""
-    
+
     def __init__(self, pipeline_service, cache_service, metadata_service):
         self.pipeline = pipeline_service
         self.cache = cache_service
         self.metadata = metadata_service
-    
+
     async def search(self, query: str, options: SearchOptions) -> SearchResponse:
         """Execute search with caching and metadata extraction"""
-        
+
     async def get_suggestions(self, query: str) -> List[str]:
         """Get search suggestions"""
-        
+
     def extract_metadata(self, results: List[Dict]) -> List[DatasetMetadata]:
         """Extract and enrich metadata from search results"""
 ```
@@ -156,16 +156,16 @@ class SearchService:
 ```python
 class CacheService:
     """Manages caching for search results and AI summaries"""
-    
+
     def __init__(self, cache_backend):
         self.cache = cache_backend
-    
+
     async def get_search_results(self, cache_key: str) -> Optional[SearchResponse]:
         """Get cached search results"""
-        
+
     async def cache_search_results(self, cache_key: str, results: SearchResponse):
         """Cache search results with dataset-specific keys"""
-        
+
     def generate_dataset_key(self, geo_id: str, query: str) -> str:
         """Generate dataset-specific cache key"""
 ```
@@ -174,13 +174,13 @@ class CacheService:
 ```python
 class MetadataService:
     """Handles metadata extraction and enrichment"""
-    
+
     def extract_geo_metadata(self, result_data: Dict) -> DatasetMetadata:
         """Extract GEO metadata from result"""
-        
+
     def detect_organism(self, text: str) -> str:
         """Detect organism from text using patterns"""
-        
+
     def extract_sample_count(self, metadata: Dict) -> int:
         """Extract sample count from metadata"""
 ```
@@ -189,13 +189,13 @@ class MetadataService:
 ```python
 class AnalyticsService:
     """Manages search analytics and statistics"""
-    
+
     def record_search(self, query: str, results_count: int):
         """Record search event"""
-        
+
     def get_popular_terms(self) -> List[str]:
         """Get popular search terms"""
-        
+
     def get_search_history(self, limit: int = 10) -> List[SearchEvent]:
         """Get recent search history"""
 ```
@@ -315,7 +315,7 @@ async def search_datasets(
 class CacheService:
     def __init__(self, cache_repository: CacheRepository):
         self.repo = cache_repository
-    
+
     async def get_dataset_summary(self, geo_id: str) -> Optional[AISummary]:
         cache_key = f"summary:{geo_id}"
         return await self.repo.get(cache_key)
@@ -326,15 +326,15 @@ class CacheService:
 # app/main.py
 def create_app() -> FastAPI:
     app = FastAPI(title="OmicsOracle API", version="2.0.0")
-    
+
     # Configure middleware
     app.add_middleware(LoggingMiddleware)
     app.add_middleware(CORSMiddleware)
-    
+
     # Include routers
     app.include_router(search_router, prefix="/api/v1")
     app.include_router(analytics_router, prefix="/api/v1")
-    
+
     return app
 ```
 
@@ -369,7 +369,7 @@ class CacheService:
     def generate_dataset_cache_key(self, geo_id: str, summary_type: str) -> str:
         """Generate dataset-specific cache key (not query-based)"""
         return f"dataset:{geo_id}:{summary_type}"
-    
+
     def generate_search_cache_key(self, query: str, options: SearchOptions) -> str:
         """Generate search-level cache key"""
         options_hash = hashlib.md5(str(options.dict()).encode()).hexdigest()[:8]
@@ -398,11 +398,11 @@ class TestSearchService:
             cache_service=Mock(),
             metadata_service=Mock()
         )
-    
+
     async def test_search_with_caching(self, search_service):
         # Test cached search results
         pass
-    
+
     async def test_metadata_extraction(self, search_service):
         # Test metadata extraction accuracy
         pass
@@ -506,11 +506,11 @@ class TestSearchService:
 1. **Minimal Refactoring**: Just fix corruption, keep monolithic structure
    - **Pros**: Less risk, faster implementation
    - **Cons**: Technical debt remains, future scalability issues
-   
+
 2. **Complete Rewrite**: Start from scratch
    - **Pros**: Clean slate, modern architecture
    - **Cons**: High risk, potential feature loss, longer timeline
-   
+
 3. **Gradual Extraction**: Extract services one by one over time
    - **Pros**: Lower risk, incremental improvement
    - **Cons**: Slower progress, may never complete

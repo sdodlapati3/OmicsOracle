@@ -10,7 +10,7 @@
 
 This document outlines a comprehensive enhancement plan for the OmicsOracle web interface. The current stable implementation successfully displays unique, correct metadata for each dataset with improved user experience. This roadmap prioritizes user experience improvements, advanced features, and production scalability.
 
-## ✅ Current Status - Accomplished 
+## ✅ Current Status - Accomplished
 
 ### ✨ **Recently Completed Features**
 - **Result Numbering**: Each result displays numbered badges (1, 2, 3...)
@@ -31,7 +31,7 @@ This document outlines a comprehensive enhancement plan for the OmicsOracle web 
 
 ## 🗺️ Enhancement Roadmap
 
-### **Phase 1: User Experience Refinements** 
+### **Phase 1: User Experience Refinements**
 *Priority: HIGH | Timeline: 1-2 weeks*
 
 #### 1.1 **Pagination System**
@@ -79,7 +79,7 @@ This document outlines a comprehensive enhancement plan for the OmicsOracle web 
 - **Goal**: Deep dive into dataset composition
 - **Features**:
   - Expandable sample viewer with metadata tables
-  - Sample filtering and sorting capabilities  
+  - Sample filtering and sorting capabilities
   - Interactive charts for sample distribution
   - Export sample metadata to CSV/Excel
   - Link to external sample visualization tools

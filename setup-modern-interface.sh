@@ -25,14 +25,14 @@ echo "📦 Checking Python environment..."
 if [ -d "venv" ]; then
     echo "🔍 Found existing virtual environment"
     source venv/bin/activate
-    
+
     # Check if Flask is already installed and what version
     flask_version=$(python -c "import flask; print(flask.__version__)" 2>/dev/null || echo "not installed")
     echo "📋 Current Flask version: $flask_version"
-    
+
     # Check if our dependencies are compatible
     echo "🔍 Checking compatibility with existing environment..."
-    
+
     # For now, let's use the existing venv but add our dependencies
     echo "✅ Using existing virtual environment"
 else

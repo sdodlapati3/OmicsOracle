@@ -118,7 +118,7 @@ cache_service.set(cache_key, dataset_summary)
 # Type-Safe Data Models
 search_query = SearchQuery(
     query="cancer research",
-    page=1, 
+    page=1,
     page_size=20,
     search_type=SearchType.SEMANTIC
 )
@@ -243,7 +243,7 @@ curl -X POST http://localhost:5001/api/v1/search \
 The OmicsOracle backend refactoring **Phase 1 is complete** and delivers:
 
 1. ✅ **Immediate fix** for the catastrophic corruption in the search functionality
-2. ✅ **Modern, maintainable architecture** ready for rapid feature development  
+2. ✅ **Modern, maintainable architecture** ready for rapid feature development
 3. ✅ **Proper caching strategy** that fixes the dataset summary issues
 4. ✅ **Comprehensive foundation** for all planned features (dual summaries, analytics, etc.)
 

@@ -1,5 +1,6 @@
 # Clean search function to replace the corrupted one
 
+
 @app.post("/search")
 async def search(
     query: str = Form(...),
@@ -35,7 +36,7 @@ async def search(
                 processed_results = []
                 organism_patterns = {
                     r"\b(homo sapiens|human|hsa)\b": "Homo sapiens",
-                    r"\b(mus musculus|mouse|mmu)\b": "Mus musculus", 
+                    r"\b(mus musculus|mouse|mmu)\b": "Mus musculus",
                     r"\b(rattus norvegicus|rat|rno)\b": "Rattus norvegicus",
                     r"\b(arabidopsis thaliana|arabidopsis|ath)\b": "Arabidopsis thaliana",
                     r"\b(drosophila melanogaster|drosophila|dme)\b": "Drosophila melanogaster",
@@ -82,10 +83,7 @@ async def search(
 
                                 # Check if any key from summary matches content in result
                                 for key in summary_keys:
-                                    if (
-                                        key != "summary"
-                                        and key in result_str
-                                    ):
+                                    if key != "summary" and key in result_str:
                                         ai_summary = summary_item.get(
                                             "summary", ""
                                         )
@@ -108,7 +106,9 @@ async def search(
                                 # Extract each field individually with explicit checking
                                 extracted_geo_id = result.get("geo_id")
                                 extracted_organism = result.get("organism")
-                                extracted_sample_count = result.get("sample_count")
+                                extracted_sample_count = result.get(
+                                    "sample_count"
+                                )
 
                                 # Only use extracted values if they're valid (not None/empty)
                                 if (
@@ -127,7 +127,9 @@ async def search(
                                 ):
                                     sample_count = extracted_sample_count
                             except Exception as e:
-                                logger.debug(f"Dict access failed for result: {e}")
+                                logger.debug(
+                                    f"Dict access failed for result: {e}"
+                                )
 
                         # Approach 2: Try direct attribute if dict access failed
                         if not geo_id or geo_id == "unknown":
@@ -161,11 +163,16 @@ async def search(
                                         + " "
                                         + str(getattr(result, "title", ""))
                                         + " "
-                                        + str(getattr(result, "overall_design", ""))
+                                        + str(
+                                            getattr(
+                                                result, "overall_design", ""
+                                            )
+                                        )
                                     ).lower()
 
                                     # Common organism patterns
                                     import re
+
                                     for (
                                         pattern,
                                         organism_name,
@@ -230,7 +237,9 @@ async def search(
                                         # If we can't parse it, keep as is
                                         pass
                             except Exception as e:
-                                logger.debug(f"Sample count extraction failed: {e}")
+                                logger.debug(
+                                    f"Sample count extraction failed: {e}"
+                                )
 
                         # Approach 4: Extract from AI summary if direct extraction completely failed
                         if ai_summary and (
@@ -253,21 +262,28 @@ async def search(
                                     or geo_id == ""
                                 ):
                                     geo_id = extracted_geo
-                                    logger.info(f"Using extracted GEO ID: {geo_id}")
+                                    logger.info(
+                                        f"Using extracted GEO ID: {geo_id}"
+                                    )
 
                         # Approach 4: Extract from original summary/title if still unknown
                         if not geo_id or geo_id == "unknown":
                             import re
+
                             all_text = str(result)
                             geo_match = re.search(r"GSE\d+", all_text)
                             if geo_match:
                                 geo_id = geo_match.group()
-                                logger.info(f"Extracted GEO ID from result text: {geo_id}")
+                                logger.info(
+                                    f"Extracted GEO ID from result text: {geo_id}"
+                                )
 
                         # Ensure we have string representations
                         geo_id = str(geo_id) if geo_id else "unknown"
                         organism = str(organism) if organism else "Unknown"
-                        sample_count = str(sample_count) if sample_count else "Unknown"
+                        sample_count = (
+                            str(sample_count) if sample_count else "Unknown"
+                        )
 
                         # Process AI summary for display
                         processed_ai_summary = ""
@@ -297,24 +313,36 @@ async def search(
                             ai_summary = (
                                 ai_summaries.get("brief_overview", "")
                                 or ai_summaries.get("summary", "")
-                                or str(ai_summaries.get("individual_summaries", [{}])[0].get("summary", ""))
+                                or str(
+                                    ai_summaries.get(
+                                        "individual_summaries", [{}]
+                                    )[0].get("summary", "")
+                                )
                             )
                             if ai_summary:
                                 logger.info("Using general AI summary")
 
                         # Use the result's own summary if no AI summary
                         if not ai_summary:
-                            ai_summary = getattr(result, "summary", "") or getattr(result, "description", "")
+                            ai_summary = getattr(
+                                result, "summary", ""
+                            ) or getattr(result, "description", "")
 
                         # Final fallback
                         if not ai_summary:
-                            ai_summary = f"Dataset {geo_id} containing genomics data"
+                            ai_summary = (
+                                f"Dataset {geo_id} containing genomics data"
+                            )
 
-                        processed_ai_summary = str(ai_summary)[:500]  # Limit length
+                        processed_ai_summary = str(ai_summary)[
+                            :500
+                        ]  # Limit length
                     except Exception as e:
                         logger.error(f"Error processing result {idx}: {e}")
                         # Use fallback values
-                        processed_ai_summary = f"Dataset {geo_id} from genomics research"
+                        processed_ai_summary = (
+                            f"Dataset {geo_id} from genomics research"
+                        )
 
                     # Create processed result
                     processed_result = {
@@ -328,7 +356,11 @@ async def search(
                         "sample_count": sample_count,
                         "platform": getattr(result, "platform", "Unknown")
                         or "Unknown",
-                        "ai_enhanced": bool(processed_ai_summary and processed_ai_summary != f"Dataset {geo_id} from genomics research"),
+                        "ai_enhanced": bool(
+                            processed_ai_summary
+                            and processed_ai_summary
+                            != f"Dataset {geo_id} from genomics research"
+                        ),
                     }
 
                     processed_results.append(processed_result)

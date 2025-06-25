@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { 
-  ClockIcon, 
-  ArrowTrendingUpIcon, 
+import {
+  ClockIcon,
+  ArrowTrendingUpIcon,
   CheckCircleIcon,
-  DocumentTextIcon 
+  DocumentTextIcon
 } from '@heroicons/react/24/outline';
 
 interface SimilarQuery {
@@ -49,7 +49,7 @@ const SimilarQueryCard: React.FC<{
   const [isHovered, setIsHovered] = useState(false);
 
   return (
-    <div 
+    <div
       className={`
         border rounded-lg p-4 cursor-pointer transition-all duration-200
         ${isHovered ? 'border-blue-500 bg-blue-50 shadow-md' : 'border-gray-200 hover:border-gray-300'}
@@ -65,7 +65,7 @@ const SimilarQueryCard: React.FC<{
             "{query.query}"
           </p>
         </div>
-        
+
         {/* Metrics Row */}
         <div className="flex items-center justify-between text-sm">
           <div className="flex items-center space-x-4">
@@ -73,22 +73,22 @@ const SimilarQueryCard: React.FC<{
               <DocumentTextIcon className="h-4 w-4 mr-1" />
               <span>{query.result_count} results</span>
             </div>
-            
+
             <div className="flex items-center text-gray-600">
               <ArrowTrendingUpIcon className="h-4 w-4 mr-1" />
               <span>{(query.similarity_score * 100).toFixed(0)}% similar</span>
             </div>
           </div>
-          
+
           <SuccessIndicator score={query.success_score} />
         </div>
-        
+
         {/* Common Entities */}
         {query.common_entities && query.common_entities.length > 0 && (
           <div className="flex flex-wrap gap-1">
             <span className="text-xs text-gray-500 mr-2">Common terms:</span>
             {query.common_entities.map((entity, index) => (
-              <span 
+              <span
                 key={index}
                 className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-700"
               >
@@ -97,7 +97,7 @@ const SimilarQueryCard: React.FC<{
             ))}
           </div>
         )}
-        
+
         {/* Click Hint */}
         <div className={`text-xs text-center transition-opacity duration-200 ${isHovered ? 'opacity-100' : 'opacity-0'}`}>
           <span className="text-blue-600 font-medium">Click to try this query</span>
@@ -164,11 +164,11 @@ export const AlternativeQueries: React.FC<AlternativeQueriesProps> = ({
           {similarQueries.length}
         </span>
       </div>
-      
+
       <p className="text-sm text-gray-600 mb-4">
         These similar queries returned good results. Click on any query to try it:
       </p>
-      
+
       <div className="space-y-3">
         {similarQueries.map((query, index) => (
           <SimilarQueryCard
@@ -178,7 +178,7 @@ export const AlternativeQueries: React.FC<AlternativeQueriesProps> = ({
           />
         ))}
       </div>
-      
+
       <div className="bg-green-50 border border-green-200 rounded-lg p-4 mt-6">
         <div className="flex items-start space-x-3">
           <CheckCircleIcon className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
@@ -187,7 +187,7 @@ export const AlternativeQueries: React.FC<AlternativeQueriesProps> = ({
               Success Patterns
             </p>
             <p className="text-green-800">
-              These queries worked well because they use common biomedical terms and 
+              These queries worked well because they use common biomedical terms and
               include specific context like organism or assay type.
             </p>
           </div>

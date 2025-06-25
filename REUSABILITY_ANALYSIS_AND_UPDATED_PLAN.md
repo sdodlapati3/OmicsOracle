@@ -151,48 +151,48 @@ from typing import Dict, List, Optional, Any
 
 class BaseSearchService(ABC):
     """Abstract base class for search services."""
-    
+
     def __init__(self, cache_service=None, analytics_service=None):
         self.cache = cache_service
         self.analytics = analytics_service
-    
+
     @abstractmethod
     async def execute_search(self, query: str, options: Dict) -> List[Dict]:
         """Execute the actual search - must be implemented by subclasses."""
         pass
-    
+
     async def search(self, query: str, **options) -> Dict[str, Any]:
         """Universal search method with caching and analytics."""
         # Validate query
         validated_query = self._validate_query(query)
-        
+
         # Check cache
         if self.cache:
             cached_result = await self.cache.get(validated_query, options)
             if cached_result:
                 return cached_result
-        
+
         # Execute search
         results = await self.execute_search(validated_query, options)
-        
+
         # Process results
         formatted_results = self._format_results(results)
-        
+
         # Cache results
         if self.cache:
             await self.cache.set(validated_query, formatted_results, options)
-        
+
         # Record analytics
         if self.analytics:
             await self.analytics.record_search(validated_query, len(results))
-        
+
         return formatted_results
-    
+
     def _validate_query(self, query: str) -> str:
         """Standard query validation."""
         # Implement common validation logic
         pass
-    
+
     def _format_results(self, results: List[Dict]) -> Dict[str, Any]:
         """Standard result formatting."""
         # Implement common formatting logic
@@ -201,11 +201,11 @@ class BaseSearchService(ABC):
 # OmicsOracle-specific implementation
 class OmicsOracleSearchService(BaseSearchService):
     """OmicsOracle-specific search implementation."""
-    
+
     def __init__(self, pipeline, **kwargs):
         super().__init__(**kwargs)
         self.pipeline = pipeline
-    
+
     async def execute_search(self, query: str, options: Dict) -> List[Dict]:
         """Execute OmicsOracle pipeline search."""
         return await self.pipeline.process_query(query, **options)
@@ -213,11 +213,11 @@ class OmicsOracleSearchService(BaseSearchService):
 # Generic genomics implementation
 class GenomicsSearchService(BaseSearchService):
     """Generic genomics database search."""
-    
+
     def __init__(self, database_client, **kwargs):
         super().__init__(**kwargs)
         self.db = database_client
-    
+
     async def execute_search(self, query: str, options: Dict) -> List[Dict]:
         """Execute generic genomics database search."""
         return await self.db.search(query, **options)
@@ -232,21 +232,21 @@ import importlib
 
 class PluginManager:
     """Manages plugins for extending functionality."""
-    
+
     def __init__(self):
         self.plugins: Dict[str, Any] = {}
-    
+
     def register_plugin(self, name: str, plugin_class: type):
         """Register a plugin."""
         self.plugins[name] = plugin_class
-    
+
     def load_plugins_from_config(self, plugin_configs: List[Dict]):
         """Load plugins from configuration."""
         for config in plugin_configs:
             module = importlib.import_module(config['module'])
             plugin_class = getattr(module, config['class'])
             self.register_plugin(config['name'], plugin_class)
-    
+
     def get_plugin(self, name: str):
         """Get a plugin instance."""
         if name in self.plugins:
@@ -256,7 +256,7 @@ class PluginManager:
 # Example plugin for custom metadata extraction
 class CustomMetadataPlugin:
     """Plugin for custom metadata extraction."""
-    
+
     def extract_metadata(self, result: Dict) -> Dict:
         """Extract custom metadata from search results."""
         # Custom logic here
@@ -385,24 +385,24 @@ from pathlib import Path
 
 class InterfaceGenerator:
     """Generates web interfaces from templates and configuration."""
-    
+
     def __init__(self, template_dir: Path):
         self.env = Environment(loader=FileSystemLoader(template_dir))
-    
+
     def generate_interface(self, config: Dict, output_dir: Path):
         """Generate a complete web interface from configuration."""
-        
+
         # Generate FastAPI app
         app_template = self.env.get_template("fastapi_app.py.j2")
         app_code = app_template.render(config=config)
         (output_dir / "app.py").write_text(app_code)
-        
+
         # Generate HTML templates
         for template_name in config.get("templates", []):
             template = self.env.get_template(f"{template_name}.html.j2")
             html_content = template.render(config=config)
             (output_dir / "templates" / f"{template_name}.html").write_text(html_content)
-        
+
         # Generate configuration files
         config_template = self.env.get_template("config.py.j2")
         config_code = config_template.render(config=config)

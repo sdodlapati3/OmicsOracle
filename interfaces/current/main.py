@@ -996,7 +996,7 @@ HTML_TEMPLATE = """
 
                 data.results.forEach((result, index) => {
                     const globalIndex = ((currentPage - 1) * (pagination.page_size || 10)) + index + 1;
-                    
+
                     // Create enhanced metadata badges
                     let metaBadges = '';
                     if (result.ai_enhanced) {
@@ -1029,7 +1029,7 @@ HTML_TEMPLATE = """
                                 <span class="meta-badge">ID: ${result.id}</span>
                             </div>
                             <div class="result-summary collapsed">${result.summary}</div>
-                            
+
                             <div class="result-details">
                                 <div class="detail-grid">
                                     <div class="detail-item">
@@ -1049,7 +1049,7 @@ HTML_TEMPLATE = """
                                         <div class="detail-value">${result.platform || 'Unknown'}</div>
                                     </div>
                                 </div>
-                                
+
                                 <!-- Sample Distribution Visualization -->
                                 <div class="sample-viz-section">
                                     <h4>Sample Distribution</h4>
@@ -1057,7 +1057,7 @@ HTML_TEMPLATE = """
                                         <canvas id="chart-${result.id}" width="300" height="150"></canvas>
                                     </div>
                                 </div>
-                                
+
                                 <div class="result-actions">
                                     ${actionButtons}
                                 </div>
@@ -1079,23 +1079,23 @@ HTML_TEMPLATE = """
 
         function createActionButtons(result) {
             let buttons = '';
-            
+
             // View Samples button
             if (result.id && result.id !== 'unknown') {
                 buttons += `<button class="btn-action primary" onclick="showSamples('${result.id}', event)">📋 View Samples</button>`;
             }
-            
+
             // External links
             if (result.id && result.id.startsWith('GSE')) {
                 buttons += `<a href="https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=${result.id}" target="_blank" class="btn-action">🔗 View on GEO</a>`;
             }
-            
+
             // Save to favorites (placeholder)
             buttons += `<button class="btn-action" onclick="saveToFavorites('${result.id}', event)">⭐ Save</button>`;
-            
+
             // Export (placeholder)
             buttons += `<button class="btn-action" onclick="exportResult('${result.id}', event)">📥 Export</button>`;
-            
+
             return buttons;
         }
 
@@ -1104,27 +1104,27 @@ HTML_TEMPLATE = """
             if (event.target.closest('.result-actions') || event.target.closest('.btn-action')) {
                 return;
             }
-            
+
             element.classList.toggle('expanded');
             const summary = element.querySelector('.result-summary');
             summary.classList.toggle('collapsed');
-            
+
             // Create sample distribution chart when expanding
             if (element.classList.contains('expanded')) {
                 const geoId = element.dataset.geoId;
                 createSampleDistributionChart(geoId);
             }
         }
-        
+
         function createSampleDistributionChart(geoId) {
             const canvas = document.getElementById(`chart-${geoId}`);
             if (!canvas || canvas.hasChart) return;
-            
+
             const ctx = canvas.getContext('2d');
-            
+
             // Mock sample distribution data (in real implementation, this would come from API)
             const sampleData = generateMockSampleDistribution(geoId);
-            
+
             new Chart(ctx, {
                 type: 'doughnut',
                 data: {
@@ -1157,10 +1157,10 @@ HTML_TEMPLATE = """
                     }
                 }
             });
-            
+
             canvas.hasChart = true;
         }
-        
+
         function generateMockSampleDistribution(geoId) {
             // Generate realistic sample distribution based on GEO ID
             const distributions = {
@@ -1181,27 +1181,27 @@ HTML_TEMPLATE = """
                     values: [40, 35, 25]
                 }
             };
-            
+
             return distributions[geoId] || distributions['default'];
         }
 
         function showSamples(geoId, event) {
             if (event) event.stopPropagation();
-            
+
             // Placeholder for sample viewer
             alert(`Sample viewer for ${geoId} will be implemented in the next phase.`);
         }
 
         function saveToFavorites(geoId, event) {
             if (event) event.stopPropagation();
-            
+
             // Placeholder for favorites functionality
             alert(`Saved ${geoId} to favorites! (Feature coming soon)`);
         }
 
         function exportResult(geoId, event) {
             if (event) event.stopPropagation();
-            
+
             // Placeholder for export functionality
             alert(`Export functionality for ${geoId} coming soon!`);
         }
@@ -1310,7 +1310,7 @@ async def search(
                 processed_results = []
                 organism_patterns = {
                     r"\b(homo sapiens|human|hsa)\b": "Homo sapiens",
-                    r"\b(mus musculus|mouse|mmu)\b": "Mus musculus", 
+                    r"\b(mus musculus|mouse|mmu)\b": "Mus musculus",
                     r"\b(rattus norvegicus|rat|rno)\b": "Rattus norvegicus",
                     r"\b(arabidopsis thaliana|arabidopsis|ath)\b": "Arabidopsis thaliana",
                     r"\b(drosophila melanogaster|drosophila|dme)\b": "Drosophila melanogaster",
@@ -1460,7 +1460,7 @@ async def search(
                                         r"\barabidopsis\b|\barabidopsis thaliana\b": "Arabidopsis thaliana",
                                     };
 
-                                    import re;
+                                    import re
 
                                     for (
                                         pattern,
@@ -1557,7 +1557,7 @@ async def search(
                         if (ai_summary && (
                             !geo_id || geo_id == "unknown" || geo_id == ""
                         )) {
-                            import re;
+                            import re
 
                             summary_text = str(ai_summary);
                             // Look for GEO accession patterns (GSE followed by digits)

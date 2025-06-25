@@ -1,9 +1,9 @@
 /* OmicsOracle Modern Interface Styles */
 
-* { 
-    box-sizing: border-box; 
-    margin: 0; 
-    padding: 0; 
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
 }
 
 body {
@@ -40,14 +40,14 @@ body {
     border-bottom: 1px solid #dee2e6;
 }
 
-.status.available { 
-    background: #d4edda; 
-    color: #155724; 
+.status.available {
+    background: #d4edda;
+    color: #155724;
 }
 
-.status.unavailable { 
-    background: #f8d7da; 
-    color: #721c24; 
+.status.unavailable {
+    background: #f8d7da;
+    color: #721c24;
 }
 
 .content {
@@ -69,8 +69,8 @@ label {
     color: #2c3e50;
 }
 
-input[type="text"], 
-input[type="number"], 
+input[type="text"],
+input[type="number"],
 select {
     width: 100%;
     padding: 12px;
@@ -80,7 +80,7 @@ select {
     transition: border-color 0.3s;
 }
 
-input:focus, 
+input:focus,
 select:focus {
     outline: none;
     border-color: #667eea;
@@ -442,7 +442,7 @@ select:focus {
     transition: background-color 0.2s;
 }
 
-.suggestion-item:hover, 
+.suggestion-item:hover,
 .suggestion-item.active {
     background-color: #f8f9fa;
 }
@@ -494,13 +494,13 @@ select:focus {
     color: #6c757d;
 }
 
-.example-searches, 
+.example-searches,
 .search-history {
     cursor: pointer;
     text-decoration: underline;
 }
 
-.example-searches:hover, 
+.example-searches:hover,
 .search-history:hover {
     color: #667eea;
 }
@@ -677,59 +677,59 @@ select:focus {
         margin: 10px;
         border-radius: 8px;
     }
-    
+
     .header {
         padding: 20px;
     }
-    
+
     .header h1 {
         font-size: 2rem;
     }
-    
+
     .content {
         padding: 20px;
     }
-    
+
     .result-item {
         padding: 15px;
     }
-    
+
     .result-number {
         position: static;
         display: inline-block;
         margin-bottom: 10px;
     }
-    
+
     .result-title {
         font-size: 1.1rem;
     }
-    
+
     .detail-grid {
         grid-template-columns: 1fr;
         gap: 10px;
     }
-    
+
     .result-meta {
         flex-direction: column;
         gap: 8px;
         align-items: flex-start;
     }
-    
+
     .result-actions {
         flex-direction: column;
         gap: 8px;
     }
-    
+
     .btn-action {
         width: 100%;
         justify-content: center;
     }
-    
+
     .pagination {
         flex-wrap: wrap;
         gap: 5px;
     }
-    
+
     .pagination button {
         padding: 6px 10px;
         font-size: 12px;
@@ -740,11 +740,11 @@ select:focus {
     body {
         padding: 10px;
     }
-    
+
     .filter-tags {
         justify-content: center;
     }
-    
+
     .search-helpers {
         flex-direction: column;
         gap: 10px;

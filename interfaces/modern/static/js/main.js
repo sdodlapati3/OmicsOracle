@@ -161,13 +161,24 @@ async function showSearchHistory() {
 }
 
 async function refreshSearchHistory() {
-    // Silently refresh search history without showing it
-    try {
-        const response = await fetch('/api/search-history');
-        const data = await response.json();
-        console.log('Search history refreshed:', data.history.length + ' items');
-    } catch (error) {
-        console.log('Could not refresh search history');
+    // Add current search query to history
+    const currentQuery = document.getElementById('query').value;
+    if (currentQuery && currentQuery.trim()) {
+        try {
+            const response = await fetch('/api/search-history', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ query: currentQuery.trim() })
+            });
+            
+            if (response.ok) {
+                console.log('Search query added to history:', currentQuery);
+            }
+        } catch (error) {
+            console.log('Could not add search to history:', error);
+        }
     }
 }
 
@@ -227,13 +238,13 @@ function setupSearchForm() {
 
         try {
             const formData = new FormData(this);
-            
+
             // Convert FormData to JSON for API
             const jsonData = {};
             for (let [key, value] of formData.entries()) {
                 jsonData[key] = value;
             }
-            
+
             const response = await fetch('/api/v1/search', {
                 method: 'POST',
                 headers: {
@@ -268,18 +279,20 @@ function displayResults(data) {
         // Debug logging
         console.log('Displaying results:', data.results.length, 'items');
         console.log('First result sample:', data.results[0]);
-        
+
         // Extract pagination info
         const pagination = data.pagination || {};
-        const totalCount = pagination.total_results || data.total_count || data.results.length;
+        const totalCount = pagination.total_count || data.total_count || data.results.length;
         const displayedCount = data.results.length;
-        const currentPage = pagination.current_page || 1;
+        const currentPage = pagination.page || 1;
         const totalPages = pagination.total_pages || 1;
 
         // Improved count display with pagination info
         let countMessage;
         if (totalPages > 1) {
-            countMessage = `✅ Showing ${pagination.start_index || 1}-${pagination.end_index || displayedCount} of ${totalCount} datasets (Page ${currentPage} of ${totalPages})`;
+            const startIndex = ((currentPage - 1) * pagination.page_size) + 1;
+            const endIndex = Math.min(startIndex + displayedCount - 1, totalCount);
+            countMessage = `✅ Showing ${startIndex}-${endIndex} of ${totalCount} datasets (Page ${currentPage} of ${totalPages})`;
         } else if (totalCount === displayedCount) {
             countMessage = `✅ Found ${totalCount} dataset${totalCount !== 1 ? 's' : ''}`;
         } else {
@@ -290,7 +303,7 @@ function displayResults(data) {
 
         data.results.forEach((result, index) => {
             const globalIndex = ((currentPage - 1) * (pagination.page_size || 10)) + index + 1;
-            
+
             // Debug log each result
             console.log(`Processing result ${index}:`, {
                 id: result.id,
@@ -298,14 +311,14 @@ function displayResults(data) {
                 hasMetadata: !!result.metadata,
                 metadata: result.metadata
             });
-            
+
             // Extract metadata from nested structure
             const metadata = result.metadata || {};
             const organism = metadata.organism || 'Unknown';
             const sampleCount = metadata.sample_count || 'Unknown';
             const summary = result.abstract || 'No summary available';
             const title = result.title || 'Untitled Dataset';
-            
+
             // Create enhanced metadata badges
             let metaBadges = '';
             if (result.ai_enhanced || (metadata.ai_summary && metadata.ai_summary.brief)) {
@@ -335,7 +348,7 @@ function displayResults(data) {
                         <span class="meta-badge">ID: ${result.id}</span>
                     </div>
                     <div class="result-summary collapsed">${escapeHtml(summary)}</div>
-                    
+
                     <div class="result-details">
                         <div class="detail-grid">
                             <div class="detail-item">
@@ -351,7 +364,7 @@ function displayResults(data) {
                                 <div class="detail-value">${sampleCount}</div>
                             </div>
                         </div>
-                        
+
                         <div class="result-actions">
                             ${actionButtons}
                         </div>
@@ -373,23 +386,23 @@ function displayResults(data) {
 
 function createActionButtons(result) {
     let buttons = '';
-    
+
     // View Samples button
     if (result.id && result.id !== 'unknown') {
         buttons += `<button class="btn-action primary" onclick="showSamples('${result.id}', event)">📋 View Samples</button>`;
     }
-    
+
     // External links
     if (result.id && result.id.startsWith('GSE')) {
         buttons += `<a href="https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=${result.id}" target="_blank" class="btn-action">🔗 View on GEO</a>`;
     }
-    
+
     // Save to favorites (placeholder)
     buttons += `<button class="btn-action" onclick="saveToFavorites('${result.id}', event)">⭐ Save</button>`;
-    
+
     // Export (placeholder)
     buttons += `<button class="btn-action" onclick="exportResult('${result.id}', event)">📥 Export</button>`;
-    
+
     return buttons;
 }
 
@@ -398,7 +411,7 @@ function toggleResultExpansion(element) {
     if (event.target.closest('.result-actions') || event.target.closest('.btn-action')) {
         return;
     }
-    
+
     element.classList.toggle('expanded');
     const summary = element.querySelector('.result-summary');
     summary.classList.toggle('collapsed');
@@ -406,7 +419,7 @@ function toggleResultExpansion(element) {
 
 function showSamples(geoId, event) {
     if (event) event.stopPropagation();
-    
+
     // Show informative modal about sample viewer
     const modal = document.createElement('div');
     modal.className = 'sample-viewer-modal';
@@ -434,7 +447,7 @@ function showSamples(geoId, event) {
         </div>
         <div class="modal-backdrop" onclick="closeSampleModal()"></div>
     `;
-    
+
     document.body.appendChild(modal);
 }
 
@@ -447,14 +460,14 @@ function closeSampleModal() {
 
 function saveToFavorites(geoId, event) {
     if (event) event.stopPropagation();
-    
+
     // Placeholder for favorites functionality
     alert(`Saved ${geoId} to favorites! (Feature coming soon)`);
 }
 
 function exportResult(geoId, event) {
     if (event) event.stopPropagation();
-    
+
     // Show export options
     const exportMenu = document.createElement('div');
     exportMenu.className = 'export-menu';
@@ -466,7 +479,7 @@ function exportResult(geoId, event) {
         <button onclick="exportAllResults('json', event)">📋 All Results (JSON)</button>
         <button onclick="closeExportMenu(event)">❌ Cancel</button>
     `;
-    
+
     // Position menu near the button
     const button = event.target;
     const rect = button.getBoundingClientRect();
@@ -474,9 +487,9 @@ function exportResult(geoId, event) {
     exportMenu.style.top = rect.bottom + 'px';
     exportMenu.style.left = rect.left + 'px';
     exportMenu.style.zIndex = '1000';
-    
+
     document.body.appendChild(exportMenu);
-    
+
     // Close menu when clicking outside
     setTimeout(() => {
         document.addEventListener('click', function closeOnClickOutside(e) {
@@ -490,7 +503,7 @@ function exportResult(geoId, event) {
 
 function exportSingleDataset(geoId, format, event) {
     if (event) event.stopPropagation();
-    
+
     // Find the dataset in current results
     const resultElement = document.querySelector(`[data-geo-id="${geoId}"]`);
     if (!resultElement) {
@@ -498,13 +511,13 @@ function exportSingleDataset(geoId, format, event) {
         closeExportMenu();
         return;
     }
-    
+
     // Extract data from the result element
     const title = resultElement.querySelector('.result-title').textContent.replace('▶', '').trim();
     const summary = resultElement.querySelector('.result-summary').textContent;
     const organism = resultElement.querySelector('.detail-value:nth-of-type(2)')?.textContent || 'Unknown';
     const sampleCount = resultElement.querySelector('.detail-value:nth-of-type(3)')?.textContent || 'Unknown';
-    
+
     const datasetData = {
         id: geoId,
         title: title,
@@ -514,30 +527,30 @@ function exportSingleDataset(geoId, format, event) {
         export_date: new Date().toISOString(),
         export_source: 'OmicsOracle'
     };
-    
+
     if (format === 'csv') {
         exportToCSV([datasetData], `${geoId}_dataset`);
     } else if (format === 'json') {
         exportToJSON(datasetData, `${geoId}_dataset`);
     }
-    
+
     closeExportMenu();
 }
 
 function exportAllResults(format, event) {
     if (event) event.stopPropagation();
-    
+
     // Extract all current results
     const resultElements = document.querySelectorAll('.result-item');
     const allData = [];
-    
+
     resultElements.forEach(element => {
         const geoId = element.dataset.geoId;
         const title = element.querySelector('.result-title').textContent.replace('▶', '').trim();
         const summary = element.querySelector('.result-summary').textContent;
         const organism = element.querySelector('.detail-value:nth-of-type(2)')?.textContent || 'Unknown';
         const sampleCount = element.querySelector('.detail-value:nth-of-type(3)')?.textContent || 'Unknown';
-        
+
         allData.push({
             id: geoId,
             title: title,
@@ -547,13 +560,13 @@ function exportAllResults(format, event) {
             result_number: element.querySelector('.result-number').textContent
         });
     });
-    
+
     if (allData.length === 0) {
         alert('No results to export');
         closeExportMenu();
         return;
     }
-    
+
     const exportData = {
         search_results: allData,
         total_results: allData.length,
@@ -561,13 +574,13 @@ function exportAllResults(format, event) {
         export_source: 'OmicsOracle',
         search_query: document.getElementById('query').value
     };
-    
+
     if (format === 'csv') {
         exportToCSV(allData, 'omics_oracle_search_results');
     } else if (format === 'json') {
         exportToJSON(exportData, 'omics_oracle_search_results');
     }
-    
+
     closeExportMenu();
 }
 
@@ -575,15 +588,15 @@ function exportToCSV(data, filename) {
     if (!Array.isArray(data)) {
         data = [data];
     }
-    
+
     if (data.length === 0) return;
-    
+
     // Get headers from first object
     const headers = Object.keys(data[0]);
-    
+
     // Create CSV content
     let csvContent = headers.join(',') + '\n';
-    
+
     data.forEach(row => {
         const values = headers.map(header => {
             let value = row[header] || '';
@@ -598,7 +611,7 @@ function exportToCSV(data, filename) {
         });
         csvContent += values.join(',') + '\n';
     });
-    
+
     // Download file
     downloadFile(csvContent, `${filename}.csv`, 'text/csv');
 }
@@ -611,16 +624,16 @@ function exportToJSON(data, filename) {
 function downloadFile(content, filename, mimeType) {
     const blob = new Blob([content], { type: mimeType });
     const url = URL.createObjectURL(blob);
-    
+
     const link = document.createElement('a');
     link.href = url;
     link.download = filename;
     link.style.display = 'none';
-    
+
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    
+
     URL.revokeObjectURL(url);
 }
 
@@ -633,10 +646,10 @@ function closeExportMenu(event) {
 }
 
 function createPaginationControls(pagination) {
-    const currentPage = pagination.current_page || 1;
+    const currentPage = pagination.page || 1;
     const totalPages = pagination.total_pages || 1;
-    const hasPrevious = pagination.has_previous || false;
-    const hasNext = pagination.has_next || false;
+    const hasPrevious = currentPage > 1;
+    const hasNext = currentPage < totalPages;
 
     let paginationHtml = '<div class="pagination">';
 

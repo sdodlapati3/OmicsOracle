@@ -7,13 +7,13 @@ interface BadgeProps {
   className?: string;
 }
 
-export const Badge: React.FC<BadgeProps> = ({ 
-  children, 
+export const Badge: React.FC<BadgeProps> = ({
+  children,
   variant = 'default',
-  className 
+  className
 }) => {
   const baseClasses = "inline-flex items-center px-2 py-1 rounded-full text-xs font-medium";
-  
+
   const variantClasses = {
     default: "bg-gray-100 text-gray-800",
     secondary: "bg-blue-100 text-blue-800",

@@ -1,9 +1,9 @@
 import React from 'react';
 import type { LoadingSpinnerProps } from '../types';
 
-const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({ 
-  size = 'md', 
-  className = '' 
+const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
+  size = 'md',
+  className = ''
 }) => {
   const sizeClasses = {
     sm: 'w-4 h-4',

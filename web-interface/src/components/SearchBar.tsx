@@ -4,10 +4,10 @@ import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import type { SearchBarProps } from '../types';
 import LoadingSpinner from './LoadingSpinner';
 
-const SearchBar: React.FC<SearchBarProps> = ({ 
-  onSearch, 
-  loading = false, 
-  placeholder = "Search genes, proteins, or annotations..." 
+const SearchBar: React.FC<SearchBarProps> = ({
+  onSearch,
+  loading = false,
+  placeholder = "Search genes, proteins, or annotations..."
 }) => {
   const [query, setQuery] = useState('');
 
@@ -69,7 +69,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
           </button>
         </div>
       </form>
-      
+
       {/* Search suggestions/tips */}
       <div className="mt-3 text-sm text-gray-600">
         <p>

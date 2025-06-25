@@ -19,7 +19,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 Beta
               </span>
             </div>
-            
+
             <nav className="hidden md:flex space-x-8">
               <a
                 href="#"

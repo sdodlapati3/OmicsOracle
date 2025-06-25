@@ -99,8 +99,8 @@ EOF
 
 # Create API service
 cat > src/services/api.ts << 'EOF'
-const API_BASE_URL = process.env.NODE_ENV === 'development' 
-  ? 'http://localhost:8000' 
+const API_BASE_URL = process.env.NODE_ENV === 'development'
+  ? 'http://localhost:8000'
   : '';
 
 export const searchAPI = {
@@ -198,7 +198,7 @@ export default function SearchBar({ onSearch, loading }: SearchBarProps) {
         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
           <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
         </div>
-        
+
         <input
           type="text"
           value={query}
@@ -207,7 +207,7 @@ export default function SearchBar({ onSearch, loading }: SearchBarProps) {
           className="block w-full pl-10 pr-20 py-4 text-lg border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           disabled={loading}
         />
-        
+
         <div className="absolute inset-y-0 right-0 flex items-center pr-3">
           <button
             type="submit"
@@ -252,7 +252,7 @@ export default function ResultsList({ results, loading }: ResultsListProps) {
       <h2 className="text-xl font-semibold text-gray-900 mb-4">
         Search Results ({results.length})
       </h2>
-      
+
       <div className="space-y-4">
         {results.map((result, index) => (
           <div
@@ -262,13 +262,13 @@ export default function ResultsList({ results, loading }: ResultsListProps) {
             <h3 className="text-lg font-medium text-gray-900 mb-2">
               {result.title}
             </h3>
-            
+
             {result.description && (
               <p className="text-gray-600 mb-3">
                 {result.description}
               </p>
             )}
-            
+
             <div className="flex items-center space-x-4 text-sm text-gray-500">
               {result.category && (
                 <span className="bg-gray-100 px-2 py-1 rounded">
@@ -306,10 +306,10 @@ function App() {
 
   const handleSearch = async (query: string) => {
     if (!query.trim()) return;
-    
+
     setLoading(true);
     setError(null);
-    
+
     try {
       const data = await searchAPI.search(query);
       setResults(data.results || []);
@@ -332,7 +332,7 @@ function App() {
           <p className="text-xl text-gray-600 mb-8">
             Search and explore omics data with advanced analytics
           </p>
-          
+
           {/* Search Interface */}
           <SearchBar onSearch={handleSearch} loading={loading} />
         </div>
