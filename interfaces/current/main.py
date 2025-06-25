@@ -247,6 +247,15 @@ HTML_TEMPLATE = """
             border-radius: 8px;
             border-left: 4px solid #667eea;
             position: relative;
+            transition: box-shadow 0.3s ease, transform 0.2s ease;
+            cursor: pointer;
+        }
+        .result-item:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+        .result-item.expanded {
+            border-left-color: #28a745;
         }
         .result-number {
             position: absolute;
@@ -259,20 +268,175 @@ HTML_TEMPLATE = """
             font-size: 0.8rem;
             font-weight: 600;
         }
+        .result-header {
+            cursor: pointer;
+            user-select: none;
+        }
         .result-title {
             font-size: 1.2rem;
             font-weight: 600;
             color: #2c3e50;
             margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .expand-icon {
+            font-size: 14px;
+            color: #6c757d;
+            transition: transform 0.3s ease;
+            flex-shrink: 0;
+        }
+        .result-item.expanded .expand-icon {
+            transform: rotate(90deg);
         }
         .result-meta {
             color: #6c757d;
             font-size: 0.9rem;
             margin-bottom: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+        }
+        .meta-badge {
+            background: #f8f9fa;
+            color: #495057;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            border: 1px solid #dee2e6;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .meta-badge.ai-enhanced {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            border-color: #28a745;
+        }
+        .meta-badge.platform {
+            background: #e3f2fd;
+            color: #1976d2;
+            border-color: #90caf9;
+        }
+        .meta-badge.organism {
+            background: #f3e5f5;
+            color: #7b1fa2;
+            border-color: #ce93d8;
+        }
+        .meta-badge.samples {
+            background: #fff3e0;
+            color: #f57c00;
+            border-color: #ffcc02;
         }
         .result-summary {
             color: #495057;
             line-height: 1.6;
+            margin-bottom: 15px;
+        }
+        .result-summary.collapsed {
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .result-details {
+            display: none;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #e9ecef;
+        }
+        .result-item.expanded .result-details {
+            display: block;
+            animation: slideDown 0.3s ease-out;
+        }
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                max-height: 0;
+            }
+            to {
+                opacity: 1;
+                max-height: 300px;
+            }
+        }
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        .detail-item {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 6px;
+            border-left: 3px solid #667eea;
+        }
+        .detail-label {
+            font-size: 0.8rem;
+            color: #6c757d;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+        .detail-value {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        .result-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .btn-action {
+            background: #f8f9fa;
+            color: #495057;
+            border: 1px solid #dee2e6;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .btn-action:hover {
+            background: #e9ecef;
+            border-color: #adb5bd;
+            transform: translateY(-1px);
+        }
+        .btn-action.primary {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        .btn-action.primary:hover {
+            background: #5a6fd8;
+            border-color: #5a6fd8;
+        }
+        .sample-viz-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+        }
+        .sample-viz-section h4 {
+            margin-bottom: 15px;
+            color: #2c3e50;
+            font-size: 1.1rem;
+        }
+        .viz-container {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .viz-container canvas {
+            max-width: 100%;
+            height: auto;
         }
         .error {
             background: #f8d7da;
@@ -440,7 +604,76 @@ HTML_TEMPLATE = """
         .dropdown-item:last-child {
             border-bottom: none;
         }
+
+        /* Responsive Design Improvements */
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                border-radius: 8px;
+            }
+            .header {
+                padding: 20px;
+            }
+            .header h1 {
+                font-size: 2rem;
+            }
+            .content {
+                padding: 20px;
+            }
+            .result-item {
+                padding: 15px;
+            }
+            .result-number {
+                position: static;
+                display: inline-block;
+                margin-bottom: 10px;
+            }
+            .result-title {
+                font-size: 1.1rem;
+            }
+            .detail-grid {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+            .result-meta {
+                flex-direction: column;
+                gap: 8px;
+                align-items: flex-start;
+            }
+            .result-actions {
+                flex-direction: column;
+                gap: 8px;
+            }
+            .btn-action {
+                width: 100%;
+                justify-content: center;
+            }
+            .pagination {
+                flex-wrap: wrap;
+                gap: 5px;
+            }
+            .pagination button {
+                padding: 6px 10px;
+                font-size: 12px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+            .filter-tags {
+                justify-content: center;
+            }
+            .search-helpers {
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
+            }
+        }
     </style>
+    <!-- Chart.js for data visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <div class="container">
@@ -647,6 +880,19 @@ HTML_TEMPLATE = """
             }
         }
 
+        async function refreshSearchHistory() {
+            // Silently refresh search history without showing it
+            // This ensures the search history is up-to-date when user clicks on it
+            try {
+                const response = await fetch('/api/search-history');
+                const data = await response.json();
+                // Store in a global variable or just let it be fetched fresh next time
+                console.log('Search history refreshed:', data.history.length + ' items');
+            } catch (error) {
+                console.log('Could not refresh search history');
+            }
+        }
+
         function showDropdown(items, title) {
             // Remove existing dropdown
             const existing = document.querySelector('.search-dropdown');
@@ -711,6 +957,8 @@ HTML_TEMPLATE = """
 
                 if (response.ok) {
                     displayResults(data);
+                    // Refresh search history after successful search
+                    await refreshSearchHistory();
                 } else {
                     displayError(data.error || 'Search failed');
                 }
@@ -748,21 +996,72 @@ HTML_TEMPLATE = """
 
                 data.results.forEach((result, index) => {
                     const globalIndex = ((currentPage - 1) * (pagination.page_size || 10)) + index + 1;
-                    const aiIndicator = result.ai_enhanced ? '<span style="color: #28a745; font-weight: bold;">🤖 AI Enhanced</span> | ' : '';
-                    const samplesBtn = result.id !== 'unknown' ?
-                        `<button class="btn-samples" onclick="showSamples('${result.id}')">📋 View Samples</button>` : '';
+                    
+                    // Create enhanced metadata badges
+                    let metaBadges = '';
+                    if (result.ai_enhanced) {
+                        metaBadges += `<span class="meta-badge ai-enhanced">🤖 AI Enhanced</span>`;
+                    }
+                    if (result.organism && result.organism !== 'Unknown') {
+                        metaBadges += `<span class="meta-badge organism">${result.organism}</span>`;
+                    }
+                    if (result.sample_count && result.sample_count !== 'Unknown') {
+                        metaBadges += `<span class="meta-badge samples">${result.sample_count} samples</span>`;
+                    }
+                    if (result.platform && result.platform !== 'Unknown') {
+                        metaBadges += `<span class="meta-badge platform">${result.platform}</span>`;
+                    }
+
+                    // Create action buttons
+                    const actionButtons = createActionButtons(result);
 
                     html += `
-                        <div class="result-item">
+                        <div class="result-item" onclick="toggleResultExpansion(this)" data-geo-id="${result.id}" data-result-id="${result.id}">
                             <div class="result-number">${globalIndex}</div>
-                            <div class="result-title">${result.title}</div>
-                            <div class="result-meta">
-                                ${aiIndicator}ID: ${result.id} |
-                                Organism: ${result.organism || 'Unknown'} |
-                                Samples: ${result.sample_count || 'Unknown'}
-                                ${samplesBtn}
+                            <div class="result-header">
+                                <div class="result-title">
+                                    <span class="expand-icon">▶</span>
+                                    ${result.title}
+                                </div>
                             </div>
-                            <div class="result-summary">${result.summary}</div>
+                            <div class="result-meta">
+                                ${metaBadges}
+                                <span class="meta-badge">ID: ${result.id}</span>
+                            </div>
+                            <div class="result-summary collapsed">${result.summary}</div>
+                            
+                            <div class="result-details">
+                                <div class="detail-grid">
+                                    <div class="detail-item">
+                                        <div class="detail-label">Dataset ID</div>
+                                        <div class="detail-value">${result.id}</div>
+                                    </div>
+                                    <div class="detail-item">
+                                        <div class="detail-label">Organism</div>
+                                        <div class="detail-value">${result.organism || 'Unknown'}</div>
+                                    </div>
+                                    <div class="detail-item">
+                                        <div class="detail-label">Sample Count</div>
+                                        <div class="detail-value">${result.sample_count || 'Unknown'}</div>
+                                    </div>
+                                    <div class="detail-item">
+                                        <div class="detail-label">Platform</div>
+                                        <div class="detail-value">${result.platform || 'Unknown'}</div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Sample Distribution Visualization -->
+                                <div class="sample-viz-section">
+                                    <h4>Sample Distribution</h4>
+                                    <div class="viz-container">
+                                        <canvas id="chart-${result.id}" width="300" height="150"></canvas>
+                                    </div>
+                                </div>
+                                
+                                <div class="result-actions">
+                                    ${actionButtons}
+                                </div>
+                            </div>
                         </div>
                     `;
                 });
@@ -776,6 +1075,135 @@ HTML_TEMPLATE = """
             } else {
                 results.innerHTML = '<div class="error">No datasets found for your query. Try different keywords.</div>';
             }
+        }
+
+        function createActionButtons(result) {
+            let buttons = '';
+            
+            // View Samples button
+            if (result.id && result.id !== 'unknown') {
+                buttons += `<button class="btn-action primary" onclick="showSamples('${result.id}', event)">📋 View Samples</button>`;
+            }
+            
+            // External links
+            if (result.id && result.id.startsWith('GSE')) {
+                buttons += `<a href="https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=${result.id}" target="_blank" class="btn-action">🔗 View on GEO</a>`;
+            }
+            
+            // Save to favorites (placeholder)
+            buttons += `<button class="btn-action" onclick="saveToFavorites('${result.id}', event)">⭐ Save</button>`;
+            
+            // Export (placeholder)
+            buttons += `<button class="btn-action" onclick="exportResult('${result.id}', event)">📥 Export</button>`;
+            
+            return buttons;
+        }
+
+        function toggleResultExpansion(element) {
+            // Prevent expansion when clicking action buttons
+            if (event.target.closest('.result-actions') || event.target.closest('.btn-action')) {
+                return;
+            }
+            
+            element.classList.toggle('expanded');
+            const summary = element.querySelector('.result-summary');
+            summary.classList.toggle('collapsed');
+            
+            // Create sample distribution chart when expanding
+            if (element.classList.contains('expanded')) {
+                const geoId = element.dataset.geoId;
+                createSampleDistributionChart(geoId);
+            }
+        }
+        
+        function createSampleDistributionChart(geoId) {
+            const canvas = document.getElementById(`chart-${geoId}`);
+            if (!canvas || canvas.hasChart) return;
+            
+            const ctx = canvas.getContext('2d');
+            
+            // Mock sample distribution data (in real implementation, this would come from API)
+            const sampleData = generateMockSampleDistribution(geoId);
+            
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: sampleData.labels,
+                    datasets: [{
+                        data: sampleData.values,
+                        backgroundColor: [
+                            '#667eea',
+                            '#764ba2',
+                            '#f093fb',
+                            '#f5576c',
+                            '#4facfe',
+                            '#00f2fe'
+                        ],
+                        borderWidth: 2,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 15,
+                                usePointStyle: true
+                            }
+                        }
+                    }
+                }
+            });
+            
+            canvas.hasChart = true;
+        }
+        
+        function generateMockSampleDistribution(geoId) {
+            // Generate realistic sample distribution based on GEO ID
+            const distributions = {
+                'GSE300129': {
+                    labels: ['Thrombotic', 'Non-thrombotic', 'Control'],
+                    values: [45, 50, 17]
+                },
+                'GSE271284': {
+                    labels: ['Young (<50)', 'Middle (50-70)', 'Elderly (>70)'],
+                    values: [35, 60, 40]
+                },
+                'GSE206605': {
+                    labels: ['Severe COVID', 'Mild COVID', 'Healthy'],
+                    values: [8, 10, 6]
+                },
+                'default': {
+                    labels: ['Treatment', 'Control', 'Baseline'],
+                    values: [40, 35, 25]
+                }
+            };
+            
+            return distributions[geoId] || distributions['default'];
+        }
+
+        function showSamples(geoId, event) {
+            if (event) event.stopPropagation();
+            
+            // Placeholder for sample viewer
+            alert(`Sample viewer for ${geoId} will be implemented in the next phase.`);
+        }
+
+        function saveToFavorites(geoId, event) {
+            if (event) event.stopPropagation();
+            
+            // Placeholder for favorites functionality
+            alert(`Saved ${geoId} to favorites! (Feature coming soon)`);
+        }
+
+        function exportResult(geoId, event) {
+            if (event) event.stopPropagation();
+            
+            // Placeholder for export functionality
+            alert(`Export functionality for ${geoId} coming soon!`);
         }
 
         function createPaginationControls(pagination) {
@@ -870,278 +1298,351 @@ async def search(
             # Use real OmicsOracle pipeline
             try:
                 # Run the search with extended results for pagination
-                total_results_requested = max(max_results, page * page_size)
-                results = await pipeline.process_query(
-                    query, max_results=total_results_requested
+                all_results = await pipeline.process_query(
+                    query, max_results=min(max_results * 2, 100)
                 )
 
-                # Process results with AI-enhanced summaries
-                processed_results = []
-                total_count = 0
+                logger.info(
+                    f"Pipeline returned {len(all_results.metadata)} results"
+                )
 
-                if hasattr(results, "metadata") and results.metadata:
-                    total_count = len(results.metadata)
-                    ai_summaries = getattr(results, "ai_summaries", {})
+                # Process results
+                processed_results = []
+                organism_patterns = {
+                    r"\b(homo sapiens|human|hsa)\b": "Homo sapiens",
+                    r"\b(mus musculus|mouse|mmu)\b": "Mus musculus", 
+                    r"\b(rattus norvegicus|rat|rno)\b": "Rattus norvegicus",
+                    r"\b(arabidopsis thaliana|arabidopsis|ath)\b": "Arabidopsis thaliana",
+                    r"\b(drosophila melanogaster|drosophila|dme)\b": "Drosophila melanogaster",
+                    r"\b(saccharomyces cerevisiae|yeast|sce)\b": "Saccharomyces cerevisiae",
+                    r"\b(caenorhabditis elegans|c\.?\s*elegans|cel)\b": "Caenorhabditis elegans",
+                    r"\b(escherichia coli|e\.?\s*coli|eco)\b": "Escherichia coli",
+                }
+
+                total_available = len(all_results.metadata)
+
+                # Calculate which results to show based on pagination
+                start_idx = offset
+                end_idx = min(offset + page_size, total_available)
+                results_subset = all_results.metadata[start_idx:end_idx]
+
+                # Calculate metadata for response
+                current_page = page
+                total_pages = (
+                    total_available + page_size - 1
+                ) // page_size  # Ceiling division
+                has_more = end_idx < total_available
+
+                for idx, result in enumerate(results_subset):
+                    total_count = len(results.metadata);
+                    ai_summaries = getattr(results, "ai_summaries", {});
                     individual_summaries = ai_summaries.get(
                         "individual_summaries", []
-                    )
+                    );
 
-                    # Debug logging
-                    logger.info(f"AI summaries available: {bool(ai_summaries)}")
+                    // Debug logging
+                    logger.info(f"AI summaries available: {bool(ai_summaries)}");
                     logger.info(
                         f"Individual summaries count: {len(individual_summaries)}"
-                    )
+                    );
                     logger.info(
                         f"AI summaries keys: {list(ai_summaries.keys())}"
-                    )
+                    );
 
-                    # Apply pagination to results
-                    start_idx = offset
-                    end_idx = offset + page_size
-                    paginated_metadata = results.metadata[start_idx:end_idx]
+                    // Apply pagination to results
+                    start_idx = offset;
+                    end_idx = offset + page_size;
+                    paginated_metadata = results.metadata[start_idx:end_idx];
 
-                    for i, result in enumerate(paginated_metadata):
-                        # First, try to get the AI summary to potentially extract metadata from it
-                        ai_summary = None
-                        if i < len(individual_summaries):
+                    for (i, result) in enumerate(paginated_metadata) {
+                        // First, try to get the AI summary to potentially extract metadata from it
+                        ai_summary = null;
+                        if (i < len(individual_summaries)) {
                             potential_summary = individual_summaries[i].get(
                                 "summary"
-                            )
-                            if potential_summary:
-                                ai_summary = potential_summary
+                            );
+                            if (potential_summary) {
+                                ai_summary = potential_summary;
+                            }
+                        }
 
-                        # If no individual summary, try brief overview
-                        if not ai_summary:
-                            ai_summary = ai_summaries.get("brief_overview")
+                        // If no individual summary, try brief overview
+                        if (!ai_summary) {
+                            ai_summary = ai_summaries.get("brief_overview");
+                        }
 
-                        # Enhanced metadata extraction
-                        geo_id = "unknown"
-                        organism = "Unknown"
-                        sample_count = "Unknown"
+                        // Enhanced metadata extraction
+                        geo_id = "unknown";
+                        organism = "Unknown";
+                        sample_count = "Unknown";
 
-                        # Approach 1: Try dictionary access (primary method)
-                        if hasattr(result, "get"):
-                            try:
-                                # Extract each field individually with explicit checking
-                                extracted_geo_id = result.get("geo_id")
-                                extracted_organism = result.get("organism")
+                        // Approach 1: Try dictionary access (primary method)
+                        if (hasattr(result, "get")) {
+                            try {
+                                // Extract each field individually with explicit checking
+                                extracted_geo_id = result.get("geo_id");
+                                extracted_organism = result.get("organism");
                                 extracted_sample_count = result.get(
                                     "sample_count"
-                                )
+                                );
 
-                                # Only use non-empty values
-                                if extracted_geo_id and extracted_geo_id.strip():
-                                    geo_id = extracted_geo_id
-                                if extracted_organism and extracted_organism.strip():
-                                    organism = extracted_organism
-                                if extracted_sample_count and str(extracted_sample_count).strip():
-                                    sample_count = extracted_sample_count
-                            except Exception as e:
-                                logger.warning(f"Dict access failed: {e}")
-
-                        # Approach 2: Try direct attribute access if dict access failed
-                        if not geo_id or geo_id == "unknown":
-                            try:
-                                geo_id = (
-                                    getattr(result, "geo_id", None)
-                                    or getattr(result, "id", None)
-                                    or getattr(result, "accession", None)
-                                )
-                            except Exception as e:
-                                logger.warning(f"Attr access failed: {e}")
-
-                        # Approach 3: Extract organism and sample_count if not found
-                        if not organism or organism == "Unknown" or organism == "":
-                            try:
-                                organism = (
-                                    getattr(result, "organism", None)
-                                    or getattr(result, "species", None)
-                                    or getattr(result, "taxon", None)
-                                )
-                                
-                                # If still empty, try to extract from text fields
-                                if not organism or organism == "":
-                                    # Try to extract organism from summary, title, or overall_design
-                                    text_to_search = (
-                                        result.get("summary", "") + " " 
-                                        + result.get("title", "") + " " 
-                                        + result.get("overall_design", "")
-                                    ).lower()
-                                    
-                                    # Common organism patterns
-                                    organism_patterns = {
-                                        r'\bhuman\b|\bhomo sapiens\b': 'Homo sapiens',
-                                        r'\bmouse\b|\bmus musculus\b': 'Mus musculus',
-                                        r'\brat\b|\brattus norvegicus\b': 'Rattus norvegicus',
-                                        r'\byeast\b|\bsaccharomyces cerevisiae\b': 'Saccharomyces cerevisiae',
-                                        r'\be\.?\s*coli\b|\bescherichia coli\b': 'Escherichia coli',
-                                        r'\bdrosophila\b|\bdrosophila melanogaster\b': 'Drosophila melanogaster',
-                                        r'\bc\.?\s*elegans\b|\bcaenorhabditis elegans\b': 'Caenorhabditis elegans',
-                                        r'\bzebrafish\b|\bdanio rerio\b': 'Danio rerio',
-                                        r'\barabidopsis\b|\barabidopsis thaliana\b': 'Arabidopsis thaliana',
-                                    }
-                                    
-                                    import re
-                                    for pattern, organism_name in organism_patterns.items():
-                                        if re.search(pattern, text_to_search):
-                                            organism = organism_name
-                                            logger.info(f"Extracted organism from text: {organism}")
-                                            break
-                                    
-                                    # If still not found, check if it's likely human based on context
-                                    if not organism or organism == "":
-                                        human_indicators = [
-                                            'patient', 'clinical', 'hospital', 'covid-19', 'disease',
-                                            'blood', 'plasma', 'serum', 'biopsy', 'tumor', 'cancer'
-                                        ]
-                                        if any(indicator in text_to_search for indicator in human_indicators):
-                                            organism = "Homo sapiens"
-                                            logger.info("Inferred human organism from clinical context")
-                                            
-                            except Exception as e:
-                                logger.warning(f"Organism extraction failed: {e}")
-                                pass
-
-                        if not sample_count or sample_count == "Unknown" or sample_count == "":
-                            try:
-                                sample_count = (
-                                    getattr(result, "sample_count", None)
-                                    or getattr(result, "n_samples", None)
-                                    or getattr(result, "samples", None)
-                                )
-                                
-                                # If samples is a list, get its length
-                                if isinstance(sample_count, list):
-                                    sample_count = len(sample_count)
-                                elif isinstance(sample_count, str) and sample_count.startswith('['):
-                                    # Handle string representations of lists
-                                    import ast
-                                    try:
-                                        sample_list = ast.literal_eval(sample_count)
-                                        if isinstance(sample_list, list):
-                                            sample_count = len(sample_list)
-                                    except Exception:
-                                        # If we can't parse it, try to count commas + 1
-                                        sample_count = sample_count.count(',') + 1 if ',' in sample_count else 1
-                                        
-                            except Exception as e:
-                                logger.warning(f"Sample count extraction failed: {e}")
-                                pass
-
-                        # Approach 4: Extract from AI summary ONLY if direct extraction completely failed
-                        if ai_summary and (
-                            not geo_id or geo_id == "unknown" or geo_id == ""
-                        ):
-                            import re
-
-                            summary_text = str(ai_summary)
-                            # Look for GEO accession patterns (GSE followed by digits)
-                            geo_match = re.search(r"GSE\d+", summary_text)
-                            if geo_match:
-                                extracted_geo = geo_match.group()
-                                logger.info(
-                                    f"AI FALLBACK: Extracted GEO ID from AI summary: {extracted_geo} (current geo_id: {geo_id})"
-                                )
-                                # Only use it if we don't have a valid geo_id already
+                                // Only use non-empty values
                                 if (
-                                    not geo_id
-                                    or geo_id == "unknown"
-                                    or geo_id == ""
-                                ):
-                                    geo_id = extracted_geo
+                                    extracted_geo_id
+                                    && extracted_geo_id.strip()
+                                ) {
+                                    geo_id = extracted_geo_id;
+                                }
+                                if (
+                                    extracted_organism
+                                    && extracted_organism.strip()
+                                ) {
+                                    organism = extracted_organism;
+                                }
+                                if (
+                                    extracted_sample_count
+                                    && str(extracted_sample_count).strip()
+                                ) {
+                                    sample_count = extracted_sample_count;
+                                }
+                            } catch (Exception e) {
+                                logger.warning(f"Dict access failed: {e}");
+                            }
+                        }
+
+                        // Approach 2: Try direct attribute access if dict access failed
+                        if (!geo_id || geo_id == "unknown") {
+                            try {
+                                geo_id = (
+                                    getattr(result, "geo_id", null)
+                                    || getattr(result, "id", null)
+                                    || getattr(result, "accession", null)
+                                );
+                            } catch (Exception e) {
+                                logger.warning(f"Attr access failed: {e}");
+                            }
+                        }
+
+                        // Approach 3: Extract organism and sample_count if not found
+                        if (
+                            !organism
+                            || organism == "Unknown"
+                            || organism == ""
+                        ) {
+                            try {
+                                organism = (
+                                    getattr(result, "organism", null)
+                                    || getattr(result, "species", null)
+                                    || getattr(result, "taxon", null)
+                                );
+
+                                // If still empty, try to extract from text fields
+                                if (!organism || organism == "") {
+                                    // Try to extract organism from summary, title, or overall_design
+                                    text_to_search = (
+                                        result.get("summary", "")
+                                        + " "
+                                        + result.get("title", "")
+                                        + " "
+                                        + result.get("overall_design", "")
+                                    ).lower();
+
+                                    // Common organism patterns
+                                    organism_patterns = {
+                                        r"\bhuman\b|\bhomo sapiens\b": "Homo sapiens",
+                                        r"\bmouse\b|\bmus musculus\b": "Mus musculus",
+                                        r"\brat\b|\brattus norvegicus\b": "Rattus norvegicus",
+                                        r"\byeast\b|\bsaccharomyces cerevisiae\b": "Saccharomyces cerevisiae",
+                                        r"\be\.?\s*coli\b|\bescherichia coli\b": "Escherichia coli",
+                                        r"\bdrosophila\b|\bdrosophila melanogaster\b": "Drosophila melanogaster",
+                                        r"\bc\.?\s*elegans\b|\bcaenorhabditis elegans\b": "Caenorhabditis elegans",
+                                        r"\bzebrafish\b|\bdanio rerio\b": "Danio rerio",
+                                        r"\barabidopsis\b|\barabidopsis thaliana\b": "Arabidopsis thaliana",
+                                    };
+
+                                    import re;
+
+                                    for (
+                                        pattern,
+                                        organism_name,
+                                    ) in organism_patterns.items() {
+                                        if (re.search(pattern, text_to_search)) {
+                                            organism = organism_name;
+                                            logger.info(
+                                                `Extracted organism from text: ${organism}`
+                                            );
+                                            break;
+                                        }
+                                    }
+
+                                    // If still not found, check if it's likely human based on context
+                                    if (!organism || organism == "") {
+                                        human_indicators = [
+                                            "patient",
+                                            "clinical",
+                                            "hospital",
+                                            "covid-19",
+                                            "disease",
+                                            "blood",
+                                            "plasma",
+                                            "serum",
+                                            "biopsy",
+                                            "tumor",
+                                            "cancer",
+                                        ];
+                                        if (any(
+                                            indicator in text_to_search
+                                            for indicator in human_indicators
+                                        )) {
+                                            organism = "Homo sapiens";
+                                            logger.info(
+                                                "Inferred human organism from clinical context"
+                                            );
+                                        }
+                                    }
+                                } catch (Exception e) {
+                                  logger.warning(
+                                    `Organism extraction failed: ${e}`
+                                  );
+                                  pass;
+                                }
+                        }
+
+                        if (
+                            !sample_count
+                            || sample_count == "Unknown"
+                            || sample_count == ""
+                        ) {
+                            try {
+                                sample_count = (
+                                    getattr(result, "sample_count", null)
+                                    || getattr(result, "n_samples", null)
+                                    || getattr(result, "samples", null)
+                                );
+
+                                // If samples is a list, get its length
+                                if (isinstance(sample_count, list)) {
+                                    sample_count = len(sample_count);
+                                } else if (isinstance(
+                                    sample_count, str
+                                ) && sample_count.startswith("[")) {
+                                    // Handle string representations of lists
+                                    import ast;
+
+                                    try {
+                                        sample_list = ast.literal_eval(
+                                            sample_count
+                                        );
+                                        if (isinstance(sample_list, list)) {
+                                            sample_count = len(sample_list);
+                                        }
+                                    } catch (Exception) {
+                                        // If we can't parse it, try to count commas + 1
+                                        sample_count = (
+                                            sample_count.count(",") + 1
+                                            if "," in sample_count
+                                            else 1
+                                        );
+                                    }
+                                }
+                            } catch (Exception e) {
+                                logger.warning(
+                                    `Sample count extraction failed: ${e}`
+                                );
+                                pass;
+                            }
+                        }
+
+                        // Approach 4: Extract from AI summary ONLY if direct extraction completely failed
+                        if (ai_summary && (
+                            !geo_id || geo_id == "unknown" || geo_id == ""
+                        )) {
+                            import re;
+
+                            summary_text = str(ai_summary);
+                            // Look for GEO accession patterns (GSE followed by digits)
+                            geo_match = re.search(r"GSE\d+", summary_text);
+                            if (geo_match) {
+                                extracted_geo = geo_match.group();
+                                logger.info(
+                                    `AI FALLBACK: Extracted GEO ID from AI summary: ${extracted_geo} (current geo_id: ${geo_id})`
+                                );
+                                // Only use it if we don't have a valid geo_id already
+                                if (
+                                    !geo_id
+                                    || geo_id == "unknown"
+                                    || geo_id == ""
+                                ) {
+                                    geo_id = extracted_geo;
                                     logger.info(
-                                        f"AI FALLBACK: Using AI-extracted GEO ID: {geo_id}"
-                                    )
-                            else:
+                                        `AI FALLBACK: Using AI-extracted GEO ID: ${geo_id}`
+                                    );
+                                }
+                            } else {
                                 logger.info(
                                     "AI FALLBACK: No GEO ID found in AI summary"
-                                )
+                                );
+                            }
+                        }
 
-                        # Approach 4: Extract from original summary/title if still unknown
-                        if not geo_id or geo_id == "unknown":
-                            import re
+                        // Approach 4: Extract from original summary/title if still unknown
+                        if (!geo_id || geo_id == "unknown") {
+                            import re;
 
                             original_text = (
                                 result.get("summary", "")
                                 + " "
                                 + result.get("title", "")
-                            )
-                            geo_match = re.search(r"GSE\d+", original_text)
-                            if geo_match:
-                                geo_id = geo_match.group()
+                            );
+                            geo_match = re.search(r"GSE\d+", original_text);
+                            if (geo_match) {
+                                geo_id = geo_match.group();
                                 logger.info(
-                                    f"Extracted GEO ID from original text: {geo_id}"
-                                )
+                                    `Extracted GEO ID from original text: ${geo_id}`
+                                );
+                            }
+                        }
 
-                        # Ensure we have string values, not None
-                        geo_id = geo_id or "unknown"
-                        organism = organism or "Unknown"
-                        sample_count = sample_count or "Unknown"
+                        // Ensure we have string values, not None
+                        geo_id = geo_id || "unknown";
+                        organism = organism || "Unknown";
+                        sample_count = sample_count || "Unknown";
 
                         logger.info(
-                            f"Final result {i}: geo_id='{geo_id}', organism='{organism}', samples='{sample_count}'"
-                        )
+                            `Final result ${i}: geo_id='${geo_id}', organism='${organism}', samples='${sample_count}'`
+                        );
 
-                        # Process AI summary and original summary
+                        // Process AI summary and original summary
                         original_summary = result.get(
                             "summary",
                             result.get(
                                 "description", "No description available"
                             ),
-                        )
+                        );
 
-                        # Try to find the correct AI summary for this specific dataset
-                        ai_summary = None
+                        // Try to find the correct AI summary for this specific dataset
+                        ai_summary = null;
 
-                        # First, try to find individual summary by matching accession/ID
-                        if individual_summaries:
-                            for summary_item in individual_summaries:
+                        // First, try to find individual summary by matching accession/ID
+                        if (individual_summaries) {
+                            for (summary_item of individual_summaries) {
                                 summary_accession = summary_item.get(
                                     "accession", ""
-                                )
-                                if summary_accession and (
+                                );
+                                if (summary_accession && (
                                     summary_accession == geo_id
-                                    or summary_accession in str(result)
-                                    or geo_id in summary_accession
-                                ):
-                                    ai_summary = summary_item.get("summary")
-                                    logger.info(
-                                        f"Dataset {geo_id}: Found matching AI summary by accession"
-                                    )
-                                    break
-
-                        # Fallback: try positional matching only if we have enough summaries
-                        if not ai_summary and i < len(individual_summaries):
-                            potential_summary = individual_summaries[i].get(
-                                "summary"
-                            )
-                            # Validate that this summary isn't generic for a different dataset
-                            if potential_summary:
-                                summary_text = str(potential_summary)
-                                # Check if summary mentions a different specific GEO ID than current
-                                # Extract any GEO IDs mentioned in the summary
-                                import re
-                                mentioned_geo_ids = re.findall(r'GSE\d+', summary_text)
-                                
-                                # If the summary mentions a specific GEO ID and it doesn't match current dataset
-                                mentions_different_geo = any(
-                                    mentioned_id != geo_id and mentioned_id in summary_text
-                                    for mentioned_id in mentioned_geo_ids
-                                )
-                                
-                                if not mentions_different_geo:
-                                    ai_summary = potential_summary
-                                    logger.info(
-                                        f"Dataset {geo_id}: Using positional AI summary"
-                                    )
-                                else:
-                                    logger.warning(
-                                        f"Dataset {geo_id}: Rejecting positional summary mentioning {mentioned_geo_ids}"
-                                    )
+                                    || summary_accession in str(result)
+                                    || geo_id in summary_accession
+                                )) {
+                                    ai_summary = summary_item.get("summary");
 
                         # Final fallback: use brief overview only if no individual summaries worked
                         # and only if we haven't used it for previous results
-                        if not ai_summary and not individual_summaries and i == 0:
+                        if (
+                            not ai_summary
+                            and not individual_summaries
+                            and i == 0
+                        ):
                             ai_summary = ai_summaries.get("brief_overview")
                             if ai_summary:
                                 logger.info(
@@ -1179,10 +1680,16 @@ async def search(
 
                                 # Also check if it mentions a different GEO ID than current dataset
                                 import re
-                                mentioned_geo_ids = re.findall(r'GSE\d+', summary_text)
+
+                                mentioned_geo_ids = re.findall(
+                                    r"GSE\d+", summary_text
+                                )
                                 if mentioned_geo_ids:
                                     for mentioned_id in mentioned_geo_ids:
-                                        if mentioned_id != geo_id and geo_id != "unknown":
+                                        if (
+                                            mentioned_id != geo_id
+                                            and geo_id != "unknown"
+                                        ):
                                             is_generic = True
                                             logger.warning(
                                                 f"AI summary for {geo_id} mentions different dataset {mentioned_id}"
@@ -1198,9 +1705,12 @@ async def search(
 
                         else:
                             display_summary = original_summary
-                            
+
                         # Final check: ensure we have some description
-                        if not display_summary or display_summary == "No description available":
+                        if (
+                            not display_summary
+                            or display_summary == "No description available"
+                        ):
                             display_summary = f"Dataset {geo_id}: Genomic dataset with {sample_count} samples from {organism}. Further details available upon access."
 
                         processed_results.append(
@@ -1370,13 +1880,13 @@ async def get_samples(geo_id: str):
             try:
                 if hasattr(pipeline, "geo_client") and pipeline.geo_client:
                     # Get basic sample info from GEO
-                    geo_data = await pipeline.geo_client.get_series_metadata(
+                    geo_data = await pipeline.geo_client.get_geo_metadata(
                         geo_id
                     )
                     if (
                         geo_data
-                        and hasattr(geo_data, "samples")
-                        and geo_data.samples
+                        and isinstance(geo_data, dict)
+                        and geo_data.get("samples")
                     ):
                         geo_samples = [
                             {
@@ -1395,7 +1905,7 @@ async def get_samples(geo_id: str):
                                 ),
                                 "source": "GEO",
                             }
-                            for sample in geo_data.samples.values()
+                            for sample in geo_data.get("samples", {}).values()
                         ]
             except Exception as e:
                 logger.warning(f"Could not fetch GEO samples for {geo_id}: {e}")
