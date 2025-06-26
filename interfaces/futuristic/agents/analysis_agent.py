@@ -5,10 +5,16 @@ Handles advanced data analysis and AI-powered insights
 """
 
 import logging
+import sys
+from pathlib import Path
 from typing import Dict, List, Optional
 
-from ..models.futuristic_models import AgentMessage, AgentType, AnalysisInsight
-from .base import AgentCapability, BaseAgent, MessageType
+# Add paths for imports when running from the futuristic interface directory
+current_dir = Path(__file__).parent
+sys.path.insert(0, str(current_dir.parent))
+
+from models.futuristic_models import AnalysisInsight
+from .base import AgentCapability, AgentMessage, AgentType, BaseAgent, MessageType
 
 logger = logging.getLogger(__name__)
 

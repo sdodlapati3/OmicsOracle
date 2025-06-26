@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OmicsOracle - Color Scheme Test</title>
+    <link rel="stylesheet" href="interfaces/futuristic/static/css/main.css">
+</head>
+<body class="gradient-bg min-h-screen">
+    <!-- Color Scheme Selector -->
+    <div class="color-scheme-selector">
+        <h4>🎨 Color Themes</h4>
+        <div class="theme-options">
+            <div class="theme-option active" data-theme="default" title="Milky White"></div>
+            <div class="theme-option" data-theme="dark-ocean" title="Dark Ocean"></div>
+            <div class="theme-option" data-theme="forest-green" title="Forest Green"></div>
+            <div class="theme-option" data-theme="sunset-purple" title="Sunset Purple"></div>
+            <div class="theme-option" data-theme="warm-amber" title="Warm Amber"></div>
+            <div class="theme-option" data-theme="modern-gray" title="Modern Gray"></div>
+        </div>
+    </div>
+
+    <div id="app" class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <header class="text-center mb-12">
+            <h1 class="text-6xl font-bold text-white mb-4">
+                🧬 OmicsOracle
+            </h1>
+            <p class="text-xl text-gray-200 mb-6">
+                Color Scheme Testing Interface
+            </p>
+        </header>
+
+        <!-- Test Content -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Test Card 1 -->
+            <div class="glass-effect rounded-xl p-6">
+                <h2 class="text-2xl font-bold text-white mb-4">🔍 Sample Content</h2>
+                <p class="text-gray-200 mb-4">This is a test of the color scheme system. The background, text colors, and glass effects should change when you select different themes.</p>
+                
+                <div class="search-results-container">
+                    <div class="result-item dataset-item">
+                        <div class="dataset-header">
+                            <h5 class="dataset-title">
+                                <a href="#" class="geo-link">📊 Sample Dataset Title</a>
+                            </h5>
+                            <div class="dataset-metadata-compact">
+                                <span class="meta-badge geo-badge">
+                                    <span class="meta-icon">🆔</span>
+                                    <a href="#" class="geo-link">GSE123456</a>
+                                </span>
+                                <span class="meta-badge organism-badge">
+                                    <span class="meta-icon">🧬</span>
+                                    Homo sapiens
+                                </span>
+                                <span class="meta-badge samples-badge">
+                                    <span class="meta-icon">🧪</span>
+                                    <a href="#" class="samples-link">150 samples</a>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Test Card 2 -->
+            <div class="glass-effect rounded-xl p-6">
+                <h2 class="text-2xl font-bold text-white mb-4">🎨 Theme Information</h2>
+                <div id="theme-info" class="space-y-2">
+                    <div class="flex justify-between text-white">
+                        <span>Current Theme:</span>
+                        <span id="current-theme">Default</span>
+                    </div>
+                    <div class="flex justify-between text-white">
+                        <span>Test Status:</span>
+                        <span id="test-status">Ready</span>
+                    </div>
+                </div>
+                
+                <button id="test-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition-colors mt-4">
+                    🚀 Test Button
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Simplified color scheme functionality for testing
+        class ColorSchemeTest {
+            constructor() {
+                this.init();
+            }
+
+            init() {
+                console.log('🎨 Initializing Color Scheme Test');
+                this.setupColorSchemeToggle();
+            }
+
+            setupColorSchemeToggle() {
+                // Load saved theme from localStorage
+                const savedTheme = localStorage.getItem('omics-oracle-theme') || 'default';
+                this.applyTheme(savedTheme);
+
+                // Setup theme option click handlers
+                const themeOptions = document.querySelectorAll('.theme-option');
+                themeOptions.forEach(option => {
+                    option.addEventListener('click', () => {
+                        const theme = option.dataset.theme;
+                        this.applyTheme(theme);
+                        localStorage.setItem('omics-oracle-theme', theme);
+                        
+                        // Update active state
+                        themeOptions.forEach(opt => opt.classList.remove('active'));
+                        option.classList.add('active');
+                        
+                        // Update info
+                        this.updateThemeInfo(theme);
+                    });
+                });
+
+                // Set active theme option
+                const activeOption = document.querySelector(`[data-theme="${savedTheme}"]`);
+                if (activeOption) {
+                    themeOptions.forEach(opt => opt.classList.remove('active'));
+                    activeOption.classList.add('active');
+                }
+
+                this.updateThemeInfo(savedTheme);
+            }
+
+            applyTheme(themeName) {
+                const body = document.body;
+                
+                // Remove any existing theme
+                body.removeAttribute('data-theme');
+                
+                // Apply new theme (except for default)
+                if (themeName && themeName !== 'default') {
+                    body.setAttribute('data-theme', themeName);
+                }
+                
+                console.log(`[THEME] Applied theme: ${themeName}`);
+            }
+
+            updateThemeInfo(themeName) {
+                const currentThemeEl = document.getElementById('current-theme');
+                const testStatusEl = document.getElementById('test-status');
+                
+                if (currentThemeEl) {
+                    currentThemeEl.textContent = themeName.charAt(0).toUpperCase() + themeName.slice(1).replace('-', ' ');
+                }
+                
+                if (testStatusEl) {
+                    testStatusEl.textContent = '✅ Theme Applied';
+                    setTimeout(() => {
+                        testStatusEl.textContent = 'Ready';
+                    }, 2000);
+                }
+            }
+        }
+
+        // Initialize when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            new ColorSchemeTest();
+        });
+    </script>
+</body>
+</html>

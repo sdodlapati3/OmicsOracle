@@ -1,23 +1,29 @@
 #!/bin/bash
 
 # OmicsOracle Futuristic Interface Startup Script
-# This script activates the virtual environment from root and starts the futuristic interface
-#
-# Usage:
-#   ./start-futuristic.sh           # Normal startup (skip install if packages exist)
-#   ./start-futuristic.sh --install # Force package installation
-#   ./start-futuristic.sh --help    # Show help
+# Simple, focused startup for the futuristic web interface
 
-# Parse command line arguments
-FORCE_INSTALL=false
-SHOW_HELP=false
+echo "🚀 Starting OmicsOracle Futuristic Interface"
+echo "============================================="
 
-while [[ $# -gt 0 ]]; do
-    case $1 in
-        --install|-i)
-            FORCE_INSTALL=true
-            shift
-            ;;
+# Check if we're in the correct directory
+if [ ! -f "interfaces/futuristic/main.py" ]; then
+    echo "❌ Error: Please run this script from the OmicsOracle root directory"
+    echo "   Current directory: $(pwd)"
+    echo "   Expected to find: interfaces/futuristic/main.py"
+    exit 1
+fi
+
+# Stop any existing servers on port 8001
+echo "🔄 Checking for existing servers on port 8001..."
+lsof -ti:8001 | xargs kill -9 2>/dev/null || true
+
+# Check Python environment
+echo "🐍 Checking Python environment..."
+if ! command -v python3 &> /dev/null; then
+    echo "❌ Python3 not found. Please install Python 3.7+ and try again."
+    exit 1
+fi
         --help|-h)
             SHOW_HELP=true
             shift

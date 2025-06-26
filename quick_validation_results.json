@@ -1,0 +1,113 @@
+{
+  "health": {
+    "status": "healthy",
+    "timestamp": 1750898099.329083,
+    "pipeline_available": true,
+    "message": "Futuristic interface ready"
+  },
+  "frontend": {
+    "status": "passed"
+  },
+  "search": {
+    "query": "cancer RNA-seq",
+    "results_count": 5,
+    "response_time": 2.4435009956359863,
+    "data": {
+      "query": "cancer RNA-seq",
+      "results": [
+        {
+          "geo_id": "GSE300710",
+          "title": "Dataset GSE300710",
+          "summary": "Biomedical dataset related to cancer RNA-seq. Metadata retrieval may be pending for recent datasets.",
+          "organism": "Homo sapiens",
+          "sample_count": 0,
+          "platform": "Unknown platform",
+          "publication_date": "Recent",
+          "study_type": "Expression profiling",
+          "ai_summary": "Dataset GSE300710 is relevant to cancer RNA-seq research. Full metadata may be pending for recent submissions.",
+          "relevance_score": 0.8
+        },
+        {
+          "geo_id": "GSE300584",
+          "title": "Dataset GSE300584",
+          "summary": "Biomedical dataset related to cancer RNA-seq. Metadata retrieval may be pending for recent datasets.",
+          "organism": "Homo sapiens",
+          "sample_count": 0,
+          "platform": "Unknown platform",
+          "publication_date": "Recent",
+          "study_type": "Expression profiling",
+          "ai_summary": "Dataset GSE300584 is relevant to cancer RNA-seq research. Full metadata may be pending for recent submissions.",
+          "relevance_score": 0.8
+        },
+        {
+          "geo_id": "GSE300564",
+          "title": "Dataset GSE300564",
+          "summary": "Biomedical dataset related to cancer RNA-seq. Metadata retrieval may be pending for recent datasets.",
+          "organism": "Homo sapiens",
+          "sample_count": 0,
+          "platform": "Unknown platform",
+          "publication_date": "Recent",
+          "study_type": "Expression profiling",
+          "ai_summary": "Dataset GSE300564 is relevant to cancer RNA-seq research. Full metadata may be pending for recent submissions.",
+          "relevance_score": 0.8
+        },
+        {
+          "geo_id": "GSE300544",
+          "title": "Dataset GSE300544",
+          "summary": "Biomedical dataset related to cancer RNA-seq. Metadata retrieval may be pending for recent datasets.",
+          "organism": "Homo sapiens",
+          "sample_count": 0,
+          "platform": "Unknown platform",
+          "publication_date": "Recent",
+          "study_type": "Expression profiling",
+          "ai_summary": "Dataset GSE300544 is relevant to cancer RNA-seq research. Full metadata may be pending for recent submissions.",
+          "relevance_score": 0.8
+        },
+        {
+          "geo_id": "GSE300543",
+          "title": "Dataset GSE300543",
+          "summary": "Biomedical dataset related to cancer RNA-seq. Metadata retrieval may be pending for recent datasets.",
+          "organism": "Homo sapiens",
+          "sample_count": 0,
+          "platform": "Unknown platform",
+          "publication_date": "Recent",
+          "study_type": "Expression profiling",
+          "ai_summary": "Dataset GSE300543 is relevant to cancer RNA-seq research. Full metadata may be pending for recent submissions.",
+          "relevance_score": 0.8
+        }
+      ],
+      "total_found": 5,
+      "search_time": 2.4338581562042236,
+      "timestamp": 1750898101.7684438
+    }
+  },
+  "accuracy": {
+    "score": 1.0,
+    "sample_results": [
+      {
+        "geo_id": "GSE300584",
+        "title": "Dataset GSE300584",
+        "summary": "Biomedical dataset related to breast cancer. Metadata retrieval may be pending for recent datasets.",
+        "organism": "Homo sapiens",
+        "sample_count": 0,
+        "platform": "Unknown platform",
+        "publication_date": "Recent",
+        "study_type": "Expression profiling",
+        "ai_summary": "Dataset GSE300584 is relevant to breast cancer research. Full metadata may be pending for recent submissions.",
+        "relevance_score": 0.8
+      },
+      {
+        "geo_id": "GSE291822",
+        "title": "Dataset GSE291822",
+        "summary": "Biomedical dataset related to breast cancer. Metadata retrieval may be pending for recent datasets.",
+        "organism": "Homo sapiens",
+        "sample_count": 0,
+        "platform": "Unknown platform",
+        "publication_date": "Recent",
+        "study_type": "Expression profiling",
+        "ai_summary": "Dataset GSE291822 is relevant to breast cancer research. Full metadata may be pending for recent submissions.",
+        "relevance_score": 0.8
+      }
+    ]
+  }
+}
