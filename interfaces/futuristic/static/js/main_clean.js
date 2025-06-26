@@ -4,21 +4,7 @@
 class OmicsOracleApp {
     constructor() {
         this.searchQueries = 0;
-        this.t        let resultsHTML = `
-            <div class="mb-6 bg-gray-800/50 rounded-lg p-4 border border-gray-700">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <h3 class="text-xl font-bold text-white mb-1">Search Results</h3>
-                        <p class="text-gray-300">Query: <span class="text-blue-300 font-medium">"${data.query}"</span></p>
-                    </div>
-                    <div class="text-right">
-                        <p class="text-lg font-semibold text-green-400">${data.total_found} datasets found</p>
-                        <p class="text-sm text-gray-400">Search time: ${data.search_time.toFixed(2)}s</p>
-                    </div>
-                </div>
-                ${data.ai_insights ? `<p class="text-gray-300 text-sm mt-3 border-t border-gray-600 pt-3">${data.ai_insights}</p>` : ''}
-            </div>
-            <div class="space-y-4">`onseTime = 0;
+        this.totalResponseTime = 0;
         this.isSearching = false;
         this.websocket = null;
         this.searchHistory = this.loadSearchHistory();
@@ -116,9 +102,14 @@ class OmicsOracleApp {
     }
 
     async performSearch() {
+        console.log('🔍 performSearch called');
         const searchInput = document.getElementById('search-input');
         const searchBtn = document.getElementById('search-btn');
         const query = searchInput?.value?.trim();
+
+        console.log('🔍 Search query:', query);
+        console.log('🔍 searchInput element:', searchInput);
+        console.log('🔍 searchBtn element:', searchBtn);
 
         if (!query) {
             this.addLiveUpdate('⚠️ Please enter a search query', 'warning');
@@ -129,6 +120,8 @@ class OmicsOracleApp {
             this.addLiveUpdate('⏳ Search already in progress...', 'warning');
             return;
         }
+
+        console.log('🔍 Starting search process...');
 
         // Clear previous results immediately - FIRST PRIORITY
         this.clearPreviousResults();
@@ -153,24 +146,66 @@ class OmicsOracleApp {
         
         try {
             this.addLiveUpdate(`🔍 Searching for: "${query}"`, 'info');
+            this.addToLiveProgressFeed(`<div class="text-blue-400">🔍 Starting search for: "${query}"</div>`);
+            
+            console.log('🌐 Making fetch request to /api/search...');
+            this.addToLiveProgressFeed(`<div class="text-yellow-400">📡 Connecting to backend API...</div>`);
+            
+            // Add timeout to prevent hanging (extended for complex queries)
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 300000); // 5 minute timeout
             
             const response = await fetch('/api/search', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Cache-Control': 'no-cache, no-store, must-revalidate',
+                    'Pragma': 'no-cache',
+                    'Expires': '0'
                 },
                 body: JSON.stringify({
                     query: query,
                     max_results: 10,
-                    search_type: 'comprehensive'
-                })
+                    search_type: 'comprehensive',
+                    disable_cache: true,  // Force fresh data
+                    timestamp: Date.now()  // Prevent browser caching
+                }),
+                signal: controller.signal
             });
+
+            clearTimeout(timeoutId);
+            console.log('📡 Response received:', response.status, response.statusText);
+            this.addToLiveProgressFeed(`<div class="text-green-400">✅ Response received from server (${response.status})</div>`);
 
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
 
+            this.addToLiveProgressFeed(`<div class="text-blue-400">📊 Processing search results...</div>`);
             const data = await response.json();
+            console.log('📊 Data received:', data);
+            console.log('🔍 First result check:', data.results?.[0]);
+            console.log('🔍 Query vs Results:', {
+                query: data.query,
+                resultCount: data.results?.length,
+                firstGeoId: data.results?.[0]?.geo_id,
+                firstTitle: data.results?.[0]?.title
+            });
+            
+            // DEBUG: Log each result for data mapping verification
+            if (data.results) {
+                data.results.forEach((result, index) => {
+                    console.log(`🔍 Result ${index + 1}:`, {
+                        geo_id: result.geo_id,
+                        title: result.title?.substring(0, 60) + '...',
+                        summary: result.summary?.substring(0, 60) + '...',
+                        ai_insights: result.ai_insights?.substring(0, 60) + '...',
+                        organism: result.organism,
+                        sample_count: result.sample_count
+                    });
+                });
+            }
+            
             const responseTime = (Date.now() - startTime) / 1000;
 
             this.searchQueries++;
@@ -185,9 +220,15 @@ class OmicsOracleApp {
             this.addToSearchHistory(query);
 
         } catch (error) {
-            console.error('Search failed:', error);
+            console.error('🚨 Search failed:', error);
             
-            this.addLiveUpdate(`❌ Search failed: ${error.message}`, 'error');
+            let errorMessage = error.message;
+            if (error.name === 'AbortError') {
+                errorMessage = 'Search timed out after 5 minutes. Please try a simpler query.';
+                this.addLiveUpdate('⏰ Search timed out - please try again with a shorter query', 'error');
+            } else {
+                this.addLiveUpdate(`❌ Search failed: ${error.message}`, 'error');
+            }
             
             this.displayError(error.message);
         } finally {
@@ -204,25 +245,26 @@ class OmicsOracleApp {
     }
 
     clearPreviousResults() {
-        // Immediately clear old results with a prominent searching indicator
+        // Show live progress area instead of static "Searching..."
         const resultsContainer = document.getElementById('search-results');
         if (resultsContainer) {
             resultsContainer.innerHTML = `
-                <div class="bg-blue-900/30 border border-blue-500 rounded-lg p-8 text-center">
-                    <div class="animate-pulse">
-                        <div class="text-blue-400 text-2xl mb-4">🔍 Searching...</div>
-                        <p class="text-gray-300 mb-2">Processing your query...</p>
-                        <div class="w-full bg-gray-700 rounded-full h-2 mb-4">
-                            <div class="bg-blue-500 h-2 rounded-full animate-pulse" style="width: 45%"></div>
+                <div class="bg-blue-900/30 border border-blue-500 rounded-lg p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-xl font-bold text-white">🔍 Live Search Progress</h3>
+                        <div class="animate-pulse">
+                            <div class="w-3 h-3 bg-blue-500 rounded-full"></div>
                         </div>
-                        <p class="text-sm text-gray-400">Please wait while we search the NCBI GEO database</p>
+                    </div>
+                    <div id="live-progress-feed" class="space-y-2 max-h-64 overflow-y-auto bg-black bg-opacity-50 rounded p-4 font-mono text-sm">
+                        <div class="text-blue-400">[${new Date().toLocaleTimeString()}] 🚀 Initializing search...</div>
+                    </div>
+                    <div class="mt-3 text-center">
+                        <p class="text-gray-400 text-sm">Real-time updates from the biomedical search pipeline</p>
                     </div>
                 </div>
             `;
         }
-        
-        // Also clear/show the live monitor
-        this.showLiveMonitor();
         
         // Force a DOM repaint to ensure immediate visual update
         if (resultsContainer) {
@@ -276,7 +318,7 @@ class OmicsOracleApp {
         // Build metadata grid dynamically, only showing available info
         let metadataGrid = '';
         
-        if (dataset.organism && dataset.organism.trim() && dataset.organism !== 'Unknown') {
+        if (dataset.organism && dataset.organism.trim()) {
             metadataGrid += `
                 <div>
                     <span class="text-gray-400">Organism:</span>
@@ -292,13 +334,17 @@ class OmicsOracleApp {
                 </div>`;
         }
         
-        if (dataset.publication_date && dataset.publication_date !== 'Date not available') {
+        if (dataset.publication_date) {
             metadataGrid += `
                 <div>
                     <span class="text-gray-400">Date:</span>
                     <span class="text-white ml-2">${dataset.publication_date}</span>
                 </div>`;
         }
+
+        // Create unique IDs for expandable content
+        const summaryId = `summary-${dataset.geo_id}`;
+        const aiId = `ai-${dataset.geo_id}`;
 
         return `
             <div class="dataset-card glass-effect rounded-lg p-4 ${relevanceClass}">
@@ -316,24 +362,46 @@ class OmicsOracleApp {
                 </div>
                 
                 <h6 class="text-md font-medium text-gray-100 mb-2">
-                    ${dataset.title}
+                    ${dataset.title || ''}
                 </h6>
                 
                 ${metadataGrid ? `<div class="grid grid-cols-2 gap-4 mb-3 text-sm">${metadataGrid}</div>` : ''}
                 
+                ${dataset.summary ? `
                 <div class="mb-3">
                     <h7 class="text-sm font-medium text-gray-300 block mb-1">Summary:</h7>
-                    <p class="text-gray-200 text-sm ${dataset.summary.includes('not available') ? 'italic text-gray-400' : ''}">
-                        ${this.truncateText(dataset.summary, 200)}
-                    </p>
+                    <div class="expandable-content">
+                        <div id="${summaryId}" class="text-gray-200 text-sm" 
+                             data-full-text="${this.escapeHtml(dataset.summary)}"
+                             data-is-expanded="false">
+                            ${dataset.summary.length > 200 ? this.truncateText(dataset.summary, 200) : dataset.summary}
+                        </div>
+                        ${dataset.summary.length > 200 ? 
+                            `<button onclick="window.omicsApp.toggleText('${summaryId}')" 
+                                     class="text-blue-400 hover:text-blue-300 text-xs mt-1 block">
+                                Show more...
+                             </button>` : ''}
+                    </div>
                 </div>
+                ` : ''}
                 
+                ${dataset.ai_insights ? `
                 <div class="border-t border-gray-600 pt-3">
                     <h7 class="text-sm font-medium text-blue-300 block mb-1">🤖 AI Analysis:</h7>
-                    <p class="text-blue-100 text-sm ${dataset.ai_insights.includes('unavailable') ? 'italic text-gray-400' : ''}">
-                        ${dataset.ai_insights || 'AI analysis not available'}
-                    </p>
+                    <div class="expandable-content">
+                        <div id="${aiId}" class="text-blue-100 text-sm"
+                           data-full-text="${this.escapeHtml(dataset.ai_insights)}"
+                           data-is-expanded="false">
+                            ${dataset.ai_insights.length > 200 ? this.truncateText(dataset.ai_insights, 200) : dataset.ai_insights}
+                        </div>
+                        ${dataset.ai_insights.length > 200 ? 
+                            `<button onclick="window.omicsApp.toggleText('${aiId}')" 
+                                     class="text-blue-400 hover:text-blue-300 text-xs mt-1 block">
+                                Show more...
+                             </button>` : ''}
+                    </div>
                 </div>
+                ` : ''}
             </div>
         `;
     }
@@ -371,7 +439,26 @@ class OmicsOracleApp {
             };
             
             this.websocket.onmessage = (event) => {
-                this.addLiveMonitorMessage(event.data);
+                console.log('📡 WebSocket message received:', event.data);
+                
+                // Add to live progress feed in results area
+                this.addToLiveProgressFeed(event.data);
+                
+                // Also add to live updates panel
+                try {
+                    const messageData = JSON.parse(event.data);
+                    if (messageData.message) {
+                        this.addLiveUpdate(messageData.message, messageData.type || 'info');
+                    }
+                } catch (e) {
+                    // If not JSON, treat as HTML and extract text for live updates
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = event.data;
+                    const textContent = tempDiv.textContent || tempDiv.innerText || '';
+                    if (textContent.trim()) {
+                        this.addLiveUpdate(textContent.trim(), 'info');
+                    }
+                }
             };
             
             this.websocket.onclose = () => {
@@ -420,6 +507,9 @@ class OmicsOracleApp {
     }
 
     loadSearchHistory() {
+        // Temporarily disable search history to avoid cached data confusion
+        return [];
+        /*
         try {
             const history = localStorage.getItem('omicsOracle_searchHistory');
             return history ? JSON.parse(history) : [];
@@ -427,9 +517,13 @@ class OmicsOracleApp {
             console.warn('Failed to load search history:', e);
             return [];
         }
+        */
     }
     
     saveSearchHistory() {
+        // Temporarily disable saving search history
+        return;
+        /*
         try {
             // Keep only the last 20 searches
             const historyToSave = this.searchHistory.slice(-20);
@@ -437,6 +531,7 @@ class OmicsOracleApp {
         } catch (e) {
             console.warn('Failed to save search history:', e);
         }
+        */
     }
     
     addToSearchHistory(query) {
@@ -556,6 +651,61 @@ class OmicsOracleApp {
                 suggestionsDiv.classList.add('hidden');
             }
         }, delay);
+    }
+
+    addToLiveProgressFeed(htmlMessage) {
+        const progressFeed = document.getElementById('live-progress-feed');
+        if (!progressFeed) return;
+
+        // Extract text content from HTML message
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = htmlMessage;
+        const textContent = tempDiv.textContent || tempDiv.innerText || '';
+        
+        if (textContent.trim()) {
+            const timestamp = new Date().toLocaleTimeString();
+            const progressLine = document.createElement('div');
+            progressLine.className = 'text-green-400 animate-fade-in';
+            progressLine.innerHTML = `[${timestamp}] ${textContent.trim()}`;
+            
+            progressFeed.appendChild(progressLine);
+            
+            // Auto-scroll to bottom
+            progressFeed.scrollTop = progressFeed.scrollHeight;
+            
+            // Limit to last 50 messages for performance
+            while (progressFeed.children.length > 50) {
+                progressFeed.removeChild(progressFeed.firstChild);
+            }
+        }
+    }
+
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    toggleText(elementId) {
+        const element = document.getElementById(elementId);
+        if (!element) return;
+
+        const fullText = element.getAttribute('data-full-text');
+        const isExpanded = element.getAttribute('data-is-expanded') === 'true';
+
+        if (isExpanded) {
+            // Collapse
+            element.textContent = this.truncateText(fullText, 200);
+            element.setAttribute('data-is-expanded', 'false');
+            const button = element.parentElement.querySelector('button');
+            if (button) button.textContent = 'Show more...';
+        } else {
+            // Expand
+            element.textContent = fullText;
+            element.setAttribute('data-is-expanded', 'true');
+            const button = element.parentElement.querySelector('button');
+            if (button) button.textContent = 'Show less';
+        }
     }
 }
 
