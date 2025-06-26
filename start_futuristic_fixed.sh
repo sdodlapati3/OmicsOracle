@@ -33,12 +33,22 @@ source venv/bin/activate
 # Set environment variables
 export PYTHONPATH="$(pwd):$PYTHONPATH"
 
-# Check if required dependencies are installed
-echo "📦 Checking dependencies..."
-python -c "import fastapi, uvicorn, python_dotenv" 2>/dev/null || {
-    echo "❌ Missing dependencies. Installing..."
-    pip install fastapi uvicorn python-dotenv
-}
+# Check if required dependencies are installed (silently)
+echo "📦 Verifying dependencies..."
+MISSING_DEPS=""
+
+# Check each dependency individually
+python -c "import fastapi" 2>/dev/null || MISSING_DEPS="$MISSING_DEPS fastapi"
+python -c "import uvicorn" 2>/dev/null || MISSING_DEPS="$MISSING_DEPS uvicorn"
+python -c "import dotenv" 2>/dev/null || MISSING_DEPS="$MISSING_DEPS python-dotenv"
+
+if [ -n "$MISSING_DEPS" ]; then
+    echo "❌ Missing dependencies:$MISSING_DEPS"
+    echo "🔧 Installing missing packages..."
+    pip install $MISSING_DEPS
+else
+    echo "✅ All dependencies available"
+fi
 
 # Navigate to futuristic interface directory
 cd interfaces/futuristic

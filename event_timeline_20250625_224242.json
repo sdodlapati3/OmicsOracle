@@ -1,0 +1,447 @@
+[
+  {
+    "timestamp": 1750905758.368342,
+    "event_type": "PROCESS_START",
+    "data": "Starting comprehensive search tracking for query: 'dna methylation data for human brain cancer tissue'",
+    "relative_time": 1.7881393432617188e-05
+  },
+  {
+    "timestamp": 1750905758.36853,
+    "event_type": "STEP_1",
+    "data": "Testing interface availability",
+    "relative_time": 0.00020599365234375
+  },
+  {
+    "timestamp": 1750905762.1800928,
+    "event_type": "SUCCESS",
+    "data": "Interface is available",
+    "relative_time": 3.8117687702178955
+  },
+  {
+    "timestamp": 1750905762.180287,
+    "event_type": "STEP_2",
+    "data": "Preparing search request",
+    "relative_time": 3.811962842941284
+  },
+  {
+    "timestamp": 1750905762.1803598,
+    "event_type": "PAYLOAD",
+    "data": {
+      "query": "dna methylation data for human brain cancer tissue",
+      "max_results": 10,
+      "search_type": "comprehensive"
+    },
+    "relative_time": 3.8120357990264893
+  },
+  {
+    "timestamp": 1750905762.1804328,
+    "event_type": "STEP_3",
+    "data": "Sending search request to API",
+    "relative_time": 3.8121087551116943
+  },
+  {
+    "timestamp": 1750905762.237159,
+    "event_type": "API_TIMING",
+    "data": "API response time: 0.057s",
+    "relative_time": 3.868834972381592
+  },
+  {
+    "timestamp": 1750905762.237323,
+    "event_type": "STEP_4",
+    "data": "Analyzing API response",
+    "relative_time": 3.8689990043640137
+  },
+  {
+    "timestamp": 1750905762.23811,
+    "event_type": "RAW_RESPONSE_STRUCTURE",
+    "data": {
+      "query": "dna methylation data for human brain cancer tissue",
+      "total_found": 10,
+      "search_time": 0.05350899696350098,
+      "results_count": 10,
+      "has_timestamp": true
+    },
+    "relative_time": 3.869786024093628
+  },
+  {
+    "timestamp": 1750905762.2388868,
+    "event_type": "STEP_5",
+    "data": "Performing deep analysis of search results",
+    "relative_time": 3.870562791824341
+  },
+  {
+    "timestamp": 1750905762.2390468,
+    "event_type": "RESULT_0_ANALYSIS",
+    "data": {
+      "geo_id": "GSE296398",
+      "title_length": 74,
+      "summary_length": 517,
+      "ai_insights_length": 1381,
+      "organism": "Homo sapiens",
+      "sample_count": 6,
+      "platform": null,
+      "relevance_score": 1.0,
+      "publication_date": "M",
+      "has_geo_link": true
+    },
+    "relative_time": 3.870722770690918
+  },
+  {
+    "timestamp": 1750905762.239143,
+    "event_type": "RESULT_0_CONTENT_PREVIEW",
+    "data": {
+      "summary_preview": "HELLS is a known chromatin remodeler, but its specific genomic targets have not been sufficiently described. Here, we report the generation of HELLS knockout human pluripotent cells and through telome...",
+      "ai_insights_preview": "Overview: {'overview': \"The dataset GSE296398 investigates the role of the chromatin remodeler HELLS in regulating DNA methylation at human satellite repeats, which are often implicated in genomic sta..."
+    },
+    "relative_time": 3.870818853378296
+  },
+  {
+    "timestamp": 1750905762.2392142,
+    "event_type": "RESULT_1_ANALYSIS",
+    "data": {
+      "geo_id": "GSE250465",
+      "title_length": 60,
+      "summary_length": 754,
+      "ai_insights_length": 1381,
+      "organism": "Homo sapiens",
+      "sample_count": 8,
+      "platform": null,
+      "relevance_score": 1.0,
+      "publication_date": "D",
+      "has_geo_link": true
+    },
+    "relative_time": 3.8708901405334473
+  },
+  {
+    "timestamp": 1750905762.239279,
+    "event_type": "RESULT_1_CONTENT_PREVIEW",
+    "data": {
+      "summary_preview": "interactions that require remodeling proteins like the Helicase, Lymphoid-specific (HELLS). Here, we generate HELLS and de novo DNA methyltransferase 3 A and B (DNMT3A/B) knockout hu-man pluripotent s...",
+      "ai_insights_preview": "Overview: {'overview': \"The dataset GSE296398 investigates the role of the chromatin remodeler HELLS in regulating DNA methylation at human satellite repeats, which are often implicated in genomic sta..."
+    },
+    "relative_time": 3.870954990386963
+  },
+  {
+    "timestamp": 1750905762.2393441,
+    "event_type": "RESULT_2_ANALYSIS",
+    "data": {
+      "geo_id": "GSE249602",
+      "title_length": 57,
+      "summary_length": 843,
+      "ai_insights_length": 1381,
+      "organism": "Homo sapiens",
+      "sample_count": 14,
+      "platform": null,
+      "relevance_score": 1.0,
+      "publication_date": "A",
+      "has_geo_link": true
+    },
+    "relative_time": 3.8710200786590576
+  },
+  {
+    "timestamp": 1750905762.23946,
+    "event_type": "RESULT_2_CONTENT_PREVIEW",
+    "data": {
+      "summary_preview": "DNA methylation is essential for genome integrity and involves multi-layered chromatin interac-tions that require remodeling proteins like the Helicase, Lymphoid-specific (HELLS). Here, we generate HE...",
+      "ai_insights_preview": "Overview: {'overview': \"The dataset GSE296398 investigates the role of the chromatin remodeler HELLS in regulating DNA methylation at human satellite repeats, which are often implicated in genomic sta..."
+    },
+    "relative_time": 3.871135950088501
+  },
+  {
+    "timestamp": 1750905762.239551,
+    "event_type": "RESULT_3_ANALYSIS",
+    "data": {
+      "geo_id": "GSE241688",
+      "title_length": 68,
+      "summary_length": 1577,
+      "ai_insights_length": 1381,
+      "organism": "Homo sapiens",
+      "sample_count": 60,
+      "platform": null,
+      "relevance_score": 1.0,
+      "publication_date": "M",
+      "has_geo_link": true
+    },
+    "relative_time": 3.8712270259857178
+  },
+  {
+    "timestamp": 1750905762.239609,
+    "event_type": "RESULT_3_CONTENT_PREVIEW",
+    "data": {
+      "summary_preview": "The absolute number of rDNA transcription units can vary by about one power of ten among individuals. Apart from extensive rDNA copy number (CN) variation and instability in many cancers, there is lit...",
+      "ai_insights_preview": "Overview: {'overview': \"The dataset GSE296398 investigates the role of the chromatin remodeler HELLS in regulating DNA methylation at human satellite repeats, which are often implicated in genomic sta..."
+    },
+    "relative_time": 3.8712849617004395
+  },
+  {
+    "timestamp": 1750905762.23967,
+    "event_type": "RESULT_4_ANALYSIS",
+    "data": {
+      "geo_id": "GSE300009",
+      "title_length": 102,
+      "summary_length": 727,
+      "ai_insights_length": 1381,
+      "organism": "Homo sapiens",
+      "sample_count": 46,
+      "platform": null,
+      "relevance_score": 0.9,
+      "publication_date": "J",
+      "has_geo_link": true
+    },
+    "relative_time": 3.8713459968566895
+  },
+  {
+    "timestamp": 1750905762.23973,
+    "event_type": "RESULT_4_CONTENT_PREVIEW",
+    "data": {
+      "summary_preview": "Peripheral blood DNA methylation was profiled in 46 patients with treatment-resistant depression prior to treatment with transcranial magnetic stimulation (TMS). Genome-wide DNA methylation was measur...",
+      "ai_insights_preview": "Overview: {'overview': \"The dataset GSE296398 investigates the role of the chromatin remodeler HELLS in regulating DNA methylation at human satellite repeats, which are often implicated in genomic sta..."
+    },
+    "relative_time": 3.871405839920044
+  },
+  {
+    "timestamp": 1750905762.2397828,
+    "event_type": "RESULT_5_ANALYSIS",
+    "data": {
+      "geo_id": "GSE297209",
+      "title_length": 100,
+      "summary_length": 1250,
+      "ai_insights_length": 1381,
+      "organism": "Homo sapiens",
+      "sample_count": 143,
+      "platform": null,
+      "relevance_score": 0.9,
+      "publication_date": "J",
+      "has_geo_link": true
+    },
+    "relative_time": 3.8714587688446045
+  },
+  {
+    "timestamp": 1750905762.239841,
+    "event_type": "RESULT_5_CONTENT_PREVIEW",
+    "data": {
+      "summary_preview": "The recently launched Illumina Infinium MethylationEPIC v2.0 (EPICv2), successor of MethylationEPIC v1.0 (EPICv1), retains a majority of probes in EPICv1, while expanding coverage of regulatory elemen...",
+      "ai_insights_preview": "Overview: {'overview': \"The dataset GSE296398 investigates the role of the chromatin remodeler HELLS in regulating DNA methylation at human satellite repeats, which are often implicated in genomic sta..."
+    },
+    "relative_time": 3.8715169429779053
+  },
+  {
+    "timestamp": 1750905762.239902,
+    "event_type": "RESULT_6_ANALYSIS",
+    "data": {
+      "geo_id": "GSE284759",
+      "title_length": 61,
+      "summary_length": 755,
+      "ai_insights_length": 1381,
+      "organism": "Homo sapiens",
+      "sample_count": 20,
+      "platform": null,
+      "relevance_score": 0.6,
+      "publication_date": "J",
+      "has_geo_link": true
+    },
+    "relative_time": 3.8715779781341553
+  },
+  {
+    "timestamp": 1750905762.2400398,
+    "event_type": "RESULT_6_CONTENT_PREVIEW",
+    "data": {
+      "summary_preview": "Pineal parenchymal body tumors are rare central nervous system tumors with a variety of presentations ranging from well-differentiated low-grade tumors to undifferentiated highly aggressive tumors. Re...",
+      "ai_insights_preview": "Overview: {'overview': \"The dataset GSE296398 investigates the role of the chromatin remodeler HELLS in regulating DNA methylation at human satellite repeats, which are often implicated in genomic sta..."
+    },
+    "relative_time": 3.871715784072876
+  },
+  {
+    "timestamp": 1750905762.240155,
+    "event_type": "RESULT_7_ANALYSIS",
+    "data": {
+      "geo_id": "GSE286313",
+      "title_length": 149,
+      "summary_length": 1167,
+      "ai_insights_length": 1381,
+      "organism": "Homo sapiens",
+      "sample_count": 467,
+      "platform": null,
+      "relevance_score": 0.6,
+      "publication_date": "O",
+      "has_geo_link": true
+    },
+    "relative_time": 3.871830940246582
+  },
+  {
+    "timestamp": 1750905762.240226,
+    "event_type": "RESULT_7_CONTENT_PREVIEW",
+    "data": {
+      "summary_preview": "DNA methylation is a relatively stable epigenetic mark with important roles in development and disease.1 Since cell-to-cell variation in epigenetic programming can reflect essential differences in cel...",
+      "ai_insights_preview": "Overview: {'overview': \"The dataset GSE296398 investigates the role of the chromatin remodeler HELLS in regulating DNA methylation at human satellite repeats, which are often implicated in genomic sta..."
+    },
+    "relative_time": 3.8719019889831543
+  },
+  {
+    "timestamp": 1750905762.2403042,
+    "event_type": "RESULT_8_ANALYSIS",
+    "data": {
+      "geo_id": "GSE269319",
+      "title_length": 136,
+      "summary_length": 1165,
+      "ai_insights_length": 1381,
+      "organism": "Homo sapiens",
+      "sample_count": 8,
+      "platform": null,
+      "relevance_score": 0.4,
+      "publication_date": "D",
+      "has_geo_link": true
+    },
+    "relative_time": 3.8719801902770996
+  },
+  {
+    "timestamp": 1750905762.240364,
+    "event_type": "RESULT_8_CONTENT_PREVIEW",
+    "data": {
+      "summary_preview": "Diffuse midline gliomas (DMGs) are lethal brain tumors characterized by p53-inactivating mutations and oncohistone H3.3K27M mutations that rewire the cellular response to genotoxic stress. Using RCAS/...",
+      "ai_insights_preview": "Overview: {'overview': \"The dataset GSE296398 investigates the role of the chromatin remodeler HELLS in regulating DNA methylation at human satellite repeats, which are often implicated in genomic sta..."
+    },
+    "relative_time": 3.872040033340454
+  },
+  {
+    "timestamp": 1750905762.2404249,
+    "event_type": "RESULT_9_ANALYSIS",
+    "data": {
+      "geo_id": "GSE280161",
+      "title_length": 129,
+      "summary_length": 1475,
+      "ai_insights_length": 1381,
+      "organism": "Homo sapiens",
+      "sample_count": 2,
+      "platform": null,
+      "relevance_score": 0.5,
+      "publication_date": "D",
+      "has_geo_link": true
+    },
+    "relative_time": 3.872100830078125
+  },
+  {
+    "timestamp": 1750905762.240486,
+    "event_type": "RESULT_9_CONTENT_PREVIEW",
+    "data": {
+      "summary_preview": "Maintaining genome integrity is crucial for the proper functioning and development of organisms. One intriguing aspect of genome integrity is the formation and function of neocentromeres at non-centro...",
+      "ai_insights_preview": "Overview: {'overview': \"The dataset GSE296398 investigates the role of the chromatin remodeler HELLS in regulating DNA methylation at human satellite repeats, which are often implicated in genomic sta..."
+    },
+    "relative_time": 3.872161865234375
+  },
+  {
+    "timestamp": 1750905762.240544,
+    "event_type": "STEP_6",
+    "data": "Performing data quality analysis",
+    "relative_time": 3.872220039367676
+  },
+  {
+    "timestamp": 1750905762.240769,
+    "event_type": "QUALITY_REPORT",
+    "data": {
+      "has_real_geo_data": true,
+      "has_real_ai_summaries": true,
+      "placeholder_indicators": [],
+      "data_completeness": {
+        "result_0": {
+          "geo_id": "GSE296398",
+          "has_title": true,
+          "has_summary": true,
+          "has_ai_insights": true,
+          "organism_valid": true,
+          "date_valid": true,
+          "sample_count_valid": true
+        },
+        "result_1": {
+          "geo_id": "GSE250465",
+          "has_title": true,
+          "has_summary": true,
+          "has_ai_insights": true,
+          "organism_valid": true,
+          "date_valid": true,
+          "sample_count_valid": true
+        },
+        "result_2": {
+          "geo_id": "GSE249602",
+          "has_title": true,
+          "has_summary": true,
+          "has_ai_insights": true,
+          "organism_valid": true,
+          "date_valid": true,
+          "sample_count_valid": true
+        },
+        "result_3": {
+          "geo_id": "GSE241688",
+          "has_title": true,
+          "has_summary": true,
+          "has_ai_insights": true,
+          "organism_valid": true,
+          "date_valid": true,
+          "sample_count_valid": true
+        },
+        "result_4": {
+          "geo_id": "GSE300009",
+          "has_title": true,
+          "has_summary": true,
+          "has_ai_insights": true,
+          "organism_valid": true,
+          "date_valid": true,
+          "sample_count_valid": true
+        },
+        "result_5": {
+          "geo_id": "GSE297209",
+          "has_title": true,
+          "has_summary": true,
+          "has_ai_insights": true,
+          "organism_valid": true,
+          "date_valid": true,
+          "sample_count_valid": true
+        },
+        "result_6": {
+          "geo_id": "GSE284759",
+          "has_title": true,
+          "has_summary": true,
+          "has_ai_insights": true,
+          "organism_valid": true,
+          "date_valid": true,
+          "sample_count_valid": true
+        },
+        "result_7": {
+          "geo_id": "GSE286313",
+          "has_title": true,
+          "has_summary": true,
+          "has_ai_insights": true,
+          "organism_valid": true,
+          "date_valid": true,
+          "sample_count_valid": true
+        },
+        "result_8": {
+          "geo_id": "GSE269319",
+          "has_title": true,
+          "has_summary": true,
+          "has_ai_insights": true,
+          "organism_valid": true,
+          "date_valid": true,
+          "sample_count_valid": true
+        },
+        "result_9": {
+          "geo_id": "GSE280161",
+          "has_title": true,
+          "has_summary": true,
+          "has_ai_insights": true,
+          "organism_valid": true,
+          "date_valid": true,
+          "sample_count_valid": true
+        }
+      },
+      "suspicious_patterns": []
+    },
+    "relative_time": 3.8724448680877686
+  },
+  {
+    "timestamp": 1750905762.240931,
+    "event_type": "STEP_7",
+    "data": "Saving detailed analysis results",
+    "relative_time": 3.8726069927215576
+  }
+]

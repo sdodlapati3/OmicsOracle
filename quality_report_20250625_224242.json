@@ -1,0 +1,98 @@
+{
+  "has_real_geo_data": true,
+  "has_real_ai_summaries": true,
+  "placeholder_indicators": [],
+  "data_completeness": {
+    "result_0": {
+      "geo_id": "GSE296398",
+      "has_title": true,
+      "has_summary": true,
+      "has_ai_insights": true,
+      "organism_valid": true,
+      "date_valid": true,
+      "sample_count_valid": true
+    },
+    "result_1": {
+      "geo_id": "GSE250465",
+      "has_title": true,
+      "has_summary": true,
+      "has_ai_insights": true,
+      "organism_valid": true,
+      "date_valid": true,
+      "sample_count_valid": true
+    },
+    "result_2": {
+      "geo_id": "GSE249602",
+      "has_title": true,
+      "has_summary": true,
+      "has_ai_insights": true,
+      "organism_valid": true,
+      "date_valid": true,
+      "sample_count_valid": true
+    },
+    "result_3": {
+      "geo_id": "GSE241688",
+      "has_title": true,
+      "has_summary": true,
+      "has_ai_insights": true,
+      "organism_valid": true,
+      "date_valid": true,
+      "sample_count_valid": true
+    },
+    "result_4": {
+      "geo_id": "GSE300009",
+      "has_title": true,
+      "has_summary": true,
+      "has_ai_insights": true,
+      "organism_valid": true,
+      "date_valid": true,
+      "sample_count_valid": true
+    },
+    "result_5": {
+      "geo_id": "GSE297209",
+      "has_title": true,
+      "has_summary": true,
+      "has_ai_insights": true,
+      "organism_valid": true,
+      "date_valid": true,
+      "sample_count_valid": true
+    },
+    "result_6": {
+      "geo_id": "GSE284759",
+      "has_title": true,
+      "has_summary": true,
+      "has_ai_insights": true,
+      "organism_valid": true,
+      "date_valid": true,
+      "sample_count_valid": true
+    },
+    "result_7": {
+      "geo_id": "GSE286313",
+      "has_title": true,
+      "has_summary": true,
+      "has_ai_insights": true,
+      "organism_valid": true,
+      "date_valid": true,
+      "sample_count_valid": true
+    },
+    "result_8": {
+      "geo_id": "GSE269319",
+      "has_title": true,
+      "has_summary": true,
+      "has_ai_insights": true,
+      "organism_valid": true,
+      "date_valid": true,
+      "sample_count_valid": true
+    },
+    "result_9": {
+      "geo_id": "GSE280161",
+      "has_title": true,
+      "has_summary": true,
+      "has_ai_insights": true,
+      "organism_valid": true,
+      "date_valid": true,
+      "sample_count_valid": true
+    }
+  },
+  "suspicious_patterns": []
+}

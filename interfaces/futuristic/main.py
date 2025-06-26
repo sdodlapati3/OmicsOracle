@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import uvicorn
-from fastapi import FastAPI, HTTPException, BackgroundTasks
+from fastapi import FastAPI, HTTPException, BackgroundTasks, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -44,7 +44,6 @@ class SearchResponse(BaseModel):
     total_found: int
     search_time: float
     timestamp: float
-    ai_insights: str = ""
 
 # FastAPI app configuration
 app = FastAPI(
@@ -66,6 +65,54 @@ app.add_middleware(
 static_path = Path(__file__).parent / "static"
 static_path.mkdir(exist_ok=True)
 app.mount("/static", StaticFiles(directory=str(static_path)), name="static")
+
+# WebSocket connection manager for live monitoring
+class ConnectionManager:
+    def __init__(self):
+        self.active_connections: List[WebSocket] = []
+
+    async def connect(self, websocket: WebSocket):
+        await websocket.accept()
+        self.active_connections.append(websocket)
+        logger.info(f"WebSocket connected. Total connections: {len(self.active_connections)}")
+
+    def disconnect(self, websocket: WebSocket):
+        if websocket in self.active_connections:
+            self.active_connections.remove(websocket)
+        logger.info(f"WebSocket disconnected. Total connections: {len(self.active_connections)}")
+
+    async def broadcast(self, message: str):
+        """Broadcast message to all connected clients"""
+        if self.active_connections:
+            disconnected = []
+            for connection in self.active_connections:
+                try:
+                    await connection.send_text(message)
+                except Exception as e:
+                    logger.warning(f"Failed to send to WebSocket: {e}")
+                    disconnected.append(connection)
+            
+            # Remove disconnected clients
+            for conn in disconnected:
+                self.disconnect(conn)
+
+# Global connection manager
+manager = ConnectionManager()
+
+async def log_to_frontend(message: str, level: str = "info"):
+    """Send log message to frontend via WebSocket"""
+    timestamp = time.strftime("%H:%M:%S", time.localtime())
+    color_map = {
+        "info": "text-white",
+        "success": "text-green-400", 
+        "warning": "text-yellow-400",
+        "error": "text-red-400",
+        "debug": "text-blue-400"
+    }
+    color = color_map.get(level, "text-white")
+    
+    formatted_message = f'<div class="{color}">[{timestamp}] {message}</div>'
+    await manager.broadcast(formatted_message)
 
 # Global pipeline instance
 pipeline: Optional[OmicsOracle] = None
@@ -98,53 +145,54 @@ async def futuristic_interface():
         <script src="https://cdn.tailwindcss.com"></script>
     </head>
     <body class="min-h-screen">
-        <div id="app" class="container mx-auto px-2 py-4">
+        <div id="app" class="container mx-auto px-4 py-8">
             <!-- Header -->
-            <header class="text-center mb-6">
-                <h1 class="text-5xl font-bold text-white mb-2">
+            <header class="text-center mb-12">
+                <h1 class="text-6xl font-bold text-white mb-4">
                     🧬 OmicsOracle
                 </h1>
-                <p class="text-lg text-gray-200 mb-4">
+                <p class="text-xl text-gray-200 mb-6">
                     Next-Generation Biomedical Research Intelligence Platform
                 </p>
-                <div class="glass-effect rounded-lg p-3 inline-block">
-                    <div class="flex items-center space-x-4">
-                        <div class="flex items-center">
-                            <div class="w-3 h-3 rounded-full bg-green-400 mr-2"></div>
-                            <span class="text-white font-medium">Futuristic Mode Active</span>
-                        </div>
-                        <div id="status" class="status-ready">
-                            ✅ Ready
-                        </div>
-                    </div>
-                </div>
             </header>
 
             <!-- Main Interface -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <!-- Left Panel: Search -->
                 <div class="lg:col-span-2">
                     <!-- Smart Search -->
-                    <div class="glass-effect rounded-xl p-4 mb-4">
-                        <h2 class="text-xl font-bold text-white mb-3">🔍 Intelligent Search</h2>
+                    <div class="glass-effect rounded-xl p-6 mb-8">
+                        <h2 class="text-2xl font-bold text-white mb-4">🔍 Intelligent Search</h2>
                         <div class="search-container">
                             <input
                                 id="search-input"
                                 type="text"
                                 placeholder="Search for biomedical datasets (e.g., 'cancer RNA-seq', 'diabetes microarray')..."
-                                class="w-full p-4 rounded-lg bg-white text-black border-2 border-blue-500 focus:border-blue-700 focus:outline-none"
+                                class="w-full p-4 rounded-lg bg-gray-800 text-white border border-gray-600 focus:border-blue-500 focus:outline-none"
                             >
-                            <button id="search-btn" class="w-full mt-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition-colors">
+                            <button id="search-btn" class="w-full mt-4 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition-colors">
                                 🚀 Search NCBI GEO Database
                             </button>
                         </div>
                     </div>
 
+                    <!-- Live Query Progress Monitor -->
+                    <div id="live-monitor-container" class="glass-effect rounded-xl p-6 mb-8" style="display: none;">
+                        <h3 class="text-xl font-bold text-white mb-4">🔄 Live Query Progress</h3>
+                        <div id="live-monitor" class="bg-black bg-opacity-80 rounded-lg p-4 h-64 overflow-y-auto font-mono text-sm">
+                            <div class="text-green-400">🚀 Query monitor ready...</div>
+                        </div>
+                        <div class="mt-2 flex justify-between items-center">
+                            <div class="text-gray-400 text-xs">Real-time backend monitoring</div>
+                            <button id="clear-monitor-btn" class="text-gray-400 hover:text-white text-xs">Clear</button>
+                        </div>
+                    </div>
+
                     <!-- Search Results -->
-                    <div class="glass-effect rounded-xl p-4">
-                        <h3 class="text-lg font-bold text-white mb-3">📊 Search Results</h3>
+                    <div class="glass-effect rounded-xl p-6">
+                        <h3 class="text-xl font-bold text-white mb-4">📊 Search Results</h3>
                         <div id="search-results">
-                            <div class="text-center py-6 text-gray-300">
+                            <div class="text-center py-8 text-gray-300">
                                 Enter a search query to find biomedical datasets...
                             </div>
                         </div>
@@ -154,18 +202,18 @@ async def futuristic_interface():
                 <!-- Right Panel: Status & Updates -->
                 <div class="lg:col-span-1">
                     <!-- Live Updates -->
-                    <div class="glass-effect rounded-xl p-4 mb-4">
-                        <h2 class="text-lg font-bold text-white mb-3">📡 Live Updates</h2>
+                    <div class="glass-effect rounded-xl p-6 mb-8">
+                        <h2 class="text-2xl font-bold text-white mb-4">📡 Live Updates</h2>
                         <div id="live-updates" class="space-y-2">
-                            <div class="text-gray-300 text-center py-3">
+                            <div class="text-gray-300 text-center py-4">
                                 System ready for search...
                             </div>
                         </div>
                     </div>
 
                     <!-- System Monitor -->
-                    <div class="glass-effect rounded-xl p-4">
-                        <h2 class="text-lg font-bold text-white mb-3">⚡ System Status</h2>
+                    <div class="glass-effect rounded-xl p-6">
+                        <h2 class="text-2xl font-bold text-white mb-4">⚡ System Status</h2>
                         <div id="system-stats" class="space-y-2">
                             <div class="flex justify-between text-white">
                                 <span>Search Queries:</span>
@@ -194,32 +242,39 @@ async def futuristic_interface():
 @app.post("/api/search")
 async def search_datasets(request: SearchRequest, background_tasks: BackgroundTasks):
     """Search for biomedical datasets using the OmicsOracle pipeline"""
+    await log_to_frontend(f"🔍 New search query received: '{request.query}'", "info")
+    
     if not pipeline:
+        await log_to_frontend("❌ Pipeline not available", "error")
         raise HTTPException(
-            status_code=503, 
+            status_code=503,
             detail="OmicsOracle pipeline not available"
         )
     
     search_start_time = time.time()
+    await log_to_frontend(f"⚡ Starting search with max_results={request.max_results}", "info")
     
     try:
         logger.info(f"🔍 Processing search query: {request.query}")
+        await log_to_frontend("🧠 Initializing AI-powered search pipeline...", "info")
         
         # Use the existing OmicsOracle pipeline to process the query
         result = await process_search_query(request.query, request.max_results)
         
         search_time = time.time() - search_start_time
+        await log_to_frontend(f"✅ Search completed in {search_time:.2f}s", "success")
+        await log_to_frontend(f"📊 Found {len(result['datasets'])} relevant datasets", "success")
         
         return SearchResponse(
             query=request.query,
             results=result["datasets"],
             total_found=len(result["datasets"]),
             search_time=search_time,
-            timestamp=time.time(),
-            ai_insights=result.get("ai_insights", "Search completed successfully.")
+            timestamp=time.time()
         )
         
     except Exception as e:
+        await log_to_frontend(f"❌ Search failed: {str(e)}", "error")
         logger.error(f"❌ Search failed: {e}")
         raise HTTPException(status_code=500, detail=f"Search failed: {str(e)}")
 
@@ -232,39 +287,112 @@ async def process_search_query(query: str, max_results: int = 10) -> Dict[str, A
             raise Exception("Pipeline not initialized")
             
         logger.info(f"🔍 Starting pipeline query processing for: {query}")
+        await log_to_frontend("🔍 Starting pipeline query processing...", "info")
+        
+        await log_to_frontend("🧬 Connecting to NCBI GEO database...", "info")
         
         # Use the pipeline's process_query method (it's async!)
         # This will handle GEO query preparation, extraction, and AI summary
         query_result = await pipeline.process_query(query, max_results=max_results)
         
+        await log_to_frontend(f"📊 Pipeline results: {len(query_result.geo_ids)} GEO IDs found", "success")
+        await log_to_frontend(f"🔍 DEBUG: Metadata entries: {len(query_result.metadata)}", "debug")
+        await log_to_frontend(f"🔍 DEBUG: AI summaries keys: {list(query_result.ai_summaries.keys()) if query_result.ai_summaries else 'None'}", "debug")
         logger.info(f"📊 Pipeline results: {len(query_result.geo_ids)} GEO IDs found, {len(query_result.metadata)} metadata entries")
         
         # Extract and format the results
         datasets = []
         
+        await log_to_frontend("🔬 Processing metadata and generating AI insights...", "info")
+        
         # Check if we have GEO IDs (even without metadata)
         if query_result.geo_ids:
             for i, geo_id in enumerate(query_result.geo_ids[:max_results]):
+                await log_to_frontend(f"📋 Processing dataset {i + 1}/{min(len(query_result.geo_ids), max_results)}: {geo_id}", "debug")
                 # Get metadata if available, otherwise use defaults
                 metadata = {}
                 if i < len(query_result.metadata):
                     metadata = query_result.metadata[i] or {}
                 
+                await log_to_frontend(f"🔍 DEBUG: {geo_id} metadata keys: {list(metadata.keys()) if metadata else 'Empty'}", "debug")
+                
+                # Clean up organism field
+                organism = metadata.get('organism', '').strip()
+                if not organism or organism.lower() == 'unknown':
+                    organism = 'Homo sapiens'
+                
+                # Get platform info (skip if Unknown platform)
+                platform = metadata.get('platform', '').strip()
+                if not platform or platform == 'Unknown platform':
+                    platform = None  # Don't display platform if unknown
+                
+                # Normalize relevance score to 0-1 range
+                raw_score = metadata.get('relevance_score', 2.0)
+                if raw_score > 1.0:
+                    # Assume it's out of 5 or similar scale
+                    relevance_score = min(raw_score / 5.0, 1.0)
+                else:
+                    relevance_score = raw_score
+                
+                # Format publication date properly
+                pub_date = "Date not available"
+                if metadata.get('submission_date') and metadata['submission_date'][0]:
+                    raw_date = metadata['submission_date'][0]
+                    # If it's just a single character, it's probably incomplete
+                    if len(raw_date) > 1:
+                        pub_date = raw_date
+                elif metadata.get('last_update_date') and metadata['last_update_date'][0]:
+                    raw_date = metadata['last_update_date'][0]
+                    if len(raw_date) > 1:
+                        pub_date = raw_date
+                elif metadata.get('pubdate'):
+                    pub_date = metadata['pubdate']
+                ai_insights = "AI analysis unavailable - no metadata to analyze"
+                if query_result.ai_summaries:
+                    # Check individual summaries first
+                    if "individual_summaries" in query_result.ai_summaries:
+                        for summary_item in query_result.ai_summaries["individual_summaries"]:
+                            if summary_item.get("accession") == geo_id:
+                                ai_insights = summary_item.get("summary", ai_insights)
+                                break
+                    # Fallback to brief overview or batch summary
+                    if ai_insights == "AI analysis unavailable - no metadata to analyze":
+                        # Generate dataset-specific insight based on available metadata
+                        if metadata.get('title') and metadata.get('summary'):
+                            title = metadata.get('title', '').lower()
+                            summary_snippet = metadata.get('summary', '')[:200]
+                            ai_insights = f"Dataset-specific analysis: This study ({geo_id}) investigates {title}. The research examines {summary_snippet}..."
+                        elif "brief_overview" in query_result.ai_summaries:
+                            overview = query_result.ai_summaries['brief_overview']
+                            # If it's a dict, extract the overview text
+                            if isinstance(overview, dict) and 'overview' in overview:
+                                ai_insights = f"General analysis: {overview['overview']}"
+                            else:
+                                ai_insights = f"General analysis: {str(overview)}"
+                        elif "batch_summary" in query_result.ai_summaries:
+                            batch_summary = query_result.ai_summaries['batch_summary']
+                            # If it's a dict, extract meaningful text
+                            if isinstance(batch_summary, dict):
+                                ai_insights = f"Batch analysis: {str(batch_summary.get('summary', batch_summary))}"
+                            else:
+                                ai_insights = f"Batch analysis: {str(batch_summary)}"
+                
                 dataset_info = {
                     "geo_id": geo_id,
-                    "title": metadata.get('title', f'Dataset {geo_id}'),
-                    "summary": metadata.get('summary', f'Biomedical dataset related to {query}. Metadata retrieval may be pending for recent datasets.'),
-                    "organism": metadata.get('organism', 'Homo sapiens'),
-                    "sample_count": metadata.get('sample_count', 0),
-                    "platform": metadata.get('platform', 'Unknown platform'),
-                    "publication_date": metadata.get('pubdate', 'Recent'),
-                    "study_type": metadata.get('type', 'Expression profiling'),
-                    "ai_summary": query_result.ai_summaries.get(geo_id, f'Dataset {geo_id} is relevant to {query} research. Full metadata may be pending for recent submissions.'),
-                    "relevance_score": metadata.get('relevance_score', 0.8)
+                    "title": metadata.get('title', 'Title not available'),
+                    "summary": metadata.get('summary', 'Summary not available - metadata could not be retrieved from NCBI GEO'),
+                    "organism": organism,
+                    "sample_count": metadata.get('sample_count', None),  # Use None instead of 0
+                    "platform": platform,  # Can be None
+                    "publication_date": pub_date,
+                    "study_type": metadata.get('type', 'Study type not specified'),
+                    "ai_insights": ai_insights,
+                    "relevance_score": relevance_score
                 }
                 datasets.append(dataset_info)
                 
             logger.info(f"✅ Successfully formatted {len(datasets)} datasets")
+            await log_to_frontend(f"✅ Successfully processed {len(datasets)} datasets", "success")
         
         # If no results from pipeline, fall back to mock data
         if not datasets:
@@ -284,6 +412,8 @@ async def process_search_query(query: str, max_results: int = 10) -> Dict[str, A
         if len(query_result.geo_ids) > len([m for m in query_result.metadata if m]):
             ai_insights += " Note: Some datasets have pending metadata (common for recent submissions)."
         
+        await log_to_frontend("🎯 Query processing complete!", "success")
+        
         return {
             "datasets": datasets,
             "query": query,
@@ -292,8 +422,9 @@ async def process_search_query(query: str, max_results: int = 10) -> Dict[str, A
         
     except Exception as e:
         logger.error(f"❌ Error processing search query: {e}")
-        # Return mock data for testing
-        return await get_mock_results(query, max_results)
+        # DISABLED FOR TESTING: Return mock data for testing
+        # return await get_mock_results(query, max_results)
+        raise Exception(f"Real pipeline processing failed: {e}")
 
 
 async def get_mock_results(query: str, max_results: int = 10) -> Dict[str, Any]:
@@ -337,6 +468,22 @@ async def health_check():
         "pipeline_available": pipeline is not None,
         "message": "Futuristic interface ready"
     }
+
+
+@app.websocket("/ws/monitor")
+async def websocket_endpoint(websocket: WebSocket):
+    """WebSocket endpoint for live query monitoring"""
+    await manager.connect(websocket)
+    try:
+        await log_to_frontend("🔄 Live monitoring connected", "success")
+        while True:
+            # Keep connection alive
+            await websocket.receive_text()
+    except WebSocketDisconnect:
+        manager.disconnect(websocket)
+    except Exception as e:
+        logger.error(f"WebSocket error: {e}")
+        manager.disconnect(websocket)
 
 
 if __name__ == "__main__":

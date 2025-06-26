@@ -1,0 +1,44 @@
+{
+  "query": "dna methylation data for bovine embryo development",
+  "results": [
+    {
+      "geo_id": "GSE298812",
+      "title": "Dataset GSE298812",
+      "summary": "Biomedical dataset related to dna methylation data for bovine embryo development. Metadata retrieval may be pending for recent datasets.",
+      "organism": "Homo sapiens",
+      "sample_count": 0,
+      "platform": null,
+      "publication_date": "Recent",
+      "study_type": "Expression profiling",
+      "ai_insights": "AI analysis pending for this dataset.",
+      "relevance_score": 0.4
+    },
+    {
+      "geo_id": "GSE295926",
+      "title": "Dataset GSE295926",
+      "summary": "Biomedical dataset related to dna methylation data for bovine embryo development. Metadata retrieval may be pending for recent datasets.",
+      "organism": "Homo sapiens",
+      "sample_count": 0,
+      "platform": null,
+      "publication_date": "Recent",
+      "study_type": "Expression profiling",
+      "ai_insights": "AI analysis pending for this dataset.",
+      "relevance_score": 0.4
+    },
+    {
+      "geo_id": "GSE295925",
+      "title": "Dataset GSE295925",
+      "summary": "Biomedical dataset related to dna methylation data for bovine embryo development. Metadata retrieval may be pending for recent datasets.",
+      "organism": "Homo sapiens",
+      "sample_count": 0,
+      "platform": null,
+      "publication_date": "Recent",
+      "study_type": "Expression profiling",
+      "ai_insights": "AI analysis pending for this dataset.",
+      "relevance_score": 0.4
+    }
+  ],
+  "total_found": 3,
+  "search_time": 1.2091798782348633,
+  "timestamp": 1750907142.075283
+}
