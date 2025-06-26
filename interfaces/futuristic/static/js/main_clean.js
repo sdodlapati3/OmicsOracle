@@ -8,25 +8,25 @@ class OmicsOracleApp {
         this.isSearching = false;
         this.websocket = null;
         this.searchHistory = this.loadSearchHistory();
-        
+
         this.init();
     }
 
     init() {
         console.log('🚀 Initializing OmicsOracle Futuristic Interface...');
-        
+
         // Bind event listeners
         this.bindEventListeners();
-        
+
         // Initialize search history autocomplete
         this.initSearchHistory();
-        
+
         // Initialize WebSocket for live monitoring
         this.initWebSocket();
-        
+
         // Update initial stats
         this.updateStats();
-        
+
         console.log('✅ Interface initialized successfully');
     }
 
@@ -45,7 +45,7 @@ class OmicsOracleApp {
                     this.performSearch();
                 }
             });
-            
+
             // Add search history functionality
             searchInput.addEventListener('focus', () => this.showSearchSuggestions());
             searchInput.addEventListener('input', () => this.filterSearchSuggestions());
@@ -67,7 +67,7 @@ class OmicsOracleApp {
         }
 
         if (avgResponseTimeElement) {
-            const avgTime = this.searchQueries > 0 ? 
+            const avgTime = this.searchQueries > 0 ?
                 (this.totalResponseTime / this.searchQueries).toFixed(2) : '--';
             avgResponseTimeElement.textContent = `${avgTime}s`;
         }
@@ -83,7 +83,7 @@ class OmicsOracleApp {
 
         const updateElement = document.createElement('div');
         updateElement.className = `live-update live-update-${type}`;
-        
+
         const timestamp = new Date().toLocaleTimeString();
         updateElement.innerHTML = `
             <div class="flex justify-between items-center text-sm">
@@ -125,15 +125,15 @@ class OmicsOracleApp {
 
         // Clear previous results immediately - FIRST PRIORITY
         this.clearPreviousResults();
-        
+
         // Hide search suggestions
         this.hideSearchSuggestions();
-        
+
         // Add to search history
         this.addToSearchHistory(query);
 
         this.isSearching = true;
-        
+
         // Update button to show searching state immediately
         if (searchBtn) {
             searchBtn.disabled = true;
@@ -141,20 +141,20 @@ class OmicsOracleApp {
             searchBtn.innerHTML = '🔍 Searching<span class="dots-loading"></span>';
             searchBtn.style.cursor = 'not-allowed';
         }
-        
+
         const startTime = Date.now();
-        
+
         try {
             this.addLiveUpdate(`🔍 Searching for: "${query}"`, 'info');
             this.addToLiveProgressFeed(`<div class="text-blue-400">🔍 Starting search for: "${query}"</div>`);
-            
+
             console.log('🌐 Making fetch request to /api/search...');
             this.addToLiveProgressFeed(`<div class="text-yellow-400">📡 Connecting to backend API...</div>`);
-            
+
             // Add timeout to prevent hanging (extended for complex queries)
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 300000); // 5 minute timeout
-            
+
             const response = await fetch('/api/search', {
                 method: 'POST',
                 headers: {
@@ -165,7 +165,7 @@ class OmicsOracleApp {
                 },
                 body: JSON.stringify({
                     query: query,
-                    max_results: 10,
+                    max_results: parseInt(document.getElementById('max-results').value || '10'),
                     search_type: 'comprehensive',
                     disable_cache: true,  // Force fresh data
                     timestamp: Date.now()  // Prevent browser caching
@@ -191,7 +191,7 @@ class OmicsOracleApp {
                 firstGeoId: data.results?.[0]?.geo_id,
                 firstTitle: data.results?.[0]?.title
             });
-            
+
             // DEBUG: Log each result for data mapping verification
             if (data.results) {
                 data.results.forEach((result, index) => {
@@ -199,20 +199,20 @@ class OmicsOracleApp {
                         geo_id: result.geo_id,
                         title: result.title?.substring(0, 60) + '...',
                         summary: result.summary?.substring(0, 60) + '...',
-                        ai_insights: result.ai_insights?.substring(0, 60) + '...',
+                        ai_insights: result.ai_insights, // Log the full ai_insights
                         organism: result.organism,
                         sample_count: result.sample_count
                     });
                 });
             }
-            
+
             const responseTime = (Date.now() - startTime) / 1000;
 
             this.searchQueries++;
             this.totalResponseTime += responseTime;
-            
+
             this.updateStats();
-            
+
             this.addLiveUpdate(`✅ Found ${data.total_found} results in ${responseTime.toFixed(2)}s`, 'success');
             this.displayResults(data);
 
@@ -221,7 +221,7 @@ class OmicsOracleApp {
 
         } catch (error) {
             console.error('🚨 Search failed:', error);
-            
+
             let errorMessage = error.message;
             if (error.name === 'AbortError') {
                 errorMessage = 'Search timed out after 5 minutes. Please try a simpler query.';
@@ -229,11 +229,11 @@ class OmicsOracleApp {
             } else {
                 this.addLiveUpdate(`❌ Search failed: ${error.message}`, 'error');
             }
-            
+
             this.displayError(error.message);
         } finally {
             this.isSearching = false;
-            
+
             // Reset button to normal state
             if (searchBtn) {
                 searchBtn.disabled = false;
@@ -265,7 +265,7 @@ class OmicsOracleApp {
                 </div>
             `;
         }
-        
+
         // Force a DOM repaint to ensure immediate visual update
         if (resultsContainer) {
             resultsContainer.offsetHeight; // Trigger reflow
@@ -294,8 +294,11 @@ class OmicsOracleApp {
                         <p class="text-gray-300">Query: <span class="text-blue-300 font-medium">"${data.query}"</span></p>
                     </div>
                     <div class="text-right">
-                        <p class="text-lg font-semibold text-green-400">${data.total_found} datasets found</p>
+                        <p class="text-lg font-semibold text-green-400">${data.results.length} of ${data.total_found} datasets shown</p>
                         <p class="text-sm text-gray-400">Search time: ${data.search_time.toFixed(2)}s</p>
+                        ${data.total_found > data.results.length ?
+                            `<p class="text-xs text-yellow-400 mt-1">Showing ${data.results.length} of ${data.total_found} available results.
+                             Use the "Max Results" selector to show more.</p>` : ''}
                     </div>
                 </div>
                 ${data.ai_insights ? `<p class="text-gray-300 text-sm mt-3 border-t border-gray-600 pt-3">${data.ai_insights}</p>` : ''}
@@ -312,12 +315,12 @@ class OmicsOracleApp {
     }
 
     renderDataset(dataset, index) {
-        const relevanceClass = dataset.relevance_score > 0.8 ? 'high-relevance' : 
+        const relevanceClass = dataset.relevance_score > 0.8 ? 'high-relevance' :
                              dataset.relevance_score > 0.5 ? 'medium-relevance' : 'low-relevance';
 
         // Build metadata grid dynamically, only showing available info
         let metadataGrid = '';
-        
+
         if (dataset.organism && dataset.organism.trim()) {
             metadataGrid += `
                 <div>
@@ -325,7 +328,7 @@ class OmicsOracleApp {
                     <span class="text-white ml-2">${dataset.organism}</span>
                 </div>`;
         }
-        
+
         if (dataset.sample_count && dataset.sample_count > 0) {
             metadataGrid += `
                 <div>
@@ -333,7 +336,7 @@ class OmicsOracleApp {
                     <span class="text-white ml-2">${dataset.sample_count}</span>
                 </div>`;
         }
-        
+
         if (dataset.publication_date) {
             metadataGrid += `
                 <div>
@@ -350,8 +353,8 @@ class OmicsOracleApp {
             <div class="dataset-card glass-effect rounded-lg p-4 ${relevanceClass}">
                 <div class="flex justify-between items-start mb-3">
                     <h5 class="text-lg font-semibold text-white">
-                        <a href="https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=${dataset.geo_id}" 
-                           target="_blank" 
+                        <a href="https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=${dataset.geo_id}"
+                           target="_blank"
                            class="hover:text-blue-400 transition-colors">
                             ${dataset.geo_id}
                         </a>
@@ -360,45 +363,33 @@ class OmicsOracleApp {
                         Score: ${(dataset.relevance_score * 100).toFixed(0)}%
                     </span>
                 </div>
-                
+
                 <h6 class="text-md font-medium text-gray-100 mb-2">
                     ${dataset.title || ''}
                 </h6>
-                
+
                 ${metadataGrid ? `<div class="grid grid-cols-2 gap-4 mb-3 text-sm">${metadataGrid}</div>` : ''}
-                
+
                 ${dataset.summary ? `
                 <div class="mb-3">
                     <h7 class="text-sm font-medium text-gray-300 block mb-1">Summary:</h7>
                     <div class="expandable-content">
-                        <div id="${summaryId}" class="text-gray-200 text-sm" 
-                             data-full-text="${this.escapeHtml(dataset.summary)}"
-                             data-is-expanded="false">
-                            ${dataset.summary.length > 500 ? this.truncateText(dataset.summary, 500) : dataset.summary}
+                        <div id="${summaryId}" class="text-gray-200 text-sm scientific-text full-text"
+                             data-full-text="${this.escapeHtml(dataset.summary)}">
+                            ${this.escapeHtml(dataset.summary)}
                         </div>
-                        ${dataset.summary.length > 500 ? 
-                            `<button onclick="window.omicsApp.toggleText('${summaryId}')" 
-                                     class="text-blue-400 hover:text-blue-300 text-xs mt-1 block">
-                                Show more...
-                             </button>` : ''}
                     </div>
                 </div>
                 ` : ''}
-                
+
                 ${dataset.ai_insights ? `
                 <div class="border-t border-gray-600 pt-3">
                     <h7 class="text-sm font-medium text-blue-300 block mb-1">🤖 AI Analysis:</h7>
                     <div class="expandable-content">
-                        <div id="${aiId}" class="text-blue-100 text-sm"
-                           data-full-text="${this.escapeHtml(dataset.ai_insights)}"
-                           data-is-expanded="false">
-                            ${dataset.ai_insights.length > 500 ? this.truncateText(dataset.ai_insights, 500) : dataset.ai_insights}
+                        <div id="${aiId}" class="text-blue-100 text-sm scientific-text full-text" style="max-height: none !important; overflow: visible !important;"
+                           data-full-text="${this.escapeHtml(dataset.ai_insights)}">
+                            ${this.escapeHtml(dataset.ai_insights)}
                         </div>
-                        ${dataset.ai_insights.length > 500 ? 
-                            `<button onclick="window.omicsApp.toggleText('${aiId}')" 
-                                     class="text-blue-400 hover:text-blue-300 text-xs mt-1 block">
-                                Show more...
-                             </button>` : ''}
                     </div>
                 </div>
                 ` : ''}
@@ -414,7 +405,7 @@ class OmicsOracleApp {
             <div class="text-center py-8">
                 <div class="text-red-400 text-xl mb-4">❌ Search Error</div>
                 <p class="text-gray-300 mb-4">${message}</p>
-                <button onclick="location.reload()" 
+                <button onclick="location.reload()"
                         class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors">
                     🔄 Reload Interface
                 </button>
@@ -423,27 +414,54 @@ class OmicsOracleApp {
     }
 
     truncateText(text, maxLength) {
+        if (!text) return '';
         if (text.length <= maxLength) return text;
-        return text.substr(0, maxLength) + '...';
+
+        // For AI analysis and important content, use a larger maxLength
+        if (maxLength < 1000 && text.includes("analysis") || text.includes("insights")) {
+            maxLength = 1500; // Allow longer text for analysis content
+        }
+
+        // Try to find a natural break point (end of sentence or paragraph)
+        const breakPoints = ['. ', '! ', '? ', '\n\n', '\n'];
+        let bestBreakPoint = maxLength;
+
+        // Look for the closest break point before maxLength
+        for (const breakChar of breakPoints) {
+            const index = text.lastIndexOf(breakChar, maxLength);
+            if (index > 0 && index < bestBreakPoint) {
+                bestBreakPoint = index + (breakChar.length); // Include the break character(s)
+            }
+        }
+
+        // If no good break point found, try to break at a word boundary
+        if (bestBreakPoint === maxLength) {
+            const lastSpace = text.lastIndexOf(' ', maxLength);
+            if (lastSpace > maxLength * 0.8) { // Only use if reasonably close to target
+                bestBreakPoint = lastSpace;
+            }
+        }
+
+        return text.substr(0, bestBreakPoint) + '...';
     }
 
     initWebSocket() {
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
         const wsUrl = `${protocol}//${window.location.host}/ws/monitor`;
-        
+
         try {
             this.websocket = new WebSocket(wsUrl);
-            
+
             this.websocket.onopen = () => {
                 console.log('🔗 WebSocket connected for live monitoring');
             };
-            
+
             this.websocket.onmessage = (event) => {
                 console.log('📡 WebSocket message received:', event.data);
-                
+
                 // Add to live progress feed in results area
                 this.addToLiveProgressFeed(event.data);
-                
+
                 // Also add to live updates panel
                 try {
                     const messageData = JSON.parse(event.data);
@@ -460,13 +478,13 @@ class OmicsOracleApp {
                     }
                 }
             };
-            
+
             this.websocket.onclose = () => {
                 console.log('❌ WebSocket disconnected');
                 // Attempt to reconnect after 3 seconds
                 setTimeout(() => this.initWebSocket(), 3000);
             };
-            
+
             this.websocket.onerror = (error) => {
                 console.error('WebSocket error:', error);
             };
@@ -478,19 +496,19 @@ class OmicsOracleApp {
     addLiveMonitorMessage(htmlMessage) {
         const monitorContainer = document.getElementById('live-monitor-container');
         const monitor = document.getElementById('live-monitor');
-        
+
         if (monitor) {
             // Show the monitor container when we have messages
             if (monitorContainer) {
                 monitorContainer.style.display = 'block';
             }
-            
+
             // Add the message
             monitor.insertAdjacentHTML('beforeend', htmlMessage);
-            
+
             // Auto-scroll to bottom
             monitor.scrollTop = monitor.scrollHeight;
-            
+
             // Limit to last 100 messages for performance
             const messages = monitor.children;
             if (messages.length > 100) {
@@ -519,7 +537,7 @@ class OmicsOracleApp {
         }
         */
     }
-    
+
     saveSearchHistory() {
         // Temporarily disable saving search history
         return;
@@ -533,7 +551,7 @@ class OmicsOracleApp {
         }
         */
     }
-    
+
     addToSearchHistory(query) {
         // Remove duplicate if exists
         this.searchHistory = this.searchHistory.filter(item => item.query !== query);
@@ -545,38 +563,38 @@ class OmicsOracleApp {
         });
         this.saveSearchHistory();
     }
-    
+
     initSearchHistory() {
         // Create suggestions dropdown
         const searchContainer = document.querySelector('.search-container') || document.querySelector('.relative');
         if (!searchContainer) return;
-        
+
         const suggestionsDiv = document.createElement('div');
         suggestionsDiv.id = 'search-suggestions';
         suggestionsDiv.className = 'absolute top-full left-0 w-full bg-gray-800 border border-gray-600 rounded-b-lg z-50 hidden max-h-60 overflow-y-auto';
         suggestionsDiv.innerHTML = '';
-        
+
         searchContainer.appendChild(suggestionsDiv);
     }
-    
+
     showSearchSuggestions() {
         const suggestionsDiv = document.getElementById('search-suggestions');
         const searchInput = document.getElementById('search-input');
-        
+
         if (!suggestionsDiv || !searchInput || this.searchHistory.length === 0) return;
-        
+
         // Sort by most recent and most frequent
         const sortedHistory = [...this.searchHistory]
             .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
             .slice(0, 10); // Show max 10 suggestions
-            
+
         if (sortedHistory.length === 0) {
             suggestionsDiv.classList.add('hidden');
             return;
         }
-        
+
         suggestionsDiv.innerHTML = sortedHistory.map(item => `
-            <div class="search-suggestion px-3 py-2 hover:bg-gray-700 cursor-pointer border-b border-gray-600 last:border-b-0" 
+            <div class="search-suggestion px-3 py-2 hover:bg-gray-700 cursor-pointer border-b border-gray-600 last:border-b-0"
                  data-query="${item.query}">
                 <div class="text-gray-200 text-sm">${item.query}</div>
                 <div class="text-gray-400 text-xs">
@@ -584,7 +602,7 @@ class OmicsOracleApp {
                 </div>
             </div>
         `).join('');
-        
+
         // Add click handlers
         suggestionsDiv.querySelectorAll('.search-suggestion').forEach(suggestion => {
             suggestion.addEventListener('click', () => {
@@ -594,35 +612,35 @@ class OmicsOracleApp {
                 this.performSearch();
             });
         });
-        
+
         suggestionsDiv.classList.remove('hidden');
     }
-    
+
     filterSearchSuggestions() {
         const searchInput = document.getElementById('search-input');
         const suggestionsDiv = document.getElementById('search-suggestions');
-        
+
         if (!searchInput || !suggestionsDiv) return;
-        
+
         const query = searchInput.value.toLowerCase().trim();
-        
+
         if (query === '') {
             this.showSearchSuggestions(); // Show all if empty
             return;
         }
-        
+
         const filteredHistory = this.searchHistory
             .filter(item => item.query.toLowerCase().includes(query))
             .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
             .slice(0, 8);
-            
+
         if (filteredHistory.length === 0) {
             suggestionsDiv.classList.add('hidden');
             return;
         }
-        
+
         suggestionsDiv.innerHTML = filteredHistory.map(item => `
-            <div class="search-suggestion px-3 py-2 hover:bg-gray-700 cursor-pointer border-b border-gray-600 last:border-b-0" 
+            <div class="search-suggestion px-3 py-2 hover:bg-gray-700 cursor-pointer border-b border-gray-600 last:border-b-0"
                  data-query="${item.query}">
                 <div class="text-gray-200 text-sm">${item.query}</div>
                 <div class="text-gray-400 text-xs">
@@ -630,7 +648,7 @@ class OmicsOracleApp {
                 </div>
             </div>
         `).join('');
-        
+
         // Add click handlers
         suggestionsDiv.querySelectorAll('.search-suggestion').forEach(suggestion => {
             suggestion.addEventListener('click', () => {
@@ -640,10 +658,10 @@ class OmicsOracleApp {
                 this.performSearch();
             });
         });
-        
+
         suggestionsDiv.classList.remove('hidden');
     }
-    
+
     hideSearchSuggestions(delay = 0) {
         setTimeout(() => {
             const suggestionsDiv = document.getElementById('search-suggestions');
@@ -661,18 +679,18 @@ class OmicsOracleApp {
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = htmlMessage;
         const textContent = tempDiv.textContent || tempDiv.innerText || '';
-        
+
         if (textContent.trim()) {
             const timestamp = new Date().toLocaleTimeString();
             const progressLine = document.createElement('div');
             progressLine.className = 'text-green-400 animate-fade-in';
             progressLine.innerHTML = `[${timestamp}] ${textContent.trim()}`;
-            
+
             progressFeed.appendChild(progressLine);
-            
+
             // Auto-scroll to bottom
             progressFeed.scrollTop = progressFeed.scrollHeight;
-            
+
             // Limit to last 50 messages for performance
             while (progressFeed.children.length > 50) {
                 progressFeed.removeChild(progressFeed.firstChild);
@@ -681,9 +699,28 @@ class OmicsOracleApp {
     }
 
     escapeHtml(text) {
+        if (!text) return '';
+
+        // First escape HTML
         const div = document.createElement('div');
         div.textContent = text;
-        return div.innerHTML;
+        let escapedText = div.innerHTML;
+
+        // Properly format line breaks
+        escapedText = escapedText.replace(/\n/g, '<br>');
+
+        // Format scientific notation (superscripts for 10^x)
+        escapedText = escapedText.replace(/(\d+)\^(\d+)/g, '$1<sup>$2</sup>');
+        escapedText = escapedText.replace(/10\s*-\s*(\d+)/g, '10<sup>-$1</sup>'); // Handle 10-6 format
+        escapedText = escapedText.replace(/10\s*\^\s*-\s*(\d+)/g, '10<sup>-$1</sup>'); // Handle 10^-6 format
+
+        // Italicize scientific names (Genus species format)
+        escapedText = escapedText.replace(/\b([A-Z][a-z]+\s+[a-z]+)\b/g, '<em>$1</em>');
+
+        // Preserve multi-paragraph structure
+        escapedText = escapedText.replace(/\.\s+([A-Z])/g, '.<br><br>$1');
+
+        return escapedText;
     }
 
     toggleText(elementId) {
@@ -694,14 +731,14 @@ class OmicsOracleApp {
         const isExpanded = element.getAttribute('data-is-expanded') === 'true';
 
         if (isExpanded) {
-            // Collapse
-            element.textContent = this.truncateText(fullText, 500);
-            element.setAttribute('data-is-expanded', 'false');
+            // Show full text by default - we're not truncating anymore
+            element.innerHTML = this.escapeHtml(fullText);
+            element.setAttribute('data-is-expanded', 'true');
             const button = element.parentElement.querySelector('button');
-            if (button) button.textContent = 'Show more...';
+            if (button) button.textContent = 'Show less';
         } else {
-            // Expand
-            element.textContent = fullText;
+            // Show full text
+            element.innerHTML = this.escapeHtml(fullText);
             element.setAttribute('data-is-expanded', 'true');
             const button = element.parentElement.querySelector('button');
             if (button) button.textContent = 'Show less';

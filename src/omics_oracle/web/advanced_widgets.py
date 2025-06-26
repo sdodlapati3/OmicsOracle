@@ -426,7 +426,7 @@ class ResearchProjectManagerWidget:
         export_history = [
             {
                 "export_id": "exp_001",
-                "dataset": "GSE123456",
+                "dataset": "DATASET_001",
                 "export_date": "2025-06-22",
                 "format": "CSV",
                 "size": "2.3 GB",
@@ -434,7 +434,7 @@ class ResearchProjectManagerWidget:
             },
             {
                 "export_id": "exp_002",
-                "dataset": "GSE789012",
+                "dataset": "DATASET_002",
                 "export_date": "2025-06-21",
                 "format": "JSON",
                 "size": "856 MB",

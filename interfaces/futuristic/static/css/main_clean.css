@@ -498,11 +498,11 @@ h2, h3 {
     .lg\\:grid-cols-3 {
         grid-template-columns: repeat(3, 1fr);
     }
-    
+
     .lg\\:col-span-2 {
         grid-column: span 2;
     }
-    
+
     .lg\\:col-span-1 {
         grid-column: span 1;
     }
@@ -512,17 +512,17 @@ h2, h3 {
     .container {
         padding: 0 10px;
     }
-    
+
     .result-item {
         padding: 1rem;
     }
-    
+
     .results-header {
         flex-direction: column;
         align-items: flex-start;
         gap: 10px;
     }
-    
+
     .meta-badge {
         font-size: 12px;
         padding: 3px 8px;
@@ -609,20 +609,100 @@ h2, h3 {
 
 /* Search results loading indicator */
 .search-loading {
-    background: linear-gradient(90deg, 
-        rgba(59, 130, 246, 0.1) 0%, 
-        rgba(59, 130, 246, 0.3) 50%, 
+    background: linear-gradient(90deg,
+        rgba(59, 130, 246, 0.1) 0%,
+        rgba(59, 130, 246, 0.3) 50%,
         rgba(59, 130, 246, 0.1) 100%);
     animation: searchPulse 2s ease-in-out infinite;
 }
 
 @keyframes searchPulse {
-    0%, 100% { 
-        background-position: 0% 50%; 
+    0%, 100% {
+        background-position: 0% 50%;
         border-color: rgba(59, 130, 246, 0.5);
     }
-    50% { 
-        background-position: 100% 50%; 
+    50% {
+        background-position: 100% 50%;
         border-color: rgba(59, 130, 246, 0.8);
     }
+}
+
+/* Scientific text formatting */
+.scientific-text {
+    line-height: 1.6;
+    white-space: pre-wrap;  /* Preserves line breaks while wrapping text */
+    max-height: none;       /* Allow full height */
+    overflow: visible;      /* Show all content */
+    padding: 0.5rem;
+    border-radius: 0.25rem;
+    background-color: rgba(0, 0, 0, 0.1);
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    max-width: 100%;
+    margin-bottom: 0.75rem;
+}
+
+.scientific-text sup,
+.scientific-text sub {
+    font-size: 0.75em;
+    line-height: 0;
+}
+
+.scientific-text em {
+    font-style: italic;
+}
+
+.scientific-text strong {
+    font-weight: bold;
+}
+
+.scientific-text a {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+.scientific-text a:hover {
+    text-decoration: underline;
+}
+
+.scientific-text code {
+    font-family: monospace;
+    background-color: rgba(0, 0, 0, 0.2);
+    padding: 2px 4px;
+    border-radius: 3px;
+}
+
+/* Dataset card improvements for full text */
+.dataset-card {
+    transition: all 0.3s ease;
+    margin-bottom: 1.5rem;
+}
+
+.expandable-content {
+    margin: 0.5rem 0;
+}
+
+/* Styling for expandable sections */
+.text-gray-200, .text-blue-100 {
+    padding: 0.75rem;
+    border-radius: 0.25rem;
+    background-color: rgba(0, 0, 0, 0.2);
+    margin-bottom: 0.5rem;
+}
+
+/* Full text display with no truncation */
+.full-text {
+    white-space: pre-wrap !important;
+    word-break: normal;
+    overflow-wrap: break-word;
+    text-overflow: clip;
+    display: block;
+    width: 100%;
+    max-height: none !important;
+    overflow: visible !important;
+    text-overflow: unset !important;
+    line-clamp: unset !important;
+    -webkit-line-clamp: unset !important;
+    box-orient: unset !important;
+    -webkit-box-orient: unset !important;
 }
