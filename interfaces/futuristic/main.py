@@ -5,11 +5,9 @@ This module implements a cutting-edge interface that integrates with the existin
 OmicsOracle pipeline for proper data search and AI summarization.
 """
 
-import asyncio
 import logging
 import sys
 import time
-import uuid
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -22,7 +20,7 @@ from fastapi import (
     WebSocketDisconnect,
 )
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
@@ -32,11 +30,7 @@ sys.path.insert(0, str(project_root))
 
 # Import existing OmicsOracle modules
 from src.omics_oracle.core.config import Config
-from src.omics_oracle.pipeline.pipeline import (
-    OmicsOracle,
-    QueryResult,
-    ResultFormat,
-)
+from src.omics_oracle.pipeline.pipeline import OmicsOracle
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -148,12 +142,12 @@ async def startup_event():
     """Initialize the OmicsOracle pipeline on startup"""
     global pipeline
     try:
-        logger.info("🚀 Initializing OmicsOracle Pipeline...")
+        logger.info("=> Initializing OmicsOracle Pipeline...")
         config = Config()
         pipeline = OmicsOracle(config)
-        logger.info("✅ OmicsOracle pipeline initialized successfully")
+        logger.info("[OK] OmicsOracle pipeline initialized successfully")
     except Exception as e:
-        logger.error(f"❌ Failed to initialize pipeline: {e}")
+        logger.error(f"[ERROR] Failed to initialize pipeline: {e}")
         pipeline = None
 
 
@@ -283,24 +277,24 @@ async def search_datasets(
 ):
     """Search for biomedical datasets using the OmicsOracle pipeline"""
     await log_to_frontend(
-        f"🔍 New search query received: '{request.query}'", "info"
+        f"[SEARCH] New search query received: '{request.query}'", "info"
     )
 
     if not pipeline:
-        await log_to_frontend("❌ Pipeline not available", "error")
+        await log_to_frontend("[ERROR] Pipeline not available", "error")
         raise HTTPException(
             status_code=503, detail="OmicsOracle pipeline not available"
         )
 
     search_start_time = time.time()
     await log_to_frontend(
-        f"⚡ Starting search with max_results={request.max_results}", "info"
+        f"[START] Starting search with max_results={request.max_results}", "info"
     )
 
     try:
-        logger.info(f"🔍 Processing search query: {request.query}")
+        logger.info(f"[SEARCH] Processing search query: {request.query}")
         await log_to_frontend(
-            "🧠 Initializing AI-powered search pipeline...", "info"
+            "[AI] Initializing AI-powered search pipeline...", "info"
         )
 
         # Use the existing OmicsOracle pipeline to process the query
@@ -308,10 +302,10 @@ async def search_datasets(
 
         search_time = time.time() - search_start_time
         await log_to_frontend(
-            f"✅ Search completed in {search_time:.2f}s", "success"
+            f"[OK] Search completed in {search_time:.2f}s", "success"
         )
         await log_to_frontend(
-            f"📊 Found {len(result['datasets'])} relevant datasets", "success"
+            f"[RESULTS] Found {len(result['datasets'])} relevant datasets", "success"
         )
 
         return SearchResponse(
@@ -323,8 +317,8 @@ async def search_datasets(
         )
 
     except Exception as e:
-        await log_to_frontend(f"❌ Search failed: {str(e)}", "error")
-        logger.error(f"❌ Search failed: {e}")
+        await log_to_frontend(f"[ERROR] Search failed: {str(e)}", "error")
+        logger.error(f"[ERROR] Search failed: {e}")
         raise HTTPException(status_code=500, detail=f"Search failed: {str(e)}")
 
 
@@ -337,10 +331,10 @@ async def process_search_query(
         if not pipeline:
             raise Exception("Pipeline not initialized")
 
-        logger.info(f"🔍 Starting pipeline query processing for: {query}")
-        await log_to_frontend("🔍 Starting pipeline query processing...", "info")
+        logger.info(f"[SEARCH] Starting pipeline query processing for: {query}")
+        await log_to_frontend("[SEARCH] Starting pipeline query processing...", "info")
 
-        await log_to_frontend("🧬 Connecting to NCBI GEO database...", "info")
+        await log_to_frontend("[DATA] Connecting to NCBI GEO database...", "info")
 
         # Use the pipeline's process_query method (it's async!)
         # This will handle GEO query preparation, extraction, and AI summary
@@ -349,32 +343,32 @@ async def process_search_query(
         )
 
         await log_to_frontend(
-            f"📊 Pipeline results: {len(query_result.geo_ids)} GEO IDs found",
+            f"[RESULTS] Pipeline results: {len(query_result.geo_ids)} GEO IDs found",
             "success",
         )
         await log_to_frontend(
-            f"🔍 DEBUG: Metadata entries: {len(query_result.metadata)}", "debug"
+            f"[DEBUG] DEBUG: Metadata entries: {len(query_result.metadata)}", "debug"
         )
         await log_to_frontend(
-            f"🔍 DEBUG: AI summaries keys: {list(query_result.ai_summaries.keys()) if query_result.ai_summaries else 'None'}",
+            f"[DEBUG] DEBUG: AI summaries keys: {list(query_result.ai_summaries.keys()) if query_result.ai_summaries else 'None'}",
             "debug",
         )
         logger.info(
-            f"📊 Pipeline results: {len(query_result.geo_ids)} GEO IDs found, {len(query_result.metadata)} metadata entries"
+            f"[RESULTS] Pipeline results: {len(query_result.geo_ids)} GEO IDs found, {len(query_result.metadata)} metadata entries"
         )
 
         # Extract and format the results
         datasets = []
 
         await log_to_frontend(
-            "🔬 Processing metadata and generating AI insights...", "info"
+            "[AI] Processing metadata and generating AI insights...", "info"
         )
 
         # Check if we have GEO IDs (even without metadata)
         if query_result.geo_ids:
             for i, geo_id in enumerate(query_result.geo_ids[:max_results]):
                 await log_to_frontend(
-                    f"📋 Processing dataset {i + 1}/{min(len(query_result.geo_ids), max_results)}: {geo_id}",
+                    f"[PROGRESS] Processing dataset {i + 1}/{min(len(query_result.geo_ids), max_results)}: {geo_id}",
                     "debug",
                 )
                 # Get metadata if available, otherwise use defaults
@@ -383,7 +377,7 @@ async def process_search_query(
                     metadata = query_result.metadata[i] or {}
 
                 await log_to_frontend(
-                    f"🔍 DEBUG: {geo_id} metadata keys: {list(metadata.keys()) if metadata else 'Empty'}",
+                    f"[DEBUG] DEBUG: {geo_id} metadata keys: {list(metadata.keys()) if metadata else 'Empty'}",
                     "debug",
                 )
 
@@ -495,14 +489,14 @@ async def process_search_query(
                 }
                 datasets.append(dataset_info)
 
-            logger.info(f"✅ Successfully formatted {len(datasets)} datasets")
+            logger.info(f"[OK] Successfully formatted {len(datasets)} datasets")
             await log_to_frontend(
-                f"✅ Successfully processed {len(datasets)} datasets", "success"
+                f"[OK] Successfully processed {len(datasets)} datasets", "success"
             )
 
         # Return empty results if nothing found - no fallback to mock data
         if not datasets:
-            logger.warning("⚠️ No datasets found from pipeline")
+            logger.warning("[WARNING] No datasets found from pipeline")
             return {
                 "datasets": [],
                 "query": query,
@@ -526,7 +520,7 @@ async def process_search_query(
         ):
             ai_insights += " Note: Some datasets have pending metadata (common for recent submissions)."
 
-        await log_to_frontend("🎯 Query processing complete!", "success")
+        await log_to_frontend("[COMPLETE] Query processing complete!", "success")
 
         return {
             "datasets": datasets,
@@ -536,7 +530,7 @@ async def process_search_query(
 
     except Exception as e:
         # Error in real pipeline - return actual error, no mock fallback
-        logger.error(f"❌ Error processing search query: {e}")
+        logger.error(f"[ERROR] Error processing search query: {e}")
         raise Exception(f"Pipeline processing failed: {e}")
 
 
@@ -556,7 +550,7 @@ async def websocket_endpoint(websocket: WebSocket):
     """WebSocket endpoint for live query monitoring"""
     await manager.connect(websocket)
     try:
-        await log_to_frontend("🔄 Live monitoring connected", "success")
+        await log_to_frontend("[LIVE] Live monitoring connected", "success")
         while True:
             # Keep connection alive
             await websocket.receive_text()

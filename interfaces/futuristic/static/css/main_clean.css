@@ -163,7 +163,7 @@ h2, h3 {
 }
 
 .dots-loading::before {
-    content: '• • •';
+    content: '... ';
     display: inline-block;
     color: rgba(255, 255, 255, 0.4);
     margin-right: 4px;

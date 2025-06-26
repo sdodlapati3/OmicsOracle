@@ -13,7 +13,7 @@ class OmicsOracleApp {
     }
 
     init() {
-        console.log('🚀 Initializing OmicsOracle Futuristic Interface...');
+        console.log('[INIT] Initializing OmicsOracle Futuristic Interface...');
 
         // Bind event listeners
         this.bindEventListeners();
@@ -27,7 +27,7 @@ class OmicsOracleApp {
         // Update initial stats
         this.updateStats();
 
-        console.log('✅ Interface initialized successfully');
+        console.log('[OK] Interface initialized successfully');
     }
 
     bindEventListeners() {
@@ -102,26 +102,26 @@ class OmicsOracleApp {
     }
 
     async performSearch() {
-        console.log('🔍 performSearch called');
+        console.log('[SEARCH] performSearch called');
         const searchInput = document.getElementById('search-input');
         const searchBtn = document.getElementById('search-btn');
         const query = searchInput?.value?.trim();
 
-        console.log('🔍 Search query:', query);
-        console.log('🔍 searchInput element:', searchInput);
-        console.log('🔍 searchBtn element:', searchBtn);
+        console.log('[SEARCH] Search query:', query);
+        console.log('[SEARCH] searchInput element:', searchInput);
+        console.log('[SEARCH] searchBtn element:', searchBtn);
 
         if (!query) {
-            this.addLiveUpdate('⚠️ Please enter a search query', 'warning');
+            this.addLiveUpdate('[WARNING] Please enter a search query', 'warning');
             return;
         }
 
         if (this.isSearching) {
-            this.addLiveUpdate('⏳ Search already in progress...', 'warning');
+            this.addLiveUpdate('[BUSY] Search already in progress...', 'warning');
             return;
         }
 
-        console.log('🔍 Starting search process...');
+        console.log('[SEARCH] Starting search process...');
 
         // Clear previous results immediately - FIRST PRIORITY
         this.clearPreviousResults();
@@ -138,22 +138,22 @@ class OmicsOracleApp {
         if (searchBtn) {
             searchBtn.disabled = true;
             searchBtn.classList.add('searching');
-            searchBtn.innerHTML = '🔍 Searching<span class="dots-loading"></span>';
+            searchBtn.innerHTML = '[SEARCH] Searching<span class="dots-loading"></span>';
             searchBtn.style.cursor = 'not-allowed';
         }
 
         const startTime = Date.now();
 
         try {
-            this.addLiveUpdate(`🔍 Searching for: "${query}"`, 'info');
-            this.addToLiveProgressFeed(`<div class="text-blue-400">🔍 Starting search for: "${query}"</div>`);
+            this.addLiveUpdate(`[SEARCH] Searching for: "${query}"`, 'info');
+            this.addToLiveProgressFeed(`<div class="text-blue-400">[SEARCH] Starting search for: "${query}"</div>`);
 
-            console.log('🌐 Making fetch request to /api/search...');
-            this.addToLiveProgressFeed(`<div class="text-yellow-400">📡 Connecting to backend API...</div>`);
+            console.log('[API] Making fetch request to /api/search...');
+            this.addToLiveProgressFeed(`<div class="text-yellow-400">[API] Connecting to backend API...</div>`);
 
-            // Add timeout to prevent hanging (extended for complex queries)
+            // Add timeout to prevent hanging (minimum 20s based on investigation findings)
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 300000); // 5 minute timeout
+            const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout (3x minimum required)
 
             const response = await fetch('/api/search', {
                 method: 'POST',
@@ -174,8 +174,8 @@ class OmicsOracleApp {
             });
 
             clearTimeout(timeoutId);
-            console.log('📡 Response received:', response.status, response.statusText);
-            this.addToLiveProgressFeed(`<div class="text-green-400">✅ Response received from server (${response.status})</div>`);
+            console.log('[API] Response received:', response.status, response.statusText);
+            this.addToLiveProgressFeed(`<div class="text-green-400">[OK] Response received from server (${response.status})</div>`);
 
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -183,9 +183,9 @@ class OmicsOracleApp {
 
             this.addToLiveProgressFeed(`<div class="text-blue-400">📊 Processing search results...</div>`);
             const data = await response.json();
-            console.log('📊 Data received:', data);
-            console.log('🔍 First result check:', data.results?.[0]);
-            console.log('🔍 Query vs Results:', {
+            console.log('[DATA] Data received:', data);
+            console.log('[SEARCH] First result check:', data.results?.[0]);
+            console.log('[SEARCH] Query vs Results:', {
                 query: data.query,
                 resultCount: data.results?.length,
                 firstGeoId: data.results?.[0]?.geo_id,
@@ -195,7 +195,7 @@ class OmicsOracleApp {
             // DEBUG: Log each result for data mapping verification
             if (data.results) {
                 data.results.forEach((result, index) => {
-                    console.log(`🔍 Result ${index + 1}:`, {
+                    console.log(`[SEARCH] Result ${index + 1}:`, {
                         geo_id: result.geo_id,
                         title: result.title?.substring(0, 60) + '...',
                         summary: result.summary?.substring(0, 60) + '...',
@@ -213,7 +213,7 @@ class OmicsOracleApp {
 
             this.updateStats();
 
-            this.addLiveUpdate(`✅ Found ${data.total_found} results in ${responseTime.toFixed(2)}s`, 'success');
+            this.addLiveUpdate(`[OK] Found ${data.total_found} results in ${responseTime.toFixed(2)}s`, 'success');
             this.displayResults(data);
 
             // Add query to search history
@@ -251,7 +251,7 @@ class OmicsOracleApp {
             resultsContainer.innerHTML = `
                 <div class="bg-blue-900/30 border border-blue-500 rounded-lg p-6">
                     <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-xl font-bold text-white">🔍 Live Search Progress</h3>
+                        <h3 class="text-xl font-bold text-white">[SEARCH] Live Search Progress</h3>
                         <div class="animate-pulse">
                             <div class="w-3 h-3 bg-blue-500 rounded-full"></div>
                         </div>
@@ -453,11 +453,11 @@ class OmicsOracleApp {
             this.websocket = new WebSocket(wsUrl);
 
             this.websocket.onopen = () => {
-                console.log('🔗 WebSocket connected for live monitoring');
+                console.log('[WS] WebSocket connected for live monitoring');
             };
 
             this.websocket.onmessage = (event) => {
-                console.log('📡 WebSocket message received:', event.data);
+                console.log('[API] WebSocket message received:', event.data);
 
                 // Add to live progress feed in results area
                 this.addToLiveProgressFeed(event.data);
@@ -480,7 +480,7 @@ class OmicsOracleApp {
             };
 
             this.websocket.onclose = () => {
-                console.log('❌ WebSocket disconnected');
+                console.log('[ERROR] WebSocket disconnected');
                 // Attempt to reconnect after 3 seconds
                 setTimeout(() => this.initWebSocket(), 3000);
             };
@@ -755,7 +755,7 @@ document.addEventListener('DOMContentLoaded', () => {
 fetch('/api/health')
     .then(response => response.json())
     .then(data => {
-        console.log('🏥 Health check:', data);
+        console.log('[HEALTH] Health check:', data);
         if (data.status !== 'healthy') {
             console.warn('⚠️ System may not be fully operational');
         }
