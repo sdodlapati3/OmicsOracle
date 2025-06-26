@@ -134,26 +134,43 @@ class OmicsOracleApp {
 
         this.isSearching = true;
 
-        // Update button to show searching state immediately
+        // Update button to show searching state immediately with better formatting
         if (searchBtn) {
             searchBtn.disabled = true;
             searchBtn.classList.add('searching');
-            searchBtn.innerHTML = '[SEARCH] Searching<span class="dots-loading"></span>';
+            searchBtn.innerHTML = '🔄 Searching<span class="dots-loading"></span>';
             searchBtn.style.cursor = 'not-allowed';
         }
 
         const startTime = Date.now();
 
+        // Start a progress timer with better time formatting
+        const progressTimer = setInterval(() => {
+            const elapsed = Math.floor((Date.now() - startTime) / 1000);
+            const searchBtn = document.getElementById('search-btn');
+            if (searchBtn && this.isSearching) {
+                const minutes = Math.floor(elapsed / 60);
+                const seconds = elapsed % 60;
+                const timeStr = minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
+                searchBtn.innerHTML = `🔄 Searching (${timeStr})<span class="dots-loading"></span>`;
+            }
+        }, 1000);
+
         try {
-            this.addLiveUpdate(`[SEARCH] Searching for: "${query}"`, 'info');
-            this.addToLiveProgressFeed(`<div class="text-blue-400">[SEARCH] Starting search for: "${query}"</div>`);
+            // Show and reset the progress monitor
+            this.showProgressMonitor();
+            this.updateProgressBars(0, "initializing");
+
+            this.addLiveUpdate(`🔍 Searching for: "${query}"`, 'info');
+            this.addToLiveProgressFeed(`<div class="text-blue-400">🔍 Starting search for: "${query}"</div>`);
 
             console.log('[API] Making fetch request to /api/search...');
-            this.addToLiveProgressFeed(`<div class="text-yellow-400">[API] Connecting to backend API...</div>`);
+            this.addToLiveProgressFeed(`<div class="text-yellow-400">🌐 Connecting to backend API...</div>`);
 
             // Add timeout to prevent hanging (minimum 20s based on investigation findings)
+            // Extended to 5 minutes for complex searches with real-time progress updates
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout (3x minimum required)
+            const timeoutId = setTimeout(() => controller.abort(), 300000); // 300 second timeout (5 minutes)
 
             const response = await fetch('/api/search', {
                 method: 'POST',
@@ -174,6 +191,7 @@ class OmicsOracleApp {
             });
 
             clearTimeout(timeoutId);
+            clearInterval(progressTimer); // Clear the progress timer when request completes
             console.log('[API] Response received:', response.status, response.statusText);
             this.addToLiveProgressFeed(`<div class="text-green-400">[OK] Response received from server (${response.status})</div>`);
 
@@ -184,27 +202,6 @@ class OmicsOracleApp {
             this.addToLiveProgressFeed(`<div class="text-blue-400">📊 Processing search results...</div>`);
             const data = await response.json();
             console.log('[DATA] Data received:', data);
-            console.log('[SEARCH] First result check:', data.results?.[0]);
-            console.log('[SEARCH] Query vs Results:', {
-                query: data.query,
-                resultCount: data.results?.length,
-                firstGeoId: data.results?.[0]?.geo_id,
-                firstTitle: data.results?.[0]?.title
-            });
-
-            // DEBUG: Log each result for data mapping verification
-            if (data.results) {
-                data.results.forEach((result, index) => {
-                    console.log(`[SEARCH] Result ${index + 1}:`, {
-                        geo_id: result.geo_id,
-                        title: result.title?.substring(0, 60) + '...',
-                        summary: result.summary?.substring(0, 60) + '...',
-                        ai_insights: result.ai_insights, // Log the full ai_insights
-                        organism: result.organism,
-                        sample_count: result.sample_count
-                    });
-                });
-            }
 
             const responseTime = (Date.now() - startTime) / 1000;
 
@@ -214,6 +211,9 @@ class OmicsOracleApp {
             this.updateStats();
 
             this.addLiveUpdate(`[OK] Found ${data.total_found} results in ${responseTime.toFixed(2)}s`, 'success');
+
+            // Update progress to 100% if it's not already there
+            this.updateProgressBars(100, "complete");
             this.displayResults(data);
 
             // Add query to search history
@@ -224,14 +224,22 @@ class OmicsOracleApp {
 
             let errorMessage = error.message;
             if (error.name === 'AbortError') {
-                errorMessage = 'Search timed out after 5 minutes. Please try a simpler query.';
-                this.addLiveUpdate('⏰ Search timed out - please try again with a shorter query', 'error');
+                errorMessage = 'Search timed out after 5 minutes. Please try a more specific query.';
+                this.addLiveUpdate('⏰ Search timed out - try a more specific query for faster results', 'error');
             } else {
                 this.addLiveUpdate(`❌ Search failed: ${error.message}`, 'error');
             }
 
             this.displayError(error.message);
+
+            // Update progress to show error state
+            this.updateProgressBars(100, "error");
         } finally {
+            // Clear progress timer
+            if (progressTimer) {
+                clearInterval(progressTimer);
+            }
+
             this.isSearching = false;
 
             // Reset button to normal state
@@ -245,6 +253,30 @@ class OmicsOracleApp {
     }
 
     clearPreviousResults() {
+        // Reset the progress bar
+        const progressBar = document.getElementById('progress-bar');
+        const progressPercentage = document.getElementById('progress-percentage');
+        const currentStage = document.getElementById('current-stage');
+
+        if (progressBar) {
+            progressBar.style.width = '0%';
+            progressBar.className = 'bg-blue-600 h-4 rounded-full transition-all duration-300';
+        }
+
+        if (progressPercentage) {
+            progressPercentage.textContent = '0%';
+        }
+
+        if (currentStage) {
+            currentStage.textContent = 'initializing...';
+        }
+
+        // Show live monitor container
+        const monitorContainer = document.getElementById('live-monitor-container');
+        if (monitorContainer) {
+            monitorContainer.style.display = 'block';
+        }
+
         // Show live progress area instead of static "Searching..."
         const resultsContainer = document.getElementById('search-results');
         if (resultsContainer) {
@@ -255,6 +287,12 @@ class OmicsOracleApp {
                         <div class="animate-pulse">
                             <div class="w-3 h-3 bg-blue-500 rounded-full"></div>
                         </div>
+                    </div>
+                    <div class="relative mb-4">
+                        <div class="w-full bg-gray-700 rounded-full h-4 overflow-hidden">
+                            <div id="results-progress-bar" class="bg-blue-600 h-4 rounded-full transition-all duration-300" style="width: 0%"></div>
+                        </div>
+                        <div id="results-progress-percentage" class="absolute right-0 top-0 -mt-6 text-gray-300 text-sm">0%</div>
                     </div>
                     <div id="live-progress-feed" class="space-y-2 max-h-64 overflow-y-auto bg-black bg-opacity-50 rounded p-4 font-mono text-sm">
                         <div class="text-blue-400">[${new Date().toLocaleTimeString()}] 🚀 Initializing search...</div>
@@ -269,6 +307,20 @@ class OmicsOracleApp {
         // Force a DOM repaint to ensure immediate visual update
         if (resultsContainer) {
             resultsContainer.offsetHeight; // Trigger reflow
+        }
+    }
+
+    showProgressMonitor() {
+        // Show live monitor container
+        const monitorContainer = document.getElementById('live-monitor-container');
+        if (monitorContainer) {
+            monitorContainer.style.display = 'block';
+        }
+
+        // Clear any existing progress feed content
+        const liveMonitor = document.getElementById('live-monitor');
+        if (liveMonitor) {
+            liveMonitor.innerHTML = '<div class="text-green-400">🚀 Query monitor ready...</div>';
         }
     }
 
@@ -315,8 +367,10 @@ class OmicsOracleApp {
     }
 
     renderDataset(dataset, index) {
-        const relevanceClass = dataset.relevance_score > 0.8 ? 'high-relevance' :
-                             dataset.relevance_score > 0.5 ? 'medium-relevance' : 'low-relevance';
+        // Handle null relevance score properly
+        const relevanceScore = dataset.relevance_score || 0;
+        const relevanceClass = relevanceScore > 0.8 ? 'high-relevance' :
+                             relevanceScore > 0.5 ? 'medium-relevance' : 'low-relevance';
 
         // Build metadata grid dynamically, only showing available info
         let metadataGrid = '';
@@ -359,9 +413,9 @@ class OmicsOracleApp {
                             ${dataset.geo_id}
                         </a>
                     </h5>
-                    <span class="text-sm text-gray-400">
+                    ${dataset.relevance_score ? `<span class="text-sm text-gray-400">
                         Score: ${(dataset.relevance_score * 100).toFixed(0)}%
-                    </span>
+                    </span>` : ''}
                 </div>
 
                 <h6 class="text-md font-medium text-gray-100 mb-2">
@@ -459,22 +513,34 @@ class OmicsOracleApp {
             this.websocket.onmessage = (event) => {
                 console.log('[API] WebSocket message received:', event.data);
 
-                // Add to live progress feed in results area
-                this.addToLiveProgressFeed(event.data);
-
-                // Also add to live updates panel
                 try {
-                    const messageData = JSON.parse(event.data);
-                    if (messageData.message) {
-                        this.addLiveUpdate(messageData.message, messageData.type || 'info');
+                    // Try to parse as JSON first (for structured progress updates)
+                    const data = JSON.parse(event.data);
+
+                    // Handle progress updates
+                    if (data.type === 'progress') {
+                        this.handleProgressUpdate(data);
+                        return;
+                    }
+
+                    // Handle other JSON messages
+                    if (data.message) {
+                        this.addLiveUpdate(data.message, data.type || 'info');
                     }
                 } catch (e) {
-                    // If not JSON, treat as HTML and extract text for live updates
+                    // If not valid JSON, treat as HTML message from backend
+
+                    // Add to live monitor (main progress area)
+                    this.addLiveMonitorMessage(event.data);
+
+                    // Also add to live updates panel - extract text for summary
                     const tempDiv = document.createElement('div');
                     tempDiv.innerHTML = event.data;
                     const textContent = tempDiv.textContent || tempDiv.innerText || '';
                     if (textContent.trim()) {
-                        this.addLiveUpdate(textContent.trim(), 'info');
+                        // Clean up the message for the live updates panel
+                        const cleanMessage = textContent.replace(/^\[.*?\]\s*/, '').trim(); // Remove timestamp
+                        this.addLiveUpdate(cleanMessage, 'info');
                     }
                 }
             };
@@ -490,6 +556,70 @@ class OmicsOracleApp {
             };
         } catch (error) {
             console.error('Failed to initialize WebSocket:', error);
+        }
+    }
+
+    handleProgressUpdate(data) {
+        console.log('[PROGRESS]', data);
+
+        // Update progress bar
+        const progressBar = document.getElementById('progress-bar');
+        const progressPercentage = document.getElementById('progress-percentage');
+        const currentStage = document.getElementById('current-stage');
+
+        if (progressBar && progressPercentage) {
+            progressBar.style.width = `${data.percentage}%`;
+            progressPercentage.textContent = `${Math.round(data.percentage)}%`;
+
+            // Change color based on stage
+            if (data.stage.includes('error') || data.stage.includes('failed')) {
+                progressBar.className = 'bg-red-600 h-4 rounded-full transition-all duration-300';
+            } else if (data.stage.includes('complete')) {
+                progressBar.className = 'bg-green-600 h-4 rounded-full transition-all duration-300';
+            } else {
+                progressBar.className = 'bg-blue-600 h-4 rounded-full transition-all duration-300';
+            }
+        }
+
+        if (currentStage) {
+            currentStage.textContent = data.stage.replace(/_/g, ' ');
+        }
+
+        // Add message to live monitor
+        const message = `<div class="text-${this.getColorForStage(data.stage)}">[${Math.round(data.percentage)}%] ${data.message}</div>`;
+        this.addToLiveProgressFeed(message);
+
+        // Show live monitor container if it's hidden
+        const monitorContainer = document.getElementById('live-monitor-container');
+        if (monitorContainer && monitorContainer.style.display === 'none') {
+            monitorContainer.style.display = 'block';
+        }
+
+        // Add to live updates with shorter message
+        this.addLiveUpdate(`${data.message} (${Math.round(data.percentage)}%)`, this.getUpdateTypeForStage(data.stage));
+    }
+
+    getColorForStage(stage) {
+        if (stage.includes('error') || stage.includes('failed')) {
+            return 'red-400';
+        } else if (stage.includes('complete') || stage.includes('success')) {
+            return 'green-400';
+        } else if (stage.includes('warning') || stage.includes('skip')) {
+            return 'yellow-400';
+        } else {
+            return 'blue-400';
+        }
+    }
+
+    getUpdateTypeForStage(stage) {
+        if (stage.includes('error') || stage.includes('failed')) {
+            return 'error';
+        } else if (stage.includes('complete') || stage.includes('success')) {
+            return 'success';
+        } else if (stage.includes('warning') || stage.includes('skip')) {
+            return 'warning';
+        } else {
+            return 'info';
         }
     }
 
@@ -742,6 +872,47 @@ class OmicsOracleApp {
             element.setAttribute('data-is-expanded', 'true');
             const button = element.parentElement.querySelector('button');
             if (button) button.textContent = 'Show less';
+        }
+    }
+
+    updateProgressBars(percentage, stage) {
+        // Update main progress bar
+        const progressBar = document.getElementById('progress-bar');
+        const progressPercentage = document.getElementById('progress-percentage');
+        const currentStage = document.getElementById('current-stage');
+
+        if (progressBar) {
+            progressBar.style.width = `${percentage}%`;
+            if (stage === "error") {
+                progressBar.className = 'bg-red-600 h-4 rounded-full transition-all duration-300';
+            } else if (stage === "complete") {
+                progressBar.className = 'bg-green-600 h-4 rounded-full transition-all duration-300';
+            }
+        }
+
+        if (progressPercentage) {
+            progressPercentage.textContent = `${Math.round(percentage)}%`;
+        }
+
+        if (currentStage) {
+            currentStage.textContent = stage.replace(/_/g, ' ');
+        }
+
+        // Update results progress bar if it exists
+        const resultsProgressBar = document.getElementById('results-progress-bar');
+        const resultsProgressPercentage = document.getElementById('results-progress-percentage');
+
+        if (resultsProgressBar) {
+            resultsProgressBar.style.width = `${percentage}%`;
+            if (stage === "error") {
+                resultsProgressBar.className = 'bg-red-600 h-4 rounded-full transition-all duration-300';
+            } else if (stage === "complete") {
+                resultsProgressBar.className = 'bg-green-600 h-4 rounded-full transition-all duration-300';
+            }
+        }
+
+        if (resultsProgressPercentage) {
+            resultsProgressPercentage.textContent = `${Math.round(percentage)}%`;
         }
     }
 }

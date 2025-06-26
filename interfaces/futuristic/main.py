@@ -6,8 +6,10 @@ OmicsOracle pipeline for proper data search and AI summarization.
 """
 
 import logging
+import os
 import sys
 import time
+from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -24,17 +26,35 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
+# Configure logging first
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 # Add the main project root to path to import existing modules
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
+# Apply NCBI email patch to ensure Bio.Entrez email is properly set
+try:
+    # Load environment variables first
+    os.environ["NCBI_EMAIL"] = "omicsoracle@example.com"
+
+    # Try to import the patch if it exists
+    if Path(project_root / "entrez_patch.py").exists():
+        sys.path.insert(0, str(project_root))
+        import entrez_patch
+
+        logger.info("Successfully applied Bio.Entrez email patch")
+    else:
+        logger.warning(
+            "entrez_patch.py not found - NCBI email may not be correctly configured"
+        )
+except Exception as e:
+    logger.warning(f"Failed to apply Bio.Entrez email patch: {e}")
+
 # Import existing OmicsOracle modules
 from src.omics_oracle.core.config import Config
 from src.omics_oracle.pipeline.pipeline import OmicsOracle
-
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 
 # Pydantic models for API
@@ -112,6 +132,61 @@ class ConnectionManager:
             for conn in disconnected:
                 self.disconnect(conn)
 
+    async def broadcast_progress(
+        self,
+        query_id: str,
+        stage: str,
+        message: str,
+        percentage: float,
+        detail: Optional[Dict[str, Any]] = None,
+    ):
+        """Broadcast progress update to all connected clients"""
+        progress_data = {
+            "type": "progress",
+            "query_id": query_id,
+            "stage": stage,
+            "message": message,
+            "percentage": percentage,
+            "detail": detail or {},
+            "timestamp": time.time(),
+        }
+
+        # Format message as HTML for UI display
+        timestamp = time.strftime("%H:%M:%S", time.localtime())
+
+        # Determine color based on stage
+        color_class = "text-blue-400"
+        if "error" in stage or "failed" in stage:
+            color_class = "text-red-400"
+        elif "complete" in stage or "success" in stage:
+            color_class = "text-green-400"
+        elif "warning" in stage or "skip" in stage:
+            color_class = "text-yellow-400"
+
+        # Format progress percentage
+        progress_text = f"{percentage:.0f}%"
+
+        # Create HTML message
+        html_message = f'<div class="{color_class}"><span class="font-mono">[{timestamp}]</span> <span class="font-mono inline-block w-10 text-right">{progress_text}</span> {message}</div>'
+
+        # Broadcast both the JSON data and HTML format
+        if self.active_connections:
+            disconnected = []
+            for connection in self.active_connections:
+                try:
+                    # Send formatted HTML for display
+                    await connection.send_text(html_message)
+
+                    # Send structured JSON data for advanced clients
+                    await connection.send_json(progress_data)
+                except Exception as e:
+                    logger.warning(f"Failed to send progress to WebSocket: {e}")
+                    disconnected.append(connection)
+
+            # Remove disconnected clients
+            for conn in disconnected:
+                self.disconnect(conn)
+
 
 # Global connection manager
 manager = ConnectionManager()
@@ -133,6 +208,33 @@ async def log_to_frontend(message: str, level: str = "info"):
     await manager.broadcast(formatted_message)
 
 
+async def send_progress_to_frontend(query_id: str, event):
+    """Send progress event to frontend via WebSocket"""
+    # Log each progress event for debugging
+    logger.info(
+        f"[PROGRESS] {event.stage} - {event.message} ({event.percentage:.1f}%)"
+    )
+
+    # Log detailed event information at debug level
+    if event.detail:
+        logger.debug(f"[PROGRESS_DETAIL] {event.stage}: {event.detail}")
+
+    # Track progress events in a file for analysis
+    with open("progress_events_raw.log", "a") as f:
+        f.write(
+            f"{time.strftime('%Y-%m-%d %H:%M:%S')} | {query_id} | {event.stage} | {event.message} | {event.percentage:.1f}%\n"
+        )
+
+    # Send to frontend via WebSocket
+    await manager.broadcast_progress(
+        query_id=query_id,
+        stage=event.stage,
+        message=event.message,
+        percentage=event.percentage,
+        detail=event.detail,
+    )
+
+
 # Global pipeline instance
 pipeline: Optional[OmicsOracle] = None
 
@@ -143,8 +245,48 @@ async def startup_event():
     global pipeline
     try:
         logger.info("=> Initializing OmicsOracle Pipeline...")
+
+        # Load environment variables from .env.local
+        try:
+            from dotenv import load_dotenv
+
+            env_file = Path(".env.local")
+            if env_file.exists():
+                logger.info(f"Loading environment from {env_file}")
+                load_dotenv(env_file)
+                ncbi_email = os.environ.get("NCBI_EMAIL")
+                if ncbi_email:
+                    logger.info(f"NCBI_EMAIL loaded: {ncbi_email}")
+                else:
+                    logger.warning("NCBI_EMAIL not found in .env.local")
+            else:
+                logger.warning(".env.local file not found")
+        except ImportError:
+            logger.warning("dotenv package not available")
+
+        # Create configuration
         config = Config()
+
+        # Log NCBI configuration
+        if hasattr(config, "ncbi") and hasattr(config.ncbi, "email"):
+            logger.info(f"NCBI email in config: {config.ncbi.email}")
+        else:
+            logger.warning("NCBI email not configured in Config object")
+
+            # Try to manually set it from environment
+            ncbi_email = os.environ.get("NCBI_EMAIL")
+            if ncbi_email and hasattr(config, "ncbi"):
+                logger.info(
+                    f"Setting NCBI email from environment: {ncbi_email}"
+                )
+                setattr(config.ncbi, "email", ncbi_email)
+
+        # Initialize pipeline
         pipeline = OmicsOracle(config)
+
+        # Set up progress callback for real-time updates
+        pipeline.set_progress_callback(send_progress_to_frontend)
+
         logger.info("[OK] OmicsOracle pipeline initialized successfully")
     except Exception as e:
         logger.error(f"[ERROR] Failed to initialize pipeline: {e}")
@@ -205,18 +347,32 @@ async def futuristic_interface():
                                 </div>
                                 <div class="text-gray-400 text-xs">Higher values may increase search time</div>
                             </div>
+                            <div class="mt-3 p-3 bg-blue-900 bg-opacity-30 rounded-lg border border-blue-600">
+                                <div class="text-blue-300 text-sm">
+                                    ⏱️ <strong>Search Times:</strong> Complex biomedical searches may take 1-3 minutes with real-time progress updates
+                                </div>
+                            </div>
                         </div>
                     </div>
 
                     <!-- Live Query Progress Monitor -->
                     <div id="live-monitor-container" class="glass-effect rounded-xl p-6 mb-8" style="display: none;">
                         <h3 class="text-xl font-bold text-white mb-4">🔄 Live Query Progress</h3>
+                        <div class="relative mb-4">
+                            <div id="progress-bar-container" class="w-full bg-gray-700 rounded-full h-4 overflow-hidden">
+                                <div id="progress-bar" class="bg-blue-600 h-4 rounded-full transition-all duration-300" style="width: 0%"></div>
+                            </div>
+                            <div id="progress-percentage" class="absolute right-0 top-0 -mt-6 text-gray-300 text-sm">0%</div>
+                        </div>
                         <div id="live-monitor" class="bg-black bg-opacity-80 rounded-lg p-4 h-64 overflow-y-auto font-mono text-sm">
                             <div class="text-green-400">🚀 Query monitor ready...</div>
                         </div>
                         <div class="mt-2 flex justify-between items-center">
                             <div class="text-gray-400 text-xs">Real-time backend monitoring</div>
-                            <button id="clear-monitor-btn" class="text-gray-400 hover:text-white text-xs">Clear</button>
+                            <div class="flex items-center">
+                                <span id="current-stage" class="text-blue-400 text-xs mr-3"></span>
+                                <button id="clear-monitor-btn" class="text-gray-400 hover:text-white text-xs">Clear</button>
+                            </div>
                         </div>
                     </div>
 
@@ -238,7 +394,7 @@ async def futuristic_interface():
                         <h2 class="text-2xl font-bold text-white mb-4">📡 Live Updates</h2>
                         <div id="live-updates" class="space-y-2">
                             <div class="text-gray-300 text-center py-4">
-                                System ready for search...
+                                🔮 Ready for biomedical search
                             </div>
                         </div>
                     </div>
@@ -288,7 +444,8 @@ async def search_datasets(
 
     search_start_time = time.time()
     await log_to_frontend(
-        f"[START] Starting search with max_results={request.max_results}", "info"
+        f"[START] Starting search with max_results={request.max_results}",
+        "info",
     )
 
     try:
@@ -305,7 +462,8 @@ async def search_datasets(
             f"[OK] Search completed in {search_time:.2f}s", "success"
         )
         await log_to_frontend(
-            f"[RESULTS] Found {len(result['datasets'])} relevant datasets", "success"
+            f"[RESULTS] Found {len(result['datasets'])} relevant datasets",
+            "success",
         )
 
         return SearchResponse(
@@ -332,9 +490,13 @@ async def process_search_query(
             raise Exception("Pipeline not initialized")
 
         logger.info(f"[SEARCH] Starting pipeline query processing for: {query}")
-        await log_to_frontend("[SEARCH] Starting pipeline query processing...", "info")
+        await log_to_frontend(
+            "[SEARCH] Starting pipeline query processing...", "info"
+        )
 
-        await log_to_frontend("[DATA] Connecting to NCBI GEO database...", "info")
+        await log_to_frontend(
+            "[DATA] Connecting to NCBI GEO database...", "info"
+        )
 
         # Use the pipeline's process_query method (it's async!)
         # This will handle GEO query preparation, extraction, and AI summary
@@ -347,7 +509,8 @@ async def process_search_query(
             "success",
         )
         await log_to_frontend(
-            f"[DEBUG] DEBUG: Metadata entries: {len(query_result.metadata)}", "debug"
+            f"[DEBUG] DEBUG: Metadata entries: {len(query_result.metadata)}",
+            "debug",
         )
         await log_to_frontend(
             f"[DEBUG] DEBUG: AI summaries keys: {list(query_result.ai_summaries.keys()) if query_result.ai_summaries else 'None'}",
@@ -381,23 +544,27 @@ async def process_search_query(
                     "debug",
                 )
 
-                # Clean up organism field
+                # Clean up organism field - use only real data
                 organism = metadata.get("organism", "").strip()
-                if not organism or organism.lower() == "unknown":
-                    organism = "Homo sapiens"
+                if not organism:
+                    organism = None  # Don't show organism if not available
 
                 # Get platform info (skip if Unknown platform)
                 platform = metadata.get("platform", "").strip()
                 if not platform or platform == "Unknown platform":
                     platform = None  # Don't display platform if unknown
 
-                # Normalize relevance score to 0-1 range
-                raw_score = metadata.get("relevance_score", 2.0)
-                if raw_score > 1.0:
-                    # Assume it's out of 5 or similar scale
-                    relevance_score = min(raw_score / 5.0, 1.0)
+                # Normalize relevance score - only use real scores
+                raw_score = metadata.get("relevance_score", None)
+                if raw_score is not None:
+                    if raw_score > 1.0:
+                        # Assume it's out of 5 or similar scale
+                        relevance_score = min(raw_score / 5.0, 1.0)
+                    else:
+                        relevance_score = raw_score
                 else:
-                    relevance_score = raw_score
+                    # No relevance score available
+                    relevance_score = None
 
                 # Format publication date properly
                 pub_date = "Date not available"
@@ -418,80 +585,51 @@ async def process_search_query(
                         pub_date = raw_date
                 elif metadata.get("pubdate"):
                     pub_date = metadata["pubdate"]
-                ai_insights = "AI analysis unavailable - no metadata to analyze"
-                if query_result.ai_summaries:
-                    # Check individual summaries first
-                    if "individual_summaries" in query_result.ai_summaries:
-                        for summary_item in query_result.ai_summaries[
-                            "individual_summaries"
-                        ]:
-                            if summary_item.get("accession") == geo_id:
-                                ai_insights = summary_item.get(
-                                    "summary", ai_insights
-                                )
-                                break
-                    # Fallback to brief overview or batch summary
-                    if (
-                        ai_insights
-                        == "AI analysis unavailable - no metadata to analyze"
-                    ):
-                        # Generate dataset-specific insight based on available metadata
-                        if metadata.get("title") and metadata.get("summary"):
-                            title = metadata.get("title", "").lower()
-                            summary_snippet = metadata.get("summary", "")
-                            ai_insights = f"Dataset-specific analysis: This study ({geo_id}) investigates {title}. The research examines {summary_snippet}"
-                        elif "brief_overview" in query_result.ai_summaries:
-                            overview = query_result.ai_summaries[
-                                "brief_overview"
-                            ]
-                            # If it's a dict, extract the overview text
-                            if (
-                                isinstance(overview, dict)
-                                and "overview" in overview
-                            ):
-                                ai_insights = (
-                                    f"General analysis: {overview['overview']}"
-                                )
-                            else:
-                                ai_insights = (
-                                    f"General analysis: {str(overview)}"
-                                )
-                        elif "batch_summary" in query_result.ai_summaries:
-                            batch_summary = query_result.ai_summaries[
-                                "batch_summary"
-                            ]
-                            # If it's a dict, extract meaningful text
-                            if isinstance(batch_summary, dict):
-                                ai_insights = f"Batch analysis: {str(batch_summary.get('summary', batch_summary))}"
-                            else:
-                                ai_insights = (
-                                    f"Batch analysis: {str(batch_summary)}"
-                                )
+                # Get AI insights - only use real AI summaries, no fallbacks
+                ai_insights = None
+                if (
+                    query_result.ai_summaries
+                    and "individual_summaries" in query_result.ai_summaries
+                ):
+                    for summary_item in query_result.ai_summaries[
+                        "individual_summaries"
+                    ]:
+                        if summary_item.get("accession") == geo_id:
+                            ai_insights = summary_item.get("summary")
+                            break
 
                 dataset_info = {
                     "geo_id": geo_id,
-                    "title": metadata.get("title", "Title not available"),
-                    "summary": metadata.get(
-                        "summary",
-                        "Summary not available - metadata could not be retrieved from NCBI GEO",
-                    ),
-                    "organism": organism,
-                    "sample_count": metadata.get(
-                        "sample_count", None
-                    ),  # Use None instead of 0
+                    "title": metadata.get("title"),  # Can be None
+                    "summary": metadata.get("summary"),  # Can be None
+                    "organism": organism,  # Can be None
+                    "sample_count": metadata.get("sample_count"),  # Can be None
                     "platform": platform,  # Can be None
-                    "publication_date": pub_date,
-                    "study_type": metadata.get(
-                        "type", "Study type not specified"
-                    ),
-                    "ai_insights": ai_insights,
-                    "relevance_score": relevance_score,
+                    "publication_date": pub_date
+                    if pub_date != "Date not available"
+                    else None,
+                    "study_type": metadata.get("type"),  # Can be None
+                    "ai_insights": ai_insights,  # Can be None
+                    "relevance_score": relevance_score,  # Can be None
                 }
                 datasets.append(dataset_info)
 
             logger.info(f"[OK] Successfully formatted {len(datasets)} datasets")
             await log_to_frontend(
-                f"[OK] Successfully processed {len(datasets)} datasets", "success"
+                f"[OK] Successfully processed {len(datasets)} datasets",
+                "success",
+            )
+
+            # Sort datasets by actual data quality - only consider real metadata
+            # Put datasets with complete real data first
+            datasets.sort(
+                key=lambda d: (
+                    d.get("title") is not None,  # Has real title
+                    d.get("summary") is not None,  # Has real summary
+                    d.get("relevance_score", 0)
+                    or 0,  # Real relevance score (handle None)
+                ),
+                reverse=True,
             )
 
         # Return empty results if nothing found - no fallback to mock data
@@ -503,24 +641,36 @@ async def process_search_query(
                 "ai_insights": f"No results found for '{query}'. Please try a different search term.",
             }
 
-        # Create AI insights message
-        ai_insights = (
-            f"Found {len(datasets)} biomedical datasets for '{query}'."
-        )
+        # Create AI insights message based only on real data
+        datasets_with_metadata = [
+            d for d in datasets if d.get("title") is not None
+        ]
+        datasets_with_summaries = [
+            d for d in datasets if d.get("summary") is not None
+        ]
+
+        ai_insights = f"Found {len(datasets)} biomedical datasets for '{query}'"
+
+        # Add real metadata quality summary
+        if datasets_with_metadata:
+            ai_insights += f" ({len(datasets_with_metadata)} with metadata)"
+        if datasets_with_summaries:
+            ai_insights += f" including {len(datasets_with_summaries)} with detailed summaries"
+        ai_insights += "."
+
         if query_result.intent:
-            ai_insights += f" Detected intent: {query_result.intent}."
+            ai_insights += f" Detected research intent: {query_result.intent}."
         if query_result.duration:
             ai_insights += f" Search completed in {query_result.duration:.2f}s."
-        else:
-            ai_insights += " Search completed successfully."
 
-        # Add note about metadata if some failed
-        if len(query_result.geo_ids) > len(
-            [m for m in query_result.metadata if m]
-        ):
-            ai_insights += " Note: Some datasets have pending metadata (common for recent submissions)."
+        # Only show note about limited metadata if there are datasets without metadata
+        datasets_without_metadata = len(datasets) - len(datasets_with_metadata)
+        if datasets_without_metadata > 0:
+            ai_insights += f" Note: {datasets_without_metadata} datasets have limited metadata from NCBI."
 
-        await log_to_frontend("[COMPLETE] Query processing complete!", "success")
+        await log_to_frontend(
+            "[COMPLETE] Query processing complete!", "success"
+        )
 
         return {
             "datasets": datasets,
@@ -559,6 +709,19 @@ async def websocket_endpoint(websocket: WebSocket):
     except Exception as e:
         logger.error(f"WebSocket error: {e}")
         manager.disconnect(websocket)
+
+
+# Store WebSocket messages for debugging
+if Path("websocket_monitor.py").exists():
+    try:
+        sys.path.insert(0, str(project_root))
+        from websocket_monitor import setup_websocket_monitoring
+
+        app.state.connection_manager = manager
+        setup_websocket_monitoring(app)
+        logger.info("[OK] WebSocket monitoring enabled for debugging")
+    except ImportError as e:
+        logger.warning(f"[WARNING] WebSocket monitoring module not loaded: {e}")
 
 
 if __name__ == "__main__":

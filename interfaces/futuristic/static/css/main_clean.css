@@ -706,3 +706,40 @@ h2, h3 {
     box-orient: unset !important;
     -webkit-box-orient: unset !important;
 }
+
+/* Progress bar animations */
+.progress-bar {
+    transition: width 0.4s ease-in-out;
+}
+
+@keyframes progressPulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(59, 130, 246, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+    }
+}
+
+.progress-animated {
+    animation: progressPulse 2s infinite;
+}
+
+/* Stage transition animation */
+@keyframes stageTransition {
+    0% {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.stage-transition {
+    animation: stageTransition 0.3s ease-out;
+}
