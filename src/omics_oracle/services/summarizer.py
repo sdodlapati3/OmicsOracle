@@ -261,7 +261,7 @@ class SummarizationService:
                     },
                     {"role": "user", "content": prompt},
                 ],
-                max_tokens=300,
+                max_tokens=600,
                 temperature=self.temperature,
             )
 
@@ -315,7 +315,7 @@ class SummarizationService:
                     },
                     {"role": "user", "content": prompt},
                 ],
-                max_tokens=300,
+                max_tokens=600,
                 temperature=self.temperature,
             )
 

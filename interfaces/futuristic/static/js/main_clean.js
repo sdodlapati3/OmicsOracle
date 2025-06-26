@@ -374,9 +374,9 @@ class OmicsOracleApp {
                         <div id="${summaryId}" class="text-gray-200 text-sm" 
                              data-full-text="${this.escapeHtml(dataset.summary)}"
                              data-is-expanded="false">
-                            ${dataset.summary.length > 200 ? this.truncateText(dataset.summary, 200) : dataset.summary}
+                            ${dataset.summary.length > 500 ? this.truncateText(dataset.summary, 500) : dataset.summary}
                         </div>
-                        ${dataset.summary.length > 200 ? 
+                        ${dataset.summary.length > 500 ? 
                             `<button onclick="window.omicsApp.toggleText('${summaryId}')" 
                                      class="text-blue-400 hover:text-blue-300 text-xs mt-1 block">
                                 Show more...
@@ -392,9 +392,9 @@ class OmicsOracleApp {
                         <div id="${aiId}" class="text-blue-100 text-sm"
                            data-full-text="${this.escapeHtml(dataset.ai_insights)}"
                            data-is-expanded="false">
-                            ${dataset.ai_insights.length > 200 ? this.truncateText(dataset.ai_insights, 200) : dataset.ai_insights}
+                            ${dataset.ai_insights.length > 500 ? this.truncateText(dataset.ai_insights, 500) : dataset.ai_insights}
                         </div>
-                        ${dataset.ai_insights.length > 200 ? 
+                        ${dataset.ai_insights.length > 500 ? 
                             `<button onclick="window.omicsApp.toggleText('${aiId}')" 
                                      class="text-blue-400 hover:text-blue-300 text-xs mt-1 block">
                                 Show more...
@@ -695,7 +695,7 @@ class OmicsOracleApp {
 
         if (isExpanded) {
             // Collapse
-            element.textContent = this.truncateText(fullText, 200);
+            element.textContent = this.truncateText(fullText, 500);
             element.setAttribute('data-is-expanded', 'false');
             const button = element.parentElement.querySelector('button');
             if (button) button.textContent = 'Show more...';
