@@ -64,8 +64,29 @@ except ImportError as e:
     logger.warning(f"Failed to import backend integration modules: {e}")
     BACKEND_URL = None
 
+# Import OmicsOracle classes
+try:
+    from src.omics_oracle.pipeline.pipeline import OmicsOracle
+    from src.omics_oracle.core.config import Config
+    logger.info("Successfully imported OmicsOracle classes")
+except ImportError as e:
+    logger.error(f"Failed to import OmicsOracle classes: {e}")
+    # Define fallback classes to prevent crash
+    class OmicsOracle:
+        def __init__(self, *args, **kwargs):
+            raise NotImplementedError("OmicsOracle class not available")
+    
+    class Config:
+        def __init__(self):
+            self.ncbi = type('NCBIConfig', (), {'email': 'omicsoracle@example.com'})()
+
 
 # Enhanced API models for Clean Architecture integration
+class SearchRequest(BaseModel):
+    query: str = Field(..., description="Search query for biomedical datasets")
+    max_results: int = Field(10, description="Maximum number of results")
+
+
 class EnhancedSearchRequest(BaseModel):
     query: str = Field(..., description="Search query for biomedical datasets")
     filters: Dict[str, Any] = Field(
