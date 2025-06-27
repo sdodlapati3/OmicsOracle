@@ -85,12 +85,6 @@ graph TD
         C4a --> C4b[WebSocket Error Processing]
         C4b --> C4c[UI Error Display]
     end
-        C3 --> C3a[GEO Metadata Display]
-        C3 --> C3b[AI Summary Display]
-        C3a --> C4[Error Handling]
-        C3b --> C4
-        C4 --> C4a[UI Interaction]
-    end
     
     %% Connections between sections
     A6b --> B1
@@ -146,22 +140,26 @@ graph TD
     TB6d[tests/unit/test_response_creation.py] -.-> B6d
     TB7[tests/e2e/test_search_pipeline.py] -.-> B2
     TB7 -.-> B6d
-    TB4a[tests/pipeline/test_result_processing.py] -.-> B4a
-    TB5[tests/services/test_summarizer.py] -.-> B5
-    TB5a[tests/services/test_openai_integration.py] -.-> B5a
-    TB6[tests/e2e/test_search_pipeline.py] -.-> B6
-    TB6a[test_honest_results.py] -.-> B6a
     
     %% Test and Validation Files - Frontend Rendering
     TC1[tests/interface/test_websocket.py] -.-> C1
-    TC1a[tests/interface/test_websocket_handler.py] -.-> C1a
+    TC1a[tests/interface/test_websocket_connection.py] -.-> C1a
+    TC1b[tests/interface/test_websocket_handler.py] -.-> C1b
     TC2[test_progress_events.py] -.-> C2
-    TC2a[test_progress_client.py] -.-> C2a
-    TC3[tests/interface/test_frontend.py] -.-> C3
-    TC3a[tests/interface/test_ui_rendering.py] -.-> C3a
-    TC3b[tests/interface/test_ui_rendering.py] -.-> C3b
+    TC2a[tests/interface/test_progress_parsing.py] -.-> C2a
+    TC2b[tests/interface/test_progress_bar.py] -.-> C2b
+    TC2c[tests/interface/test_live_monitor.py] -.-> C2c
+    TC3[tests/interface/test_results_preparation.py] -.-> C3
+    TC3a[tests/interface/test_json_parsing.py] -.-> C3a
+    TC3b[tests/interface/test_search_history.py] -.-> C3b
+    TC3c[tests/interface/test_results_rendering.py] -.-> C3c
+    TC3d[tests/interface/test_dataset_card.py] -.-> C3d
+    TC3e[tests/interface/test_geo_summary_display.py] -.-> C3e
+    TC3f[tests/interface/test_ai_summary_display.py] -.-> C3f
     TC4[tests/unit/test_error_handling.py] -.-> C4
-    TC4a[tests/interface/test_ui_interaction.py] -.-> C4a
+    TC4a[tests/interface/test_api_error_processing.py] -.-> C4a
+    TC4b[tests/interface/test_websocket_error.py] -.-> C4b
+    TC4c[tests/interface/test_ui_error_display.py] -.-> C4c
     TC5[tests/e2e/test_interface_integration.py] -.-> C3
     
     %% Monitoring Components
@@ -169,7 +167,7 @@ graph TD
     M2[src/omics_oracle/monitoring/api_monitor.py] -. monitors .-> B1
     M3[src/omics_oracle/monitoring/websocket_monitor.py] -. monitors .-> C1
     M1a[src/omics_oracle/monitoring/geo_client_monitor.py] -. monitors .-> A5a
-    M1b[src/omics_oracle/monitoring/summarizer_monitor.py] -. monitors .-> A5b
+    M1b[src/omics_oracle/monitoring/summarizer_monitor.py] -. monitors .-> A5e
     M3a[interfaces/futuristic/static/js/monitoring.js] -. monitors .-> C3
     M4[omics_monitor.py] -. central monitor .-> M1
     M4 -. central monitor .-> M1a
@@ -178,11 +176,18 @@ graph TD
     M4 -. central monitor .-> M3
     M4 -. central monitor .-> M3a
     
+    %% Diagnostic Tools
+    D1[debug_pipeline.py] -. diagnostic .-> A4
+    D2[validate_ncbi_config.py] -. diagnostic .-> A3
+    D3[fix_ncbi_email.py] -. diagnostic .-> A3
+    D4[quick_validation.py] -. diagnostic .-> B6d
+    D5[real_time_query_monitor.py] -. diagnostic .-> C2
+    
     %% Apply styles
     class A1,A4,B1,B3,B5,C1,C3 keyEvent;
-    class A1a,A1b,A1c,A1d,A2,A3,A3a,A5,A5a,A5b,A5c,A6,A6a,A6b,B1a,B1b,B2,B2a,B2b,B3a,B3b,B3c,B4,B4a,B5a,B6,B6a,C1a,C2,C2a,C3a,C3b,C4,C4a normalEvent;
-    class TA1,TA1a,TA1c,TA2,TA3,TA3a,TA4,TA5,TA5a,TA5b,TB1,TB2,TB2a,TB2b,TB3,TB3a,TB3b,TB3c,TB4,TB4a,TB5,TB5a,TB6,TB6a,TC1,TC1a,TC2,TC2a,TC3,TC3a,TC3b,TC4,TC4a,TC5 testFile;
-    class M1,M1a,M1b,M2,M3,M3a,M4 monitorFile;
+    class A1a,A1b,A1c,A1d,A2,A3,A3a,A5,A5a,A5b,A5c,A5d,A5e,A5f,A5g,A5h,A6,A6a,A6b,A6c,B1a,B1b,B1c,B2,B2a,B2b,B2c,B3a,B3b,B3c,B4,B4a,B4b,B5a,B5b,B6,B6a,B6b,B6c,B6d,C1a,C1b,C2,C2a,C2b,C2c,C3a,C3b,C3c,C3d,C3e,C3f,C4,C4a,C4b,C4c normalEvent;
+    class TA1,TA1a,TA1b,TA1c,TA1d,TA2,TA3,TA3a,TA4,TA5,TA5a,TA5b,TA5c,TA5d,TA5e,TA5f,TA5g,TA5h,TA6,TA6a,TA6b,TA6c,TB1,TB1a,TB1b,TB1c,TB2,TB2a,TB2b,TB2c,TB3,TB3a,TB3b,TB3c,TB4,TB4a,TB4b,TB5,TB5a,TB5b,TB6,TB6a,TB6b,TB6c,TB6d,TB7,TC1,TC1a,TC1b,TC2,TC2a,TC2b,TC2c,TC3,TC3a,TC3b,TC3c,TC3d,TC3e,TC3f,TC4,TC4a,TC4b,TC4c,TC5 testFile;
+    class M1,M1a,M1b,M2,M3,M3a,M4,D1,D2,D3,D4,D5 monitorFile;
 ```
 
 ## End-to-End Testing Flow
