@@ -10,13 +10,7 @@ import uuid
 from fastapi import APIRouter, HTTPException
 
 # Import our models
-from .models import (
-    DatasetMetadata,
-    EntityInfo,
-    QueryStatus,
-    SearchResult,
-    SummarizeRequest,
-)
+from .models import SummarizeRequest, SearchResult, QueryStatus, DatasetMetadata, EntityInfo
 
 logger = logging.getLogger(__name__)
 
@@ -28,22 +22,22 @@ ai_router = APIRouter()
 async def summarize_datasets(request: SummarizeRequest):
     """
     Search GEO datasets and generate AI-powered summaries.
-
+    
     This endpoint combines dataset search with intelligent summarization using GPT-4.
     """
     try:
         # Import the pipeline from the new integration
         from ..pipeline.pipeline import OmicsOracle
-
+        
         # Initialize pipeline
         oracle = OmicsOracle()
-
+        
         try:
             # Generate unique query ID
             query_id = f"ai_summary_{uuid.uuid4().hex[:8]}"
-
+            
             logger.info(f"Starting AI summarization for query: {request.query}")
-
+            
             # Process the query through our enhanced pipeline
             pipeline_result = await oracle.search_datasets(
                 query=request.query,
@@ -54,13 +48,13 @@ async def summarize_datasets(request: SummarizeRequest):
                 date_from=request.date_from,
                 date_to=request.date_to,
             )
-
+            
             if pipeline_result.is_failed:
                 raise HTTPException(
                     status_code=500,
-                    detail=f"Pipeline processing failed: {pipeline_result.error}",
+                    detail=f"Pipeline processing failed: {pipeline_result.error}"
                 )
-
+            
             # Convert to web API format
             result = SearchResult(
                 query_id=query_id,
@@ -71,9 +65,9 @@ async def summarize_datasets(request: SummarizeRequest):
                 entities=[],
                 metadata=[],
                 ai_summaries=pipeline_result.ai_summaries,
-                error_message=None,
+                error_message=None
             )
-
+            
             # Convert entities
             for entity_type, entity_list in pipeline_result.entities.items():
                 for entity in entity_list:
@@ -83,10 +77,10 @@ async def summarize_datasets(request: SummarizeRequest):
                             label=entity_type,
                             confidence=entity.get("confidence"),
                             start=entity.get("start"),
-                            end=entity.get("end"),
+                            end=entity.get("end")
                         )
                     )
-
+            
             # Convert metadata
             for metadata in pipeline_result.metadata:
                 result.metadata.append(
@@ -100,26 +94,28 @@ async def summarize_datasets(request: SummarizeRequest):
                         submission_date=metadata.get("submission_date"),
                         last_update_date=metadata.get("last_update_date"),
                         pubmed_id=metadata.get("pubmed_id"),
-                        sra_info=metadata.get("sra_info"),
+                        sra_info=metadata.get("sra_info")
                     )
                 )
-
+            
             logger.info(f"AI summarization completed for query: {query_id}")
             return result
-
+            
         except Exception as e:
             logger.error(f"Error during AI summarization: {e}")
             raise HTTPException(
-                status_code=500, detail=f"Summarization failed: {str(e)}"
+                status_code=500,
+                detail=f"Summarization failed: {str(e)}"
             )
-
+            
         finally:
             await oracle.close()
-
+            
     except Exception as e:
         logger.error(f"AI summarization endpoint error: {e}")
         raise HTTPException(
-            status_code=500, detail=f"Internal server error: {str(e)}"
+            status_code=500,
+            detail=f"Internal server error: {str(e)}"
         )
 
 
@@ -135,20 +131,23 @@ async def get_ai_capabilities():
     """Get information about AI capabilities and configuration."""
     try:
         from ..services.summarizer import SummarizationService
-
+        
         summarizer = SummarizationService()
-
+        
         return {
             "llm_available": summarizer.client is not None,
             "model": summarizer.model if summarizer.client else None,
             "summary_types": ["brief", "comprehensive", "technical"],
             "max_tokens": summarizer.max_tokens if summarizer.client else None,
-            "fallback_mode": summarizer.client is None,
+            "fallback_mode": summarizer.client is None
         }
-
+        
     except Exception as e:
         logger.error(f"Error getting AI capabilities: {e}")
-        return {"llm_available": False, "error": str(e)}
+        return {
+            "llm_available": False,
+            "error": str(e)
+        }
 
 
 @ai_router.post("/ai/test")
@@ -156,15 +155,15 @@ async def test_ai_integration():
     """Test endpoint to verify AI integration is working."""
     try:
         from ..services.summarizer import SummarizationService
-
+        
         summarizer = SummarizationService()
-
+        
         if not summarizer.client:
             return {
                 "status": "fallback_mode",
-                "message": "OpenAI client not available, using fallback summaries",
+                "message": "OpenAI client not available, using fallback summaries"
             }
-
+        
         # Test with a small sample
         test_metadata = {
             "accession": "TEST123",
@@ -172,22 +171,27 @@ async def test_ai_integration():
             "summary": "This is a test dataset to verify AI summarization functionality.",
             "organism": "Homo sapiens",
             "platform": "Test Platform",
-            "samples": [{"title": "Sample 1"}, {"title": "Sample 2"}],
+            "samples": [{"title": "Sample 1"}, {"title": "Sample 2"}]
         }
-
+        
         test_summary = summarizer.summarize_dataset(
-            test_metadata, query_context="test query", summary_type="brief"
+            test_metadata,
+            query_context="test query",
+            summary_type="brief"
         )
-
+        
         return {
             "status": "success",
             "message": "AI integration is working",
-            "test_summary": test_summary,
+            "test_summary": test_summary
         }
-
+        
     except Exception as e:
         logger.error(f"AI test failed: {e}")
-        return {"status": "error", "message": f"AI test failed: {str(e)}"}
+        return {
+            "status": "error",
+            "message": f"AI test failed: {str(e)}"
+        }
 
 
 @ai_router.get("/ai/cache/stats")
@@ -195,21 +199,21 @@ async def get_cache_stats():
     """Get AI cache statistics and performance metrics."""
     try:
         from ..services.summarizer import SummarizationService
-
+        
         summarizer = SummarizationService()
         cache_stats = summarizer.cache.get_stats()
-
+        
         return {
             "status": "success",
             "cache_stats": cache_stats,
-            "message": "Cache statistics retrieved successfully",
+            "message": "Cache statistics retrieved successfully"
         }
-
+        
     except Exception as e:
         logger.error(f"Error getting cache stats: {e}")
         return {
             "status": "error",
-            "message": f"Failed to get cache stats: {str(e)}",
+            "message": f"Failed to get cache stats: {str(e)}"
         }
 
 
@@ -218,21 +222,21 @@ async def cleanup_cache():
     """Clean up expired cache entries."""
     try:
         from ..services.summarizer import SummarizationService
-
+        
         summarizer = SummarizationService()
         removed_count = summarizer.cache.cleanup_expired()
-
+        
         return {
             "status": "success",
             "removed_entries": removed_count,
-            "message": f"Cleaned up {removed_count} expired cache entries",
+            "message": f"Cleaned up {removed_count} expired cache entries"
         }
-
+        
     except Exception as e:
         logger.error(f"Error cleaning cache: {e}")
         return {
             "status": "error",
-            "message": f"Failed to clean cache: {str(e)}",
+            "message": f"Failed to clean cache: {str(e)}"
         }
 
 
@@ -241,19 +245,19 @@ async def clear_cache():
     """Clear all cache entries (admin operation)."""
     try:
         from ..services.summarizer import SummarizationService
-
+        
         summarizer = SummarizationService()
         removed_count = summarizer.cache.clear_all()
-
+        
         return {
             "status": "success",
             "removed_entries": removed_count,
-            "message": f"Cleared all {removed_count} cache entries",
+            "message": f"Cleared all {removed_count} cache entries"
         }
-
+        
     except Exception as e:
         logger.error(f"Error clearing cache: {e}")
         return {
             "status": "error",
-            "message": f"Failed to clear cache: {str(e)}",
+            "message": f"Failed to clear cache: {str(e)}"
         }

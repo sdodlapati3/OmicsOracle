@@ -43,7 +43,7 @@ class SearchRequest(BaseModel):
     output_format: OutputFormat = Field(
         default=OutputFormat.JSON, description="Output format"
     )
-
+    
     # Advanced filter parameters
     organism: Optional[str] = Field(
         default=None, description="Organism filter (e.g., 'homo sapiens')"
@@ -280,12 +280,8 @@ class AISummary(BaseModel):
 
     overview: Optional[str] = Field(None, description="High-level overview")
     methodology: Optional[str] = Field(None, description="Methodology summary")
-    significance: Optional[str] = Field(
-        None, description="Research significance"
-    )
-    technical_details: Optional[str] = Field(
-        None, description="Technical details"
-    )
+    significance: Optional[str] = Field(None, description="Research significance")
+    technical_details: Optional[str] = Field(None, description="Technical details")
     brief: Optional[str] = Field(None, description="Brief summary")
 
 
@@ -294,14 +290,10 @@ class BatchAISummary(BaseModel):
 
     query: str = Field(..., description="Original query")
     total_datasets: int = Field(..., description="Total datasets found")
-    total_samples: int = Field(
-        ..., description="Total samples across all datasets"
-    )
+    total_samples: int = Field(..., description="Total samples across all datasets")
     organisms: List[str] = Field(default=[], description="List of organisms")
     platforms: List[str] = Field(default=[], description="List of platforms")
-    study_types: List[str] = Field(
-        default=[], description="List of study types"
-    )
+    study_types: List[str] = Field(default=[], description="List of study types")
     overview: str = Field(..., description="Batch overview summary")
 
 
@@ -310,19 +302,16 @@ class SummarizeRequest(BaseModel):
 
     query: str = Field(..., description="Search query (natural language)")
     max_results: int = Field(
-        default=5,
-        ge=1,
-        le=20,
-        description="Maximum number of results to summarize",
+        default=5, ge=1, le=20, description="Maximum number of results to summarize"
     )
     summary_type: str = Field(
         default="comprehensive",
-        description="Type of summary (brief, comprehensive, technical)",
+        description="Type of summary (brief, comprehensive, technical)"
     )
     include_individual: bool = Field(
         default=True, description="Include individual dataset summaries"
     )
-
+    
     # Advanced filter parameters (same as SearchRequest)
     organism: Optional[str] = Field(
         default=None, description="Organism filter (e.g., 'homo sapiens')"
@@ -350,7 +339,5 @@ class SummarizeRequest(BaseModel):
     def validate_summary_type(cls, v):
         """Validate summary type."""
         if v not in ["brief", "comprehensive", "technical"]:
-            raise ValueError(
-                "Summary type must be one of: brief, comprehensive, technical"
-            )
+            raise ValueError("Summary type must be one of: brief, comprehensive, technical")
         return v
