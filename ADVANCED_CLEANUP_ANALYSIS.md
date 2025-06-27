@@ -169,10 +169,10 @@ git status --porcelain
   - Created unified root-level `start-futuristic-enhanced.sh` for full-stack startup
   - Supports `--backend-only`, `--frontend-only`, and port configuration options
 - ✅ **Major Cleanup Completed:**
-  - **Removed 10 redundant startup scripts** (from 13 total down to 3 essential)
-  - Deleted `start_server_simple.sh`, entire `scripts/startup/` directory, `src/omics_oracle/web/start.sh`, and `scripts/start_web_server.py`
-  - **Final 3 scripts:** `start_server.sh`, `start-futuristic-enhanced.sh`, `interfaces/futuristic_enhanced/start_enhanced.sh`
-  - Eliminated user confusion and maintenance overhead
+  - **Reduced to 1 UNIVERSAL startup script** (from 13 total scripts!)
+  - Created intelligent `start.sh` with auto-detection and symlinks
+  - **Symlinks:** `start_server.sh` → backend-only, `start-frontend.sh` → frontend-only
+  - Eliminated ALL redundancy and user confusion
 
 The OmicsOracle project is now in a fully functional state with all essential code and documentation restored from the git history.
 
@@ -183,14 +183,21 @@ The OmicsOracle project is now in a fully functional state with all essential co
 ### 🚀 Quick Start Commands
 ```bash
 # Start both backend and frontend (recommended)
-./start-futuristic-enhanced.sh
+./start.sh
 
 # Start only backend
-./start-futuristic-enhanced.sh --backend-only
+./start.sh --backend-only
+# OR use the convenient symlink:
+./start_server.sh
 
 # Start only frontend (if backend already running)
-./start-futuristic-enhanced.sh --frontend-only
+./start.sh --frontend-only
+# OR use the convenient symlink:
+./start-frontend.sh
+
+# Full-stack with development tools
+./start.sh --dev
 
 # Get help
-./start-futuristic-enhanced.sh --help
+./start.sh --help
 ```

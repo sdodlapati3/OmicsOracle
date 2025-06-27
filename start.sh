@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# OmicsOracle Futuristic Enhanced Interface - Unified Startup Script
-# This script starts both backend and frontend components
+# OmicsOracle Universal Startup Script
+# One script to rule them all - backend, frontend, or full-stack
 
 set -e
 
@@ -20,18 +20,42 @@ START_FRONTEND=true
 BACKEND_PORT=8000
 FRONTEND_PORT=8001
 SHOW_HELP=false
+DEV_MODE=false
+
+# Auto-detect mode based on script name
+SCRIPT_NAME=$(basename "$0")
+case $SCRIPT_NAME in
+    "start_server.sh"|"start-server.sh"|"backend.sh")
+        START_BACKEND=true
+        START_FRONTEND=false
+        echo -e "${BLUE}[AUTO] Detected backend-only mode from script name${NC}"
+        ;;
+    "start-frontend"*|"frontend"*)
+        START_BACKEND=false
+        START_FRONTEND=true
+        DEV_MODE=true
+        echo -e "${BLUE}[AUTO] Detected frontend development mode from script name${NC}"
+        ;;
+    *)
+        # Default full-stack mode
+        ;;
+esac
 
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
     case $1 in
-        --backend-only)
+        --backend-only|--backend|--api)
             START_BACKEND=true
             START_FRONTEND=false
             shift
             ;;
-        --frontend-only)
+        --frontend-only|--frontend|--ui)
             START_BACKEND=false
             START_FRONTEND=true
+            shift
+            ;;
+        --dev|--development)
+            DEV_MODE=true
             shift
             ;;
         --backend-port)
@@ -56,13 +80,14 @@ done
 
 # Show help if requested
 if [ "$SHOW_HELP" = true ]; then
-    echo -e "${CYAN}[STARTUP] OmicsOracle Futuristic Enhanced Interface Startup${NC}"
+    echo -e "${CYAN}[STARTUP] OmicsOracle Universal Startup Script${NC}"
     echo ""
     echo "Usage: $0 [options]"
     echo ""
     echo "Options:"
     echo "  --backend-only         Start only the backend server"
     echo "  --frontend-only        Start only the frontend interface"
+    echo "  --dev                  Enable development mode (hot reload, build tools)"
     echo "  --backend-port PORT    Backend port (default: 8000)"
     echo "  --frontend-port PORT   Frontend port (default: 8001)"
     echo "  --help, -h            Show this help message"
@@ -71,18 +96,23 @@ if [ "$SHOW_HELP" = true ]; then
     echo "  $0                     # Start both backend and frontend"
     echo "  $0 --backend-only      # Start only backend"
     echo "  $0 --frontend-only     # Start only frontend"
+    echo "  $0 --dev               # Full-stack with development tools"
+    echo ""
+    echo "Aliases (create symlinks for convenience):"
+    echo "  ln -s start.sh start_server.sh      # Backend-only mode"
+    echo "  ln -s start.sh start-frontend.sh    # Frontend-only mode"
     echo ""
     exit 0
 fi
 
-echo -e "${PURPLE}[STARTUP] OmicsOracle Futuristic Enhanced Interface${NC}"
-echo -e "${PURPLE}=============================================${NC}"
+echo -e "${PURPLE}[STARTUP] OmicsOracle Universal Launcher${NC}"
+echo -e "${PURPLE}=========================================${NC}"
 
 # Check if we're in the correct directory
-if [ ! -f "interfaces/futuristic_enhanced/main.py" ]; then
+if [ ! -f "src/omics_oracle/presentation/web/main.py" ]; then
     echo -e "${RED}[ERROR] Please run this script from the OmicsOracle root directory${NC}"
     echo -e "${YELLOW}   Current directory: $(pwd)${NC}"
-    echo -e "${YELLOW}   Expected to find: interfaces/futuristic_enhanced/main.py${NC}"
+    echo -e "${YELLOW}   Expected to find: src/omics_oracle/presentation/web/main.py${NC}"
     exit 1
 fi
 
@@ -96,20 +126,58 @@ check_port() {
     fi
 }
 
+# Function to check Python
+check_python() {
+    if command -v python3 &> /dev/null; then
+        PYTHON_CMD="python3"
+    elif command -v python &> /dev/null; then
+        PYTHON_CMD="python"
+    else
+        echo -e "${RED}[ERROR] Python not found! Please install Python 3.8+ first.${NC}"
+        exit 1
+    fi
+    echo -e "${GREEN}[OK] Using Python: $PYTHON_CMD${NC}"
+}
+
 # Function to start backend
 start_backend() {
     echo -e "${BLUE}[CONFIG] Starting Backend Server...${NC}"
 
     if check_port $BACKEND_PORT; then
-        echo -e "${YELLOW}[WARN]  Backend port $BACKEND_PORT is already in use${NC}"
+        echo -e "${YELLOW}[WARN] Backend port $BACKEND_PORT is already in use${NC}"
         echo -e "${GREEN}[OK] Backend appears to be already running${NC}"
         return 0
+    fi
+
+    check_python
+
+    # Check and activate virtual environment
+    if [ -d "venv" ]; then
+        echo -e "${CYAN}[CONFIG] Activating virtual environment...${NC}"
+        source venv/bin/activate
+    else
+        echo -e "${YELLOW}[WARN] No virtual environment found (venv)${NC}"
+    fi
+
+    # Set up environment
+    export PYTHONPATH="$(pwd)/src:$PYTHONPATH"
+
+    # Load environment variables
+    if [ -f ".env.local" ]; then
+        echo -e "${CYAN}[CONFIG] Loading environment variables from .env.local...${NC}"
+        set -a
+        source .env.local
+        set +a
     fi
 
     echo -e "${CYAN}[BUILD] Starting backend on port $BACKEND_PORT...${NC}"
 
     # Start backend in background
-    nohup ./start_server.sh > backend.log 2>&1 &
+    nohup $PYTHON_CMD -m uvicorn src.omics_oracle.presentation.web.main:app \
+        --host 0.0.0.0 \
+        --port $BACKEND_PORT \
+        --reload \
+        --log-level info > backend.log 2>&1 &
     BACKEND_PID=$!
 
     # Wait for backend to start
@@ -134,29 +202,54 @@ start_frontend() {
     echo -e "${BLUE}[UI] Starting Frontend Interface...${NC}"
 
     if check_port $FRONTEND_PORT; then
-        echo -e "${YELLOW}[WARN]  Frontend port $FRONTEND_PORT is already in use${NC}"
+        echo -e "${YELLOW}[WARN] Frontend port $FRONTEND_PORT is already in use${NC}"
         echo -e "${YELLOW}[RESTART] Stopping existing frontend...${NC}"
         lsof -ti:$FRONTEND_PORT | xargs kill -9 2>/dev/null || true
         sleep 2
     fi
 
-    echo -e "${CYAN}[BUILD]  Building frontend assets...${NC}"
-    cd interfaces/futuristic_enhanced
-
-    # Build frontend
-    if ! npm run build; then
-        echo -e "${RED}[ERROR] Frontend build failed${NC}"
-        cd ../..
-        return 1
+    # Check if backend is running (unless we're starting it ourselves)
+    if [ "$START_BACKEND" = false ]; then
+        echo -e "${CYAN}[CHECK] Verifying backend connectivity...${NC}"
+        if ! check_port $BACKEND_PORT; then
+            echo -e "${YELLOW}[WARN] Backend not detected on port $BACKEND_PORT${NC}"
+            echo -e "${CYAN}[INFO] You may need to start the backend first${NC}"
+        fi
     fi
 
-    echo -e "${CYAN}[START] Starting frontend server on port $FRONTEND_PORT...${NC}"
+    if [ "$DEV_MODE" = true ]; then
+        echo -e "${CYAN}[BUILD] Building frontend assets with development tools...${NC}"
+        cd interfaces/futuristic_enhanced
 
-    # Start frontend
-    ./start_enhanced.sh --port $FRONTEND_PORT &
-    FRONTEND_PID=$!
+        # Install npm dependencies if needed
+        if [ ! -d "node_modules" ] || [ "package.json" -nt "node_modules" ]; then
+            echo -e "${CYAN}[BUILD] Installing npm dependencies...${NC}"
+            npm install
+        fi
 
-    cd ../..
+        # Build frontend
+        if ! npm run build; then
+            echo -e "${RED}[ERROR] Frontend build failed${NC}"
+            cd ../..
+            return 1
+        fi
+
+        # Start with enhanced development features
+        ./start_enhanced.sh &
+        FRONTEND_PID=$!
+        cd ../..
+    else
+        echo -e "${CYAN}[START] Starting frontend server on port $FRONTEND_PORT...${NC}"
+        cd interfaces/futuristic_enhanced
+
+        # Simple start without development tools
+        $PYTHON_CMD -m uvicorn main:app \
+            --host 0.0.0.0 \
+            --port $FRONTEND_PORT \
+            --log-level info &
+        FRONTEND_PID=$!
+        cd ../..
+    fi
 
     # Wait for frontend to start
     echo -e "${YELLOW}[WAIT] Waiting for frontend to start...${NC}"
@@ -176,13 +269,17 @@ start_frontend() {
 
 # Function to cleanup on exit
 cleanup() {
-    echo -e "\n${YELLOW}[CLEANUP] Cleaning up...${NC}"
+    echo -e "\n${YELLOW}[CLEANUP] Stopping services...${NC}"
     if [ -n "$BACKEND_PID" ]; then
         kill $BACKEND_PID 2>/dev/null || true
     fi
     if [ -n "$FRONTEND_PID" ]; then
         kill $FRONTEND_PID 2>/dev/null || true
     fi
+    # Kill any remaining processes
+    pkill -f "uvicorn.*omics_oracle" 2>/dev/null || true
+    pkill -f "uvicorn.*main:app" 2>/dev/null || true
+    echo -e "${GREEN}[OK] Cleanup complete${NC}"
     exit 0
 }
 
@@ -207,8 +304,8 @@ if [ "$START_FRONTEND" = true ]; then
 fi
 
 echo ""
-echo -e "${GREEN}[SUCCESS] OmicsOracle Futuristic Enhanced Interface is ready!${NC}"
-echo -e "${PURPLE}=============================================${NC}"
+echo -e "${GREEN}[SUCCESS] OmicsOracle is ready!${NC}"
+echo -e "${PURPLE}=========================================${NC}"
 
 if [ "$START_BACKEND" = true ]; then
     echo -e "${CYAN}[CONFIG] Backend:      http://localhost:$BACKEND_PORT${NC}"
