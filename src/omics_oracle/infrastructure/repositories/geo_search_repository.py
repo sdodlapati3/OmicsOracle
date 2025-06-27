@@ -36,11 +36,7 @@ class GEOSearchRepository(SimpleSearchRepository):
 
             # Use the GEO client to search
             search_results = await self._geo_client.search_datasets(
-                query=query.query_text,
-                max_results=query.max_results,
-                search_type=query.search_type.value
-                if query.search_type
-                else "all",
+                query=query.query_text, max_results=query.max_results
             )
 
             # Convert to domain entities

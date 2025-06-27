@@ -1,11 +1,11 @@
 {
-  "timestamp": "2025-06-27T00:04:45.746591",
-  "total_tests": 51,
+  "timestamp": "2025-06-27T04:28:24.144001",
+  "total_tests": 56,
   "passed": 19,
-  "failed": 32,
-  "errors": 0,
-  "success_rate": 37.254901960784316,
-  "total_duration": 132.52433848381042,
+  "failed": 36,
+  "errors": 1,
+  "success_rate": 33.92857142857143,
+  "total_duration": 438.1483643054962,
   "categories": {
     "unit": {
       "total": 16,
@@ -14,10 +14,10 @@
       "errors": 0
     },
     "integration": {
-      "total": 19,
-      "passed": 4,
-      "failed": 15,
-      "errors": 0
+      "total": 21,
+      "passed": 3,
+      "failed": 17,
+      "errors": 1
     },
     "interface": {
       "total": 3,
@@ -44,9 +44,9 @@
       "errors": 0
     },
     "root_tests": {
-      "total": 8,
-      "passed": 1,
-      "failed": 7,
+      "total": 11,
+      "passed": 2,
+      "failed": 9,
       "errors": 0
     }
   },
@@ -56,8 +56,8 @@
       "path": "tests/unit/test_biomedical_nlp.py",
       "category": "unit",
       "status": "PASSED",
-      "duration": 2.570612907409668,
-      "timestamp": "2025-06-27T00:02:33.217690",
+      "duration": 1.858616828918457,
+      "timestamp": "2025-06-27T04:21:05.991932",
       "error": ""
     },
     {
@@ -65,8 +65,8 @@
       "path": "tests/unit/test_cache_disabling.py",
       "category": "unit",
       "status": "PASSED",
-      "duration": 3.3382022380828857,
-      "timestamp": "2025-06-27T00:02:35.788366",
+      "duration": 2.954803943634033,
+      "timestamp": "2025-06-27T04:21:07.850625",
       "error": ""
     },
     {
@@ -74,8 +74,8 @@
       "path": "tests/unit/test_core.py",
       "category": "unit",
       "status": "PASSED",
-      "duration": 1.1673979759216309,
-      "timestamp": "2025-06-27T00:02:39.126653",
+      "duration": 1.008141279220581,
+      "timestamp": "2025-06-27T04:21:10.805498",
       "error": ""
     },
     {
@@ -83,8 +83,8 @@
       "path": "tests/unit/test_core_simple.py",
       "category": "unit",
       "status": "PASSED",
-      "duration": 1.280965805053711,
-      "timestamp": "2025-06-27T00:02:40.294150",
+      "duration": 0.9903237819671631,
+      "timestamp": "2025-06-27T04:21:11.813708",
       "error": ""
     },
     {
@@ -92,8 +92,8 @@
       "path": "tests/unit/test_entrez_patch.py",
       "category": "unit",
       "status": "FAILED",
-      "duration": 1.2947180271148682,
-      "timestamp": "2025-06-27T00:02:41.575220",
+      "duration": 1.1869487762451172,
+      "timestamp": "2025-06-27T04:21:12.804103",
       "error": ""
     },
     {
@@ -101,8 +101,8 @@
       "path": "tests/unit/test_environment.py",
       "category": "unit",
       "status": "PASSED",
-      "duration": 0.9226119518280029,
-      "timestamp": "2025-06-27T00:02:42.870028",
+      "duration": 0.8710949420928955,
+      "timestamp": "2025-06-27T04:21:13.991123",
       "error": ""
     },
     {
@@ -110,8 +110,8 @@
       "path": "tests/unit/test_error_handling.py",
       "category": "unit",
       "status": "FAILED",
-      "duration": 1.1335618495941162,
-      "timestamp": "2025-06-27T00:02:43.792700",
+      "duration": 0.8474459648132324,
+      "timestamp": "2025-06-27T04:21:14.862287",
       "error": ""
     },
     {
@@ -119,8 +119,8 @@
       "path": "tests/unit/test_geo_client.py",
       "category": "unit",
       "status": "PASSED",
-      "duration": 1.6829838752746582,
-      "timestamp": "2025-06-27T00:02:44.926355",
+      "duration": 1.5820910930633545,
+      "timestamp": "2025-06-27T04:21:15.709813",
       "error": ""
     },
     {
@@ -128,8 +128,8 @@
       "path": "tests/unit/test_nlp.py",
       "category": "unit",
       "status": "PASSED",
-      "duration": 3.2570412158966064,
-      "timestamp": "2025-06-27T00:02:46.609430",
+      "duration": 2.945114850997925,
+      "timestamp": "2025-06-27T04:21:17.291974",
       "error": ""
     },
     {
@@ -137,8 +137,8 @@
       "path": "tests/unit/test_pipeline.py",
       "category": "unit",
       "status": "PASSED",
-      "duration": 2.8955330848693848,
-      "timestamp": "2025-06-27T00:02:49.866555",
+      "duration": 3.2201521396636963,
+      "timestamp": "2025-06-27T04:21:20.237148",
       "error": ""
     },
     {
@@ -146,8 +146,8 @@
       "path": "tests/unit/test_pipeline_status.py",
       "category": "unit",
       "status": "PASSED",
-      "duration": 3.2897000312805176,
-      "timestamp": "2025-06-27T00:02:52.762189",
+      "duration": 3.2399120330810547,
+      "timestamp": "2025-06-27T04:21:23.457357",
       "error": ""
     },
     {
@@ -155,8 +155,8 @@
       "path": "tests/unit/test_progress_callback_setup.py",
       "category": "unit",
       "status": "FAILED",
-      "duration": 3.373828172683716,
-      "timestamp": "2025-06-27T00:02:56.051971",
+      "duration": 3.2718918323516846,
+      "timestamp": "2025-06-27T04:21:26.697339",
       "error": ""
     },
     {
@@ -164,8 +164,8 @@
       "path": "tests/unit/test_request_validation.py",
       "category": "unit",
       "status": "FAILED",
-      "duration": 3.4706969261169434,
-      "timestamp": "2025-06-27T00:02:59.425898",
+      "duration": 3.3743629455566406,
+      "timestamp": "2025-06-27T04:21:29.969290",
       "error": ""
     },
     {
@@ -173,8 +173,8 @@
       "path": "tests/unit/test_simple_api.py",
       "category": "unit",
       "status": "FAILED",
-      "duration": 0.8708908557891846,
-      "timestamp": "2025-06-27T00:03:02.896676",
+      "duration": 0.8513379096984863,
+      "timestamp": "2025-06-27T04:21:33.343709",
       "error": ""
     },
     {
@@ -182,8 +182,8 @@
       "path": "tests/unit/test_web_interface_unit.py",
       "category": "unit",
       "status": "PASSED",
-      "duration": 4.942538022994995,
-      "timestamp": "2025-06-27T00:03:03.767641",
+      "duration": 4.554234743118286,
+      "timestamp": "2025-06-27T04:21:34.195113",
       "error": ""
     },
     {
@@ -191,8 +191,8 @@
       "path": "tests/unit/test_web_server.py",
       "category": "unit",
       "status": "FAILED",
-      "duration": 4.580006837844849,
-      "timestamp": "2025-06-27T00:03:08.710266",
+      "duration": 4.486764907836914,
+      "timestamp": "2025-06-27T04:21:38.749405",
       "error": ""
     },
     {
@@ -200,26 +200,26 @@
       "path": "tests/integration/test_advanced_filters.py",
       "category": "integration",
       "status": "FAILED",
-      "duration": 0.8694119453430176,
-      "timestamp": "2025-06-27T00:03:13.290344",
+      "duration": 0.8264288902282715,
+      "timestamp": "2025-06-27T04:21:43.236231",
       "error": ""
     },
     {
       "name": "test_ai_summarization",
       "path": "tests/integration/test_ai_summarization.py",
       "category": "integration",
-      "status": "PASSED",
-      "duration": 3.0296990871429443,
-      "timestamp": "2025-06-27T00:03:14.159835",
-      "error": ""
+      "status": "TIMEOUT",
+      "duration": 300.02109718322754,
+      "timestamp": "2025-06-27T04:21:44.062717",
+      "error": "Test execution timed out"
     },
     {
       "name": "test_cli_ai_integration",
       "path": "tests/integration/test_cli_ai_integration.py",
       "category": "integration",
       "status": "FAILED",
-      "duration": 0.868873119354248,
-      "timestamp": "2025-06-27T00:03:17.189623",
+      "duration": 0.8650650978088379,
+      "timestamp": "2025-06-27T04:26:44.083947",
       "error": ""
     },
     {
@@ -227,8 +227,8 @@
       "path": "tests/integration/test_comprehensive_web_interface.py",
       "category": "integration",
       "status": "FAILED",
-      "duration": 5.055073022842407,
-      "timestamp": "2025-06-27T00:03:18.058571",
+      "duration": 5.111715078353882,
+      "timestamp": "2025-06-27T04:26:44.949070",
       "error": ""
     },
     {
@@ -236,8 +236,8 @@
       "path": "tests/integration/test_dashboard_integration.py",
       "category": "integration",
       "status": "FAILED",
-      "duration": 0.853466272354126,
-      "timestamp": "2025-06-27T00:03:23.113728",
+      "duration": 0.8530659675598145,
+      "timestamp": "2025-06-27T04:26:50.060843",
       "error": ""
     },
     {
@@ -245,17 +245,17 @@
       "path": "tests/integration/test_enhancements.py",
       "category": "integration",
       "status": "FAILED",
-      "duration": 0.851550817489624,
-      "timestamp": "2025-06-27T00:03:23.967270",
+      "duration": 0.8673820495605469,
+      "timestamp": "2025-06-27T04:26:50.913969",
       "error": ""
     },
     {
       "name": "test_geo_client_integration",
       "path": "tests/integration/test_geo_client_integration.py",
       "category": "integration",
-      "status": "PASSED",
-      "duration": 39.828540325164795,
-      "timestamp": "2025-06-27T00:03:24.818912",
+      "status": "FAILED",
+      "duration": 45.89373016357422,
+      "timestamp": "2025-06-27T04:26:51.781410",
       "error": ""
     },
     {
@@ -263,8 +263,8 @@
       "path": "tests/integration/test_integration.py",
       "category": "integration",
       "status": "PASSED",
-      "duration": 1.1854479312896729,
-      "timestamp": "2025-06-27T00:04:04.647528",
+      "duration": 0.8934400081634521,
+      "timestamp": "2025-06-27T04:27:37.675201",
       "error": ""
     },
     {
@@ -272,8 +272,8 @@
       "path": "tests/integration/test_integrations.py",
       "category": "integration",
       "status": "FAILED",
-      "duration": 0.8552219867706299,
-      "timestamp": "2025-06-27T00:04:05.833082",
+      "duration": 0.8692207336425781,
+      "timestamp": "2025-06-27T04:27:38.568702",
       "error": ""
     },
     {
@@ -281,8 +281,26 @@
       "path": "tests/integration/test_llm_integration.py",
       "category": "integration",
       "status": "FAILED",
-      "duration": 0.8790950775146484,
-      "timestamp": "2025-06-27T00:04:06.688380",
+      "duration": 0.850175142288208,
+      "timestamp": "2025-06-27T04:27:39.437986",
+      "error": ""
+    },
+    {
+      "name": "test_phase3_architecture",
+      "path": "tests/integration/test_phase3_architecture.py",
+      "category": "integration",
+      "status": "FAILED",
+      "duration": 1.5769140720367432,
+      "timestamp": "2025-06-27T04:27:40.288222",
+      "error": "/Users/sanjeevadodlapati/Downloads/Repos/OmicsOracle/venv/lib/python3.11/site-packages/_pytest/unraisableexception.py:33: RuntimeWarning: coroutine 'TestPhase3Architecture.event_bus' was never awaited\n  gc.collect()\nRuntimeWarning: Enable tracemalloc to get the object allocation traceback\n"
+    },
+    {
+      "name": "test_phase3_simple",
+      "path": "tests/integration/test_phase3_simple.py",
+      "category": "integration",
+      "status": "PASSED",
+      "duration": 1.4756109714508057,
+      "timestamp": "2025-06-27T04:27:41.865196",
       "error": ""
     },
     {
@@ -290,8 +308,8 @@
       "path": "tests/integration/test_phase4_enhancements.py",
       "category": "integration",
       "status": "FAILED",
-      "duration": 0.8858890533447266,
-      "timestamp": "2025-06-27T00:04:07.567583",
+      "duration": 0.8471510410308838,
+      "timestamp": "2025-06-27T04:27:43.340867",
       "error": ""
     },
     {
@@ -299,8 +317,8 @@
       "path": "tests/integration/test_query_refinement.py",
       "category": "integration",
       "status": "FAILED",
-      "duration": 1.0561671257019043,
-      "timestamp": "2025-06-27T00:04:08.453558",
+      "duration": 1.0160019397735596,
+      "timestamp": "2025-06-27T04:27:44.188077",
       "error": ""
     },
     {
@@ -308,8 +326,8 @@
       "path": "tests/integration/test_query_refinement_integration.py",
       "category": "integration",
       "status": "PASSED",
-      "duration": 0.8950960636138916,
-      "timestamp": "2025-06-27T00:04:09.509820",
+      "duration": 0.8682699203491211,
+      "timestamp": "2025-06-27T04:27:45.204139",
       "error": ""
     },
     {
@@ -317,8 +335,8 @@
       "path": "tests/integration/test_query_refinement_system.py",
       "category": "integration",
       "status": "FAILED",
-      "duration": 0.8536338806152344,
-      "timestamp": "2025-06-27T00:04:10.404994",
+      "duration": 0.8444809913635254,
+      "timestamp": "2025-06-27T04:27:46.072470",
       "error": ""
     },
     {
@@ -326,8 +344,8 @@
       "path": "tests/integration/test_real_geo_llm.py",
       "category": "integration",
       "status": "FAILED",
-      "duration": 0.85093092918396,
-      "timestamp": "2025-06-27T00:04:11.258724",
+      "duration": 0.84055495262146,
+      "timestamp": "2025-06-27T04:27:46.917012",
       "error": ""
     },
     {
@@ -335,8 +353,8 @@
       "path": "tests/integration/test_realtime_monitoring.py",
       "category": "integration",
       "status": "FAILED",
-      "duration": 1.5596427917480469,
-      "timestamp": "2025-06-27T00:04:12.109732",
+      "duration": 1.4998579025268555,
+      "timestamp": "2025-06-27T04:27:47.757629",
       "error": ""
     },
     {
@@ -344,8 +362,8 @@
       "path": "tests/integration/test_visualization_api.py",
       "category": "integration",
       "status": "FAILED",
-      "duration": 0.8652698993682861,
-      "timestamp": "2025-06-27T00:04:13.669447",
+      "duration": 0.8456528186798096,
+      "timestamp": "2025-06-27T04:27:49.257546",
       "error": ""
     },
     {
@@ -353,8 +371,8 @@
       "path": "tests/integration/test_web_ai_integration.py",
       "category": "integration",
       "status": "FAILED",
-      "duration": 0.8526098728179932,
-      "timestamp": "2025-06-27T00:04:14.534792",
+      "duration": 0.8408827781677246,
+      "timestamp": "2025-06-27T04:27:50.103259",
       "error": ""
     },
     {
@@ -362,8 +380,8 @@
       "path": "tests/integration/test_web_interface_validation.py",
       "category": "integration",
       "status": "FAILED",
-      "duration": 0.9582531452178955,
-      "timestamp": "2025-06-27T00:04:15.387489",
+      "duration": 0.9252080917358398,
+      "timestamp": "2025-06-27T04:27:50.944206",
       "error": ""
     },
     {
@@ -371,8 +389,8 @@
       "path": "tests/interface/test_all_interfaces.py",
       "category": "interface",
       "status": "PASSED",
-      "duration": 0.8965270519256592,
-      "timestamp": "2025-06-27T00:04:16.345840",
+      "duration": 0.8987739086151123,
+      "timestamp": "2025-06-27T04:27:51.869476",
       "error": ""
     },
     {
@@ -380,8 +398,8 @@
       "path": "tests/interface/test_api_endpoints.py",
       "category": "interface",
       "status": "FAILED",
-      "duration": 3.7222001552581787,
-      "timestamp": "2025-06-27T00:04:17.242462",
+      "duration": 3.451810121536255,
+      "timestamp": "2025-06-27T04:27:52.768314",
       "error": ""
     },
     {
@@ -389,8 +407,8 @@
       "path": "tests/interface/test_modern_interface.py",
       "category": "interface",
       "status": "PASSED",
-      "duration": 0.8783249855041504,
-      "timestamp": "2025-06-27T00:04:20.964734",
+      "duration": 0.846959114074707,
+      "timestamp": "2025-06-27T04:27:56.220185",
       "error": ""
     },
     {
@@ -398,8 +416,8 @@
       "path": "tests/e2e/test_complete_search_journey.py",
       "category": "e2e",
       "status": "PASSED",
-      "duration": 2.8186397552490234,
-      "timestamp": "2025-06-27T00:04:21.843134",
+      "duration": 2.9258978366851807,
+      "timestamp": "2025-06-27T04:27:57.067203",
       "error": ""
     },
     {
@@ -407,8 +425,8 @@
       "path": "tests/e2e/test_search_pipeline.py",
       "category": "e2e",
       "status": "FAILED",
-      "duration": 2.7701189517974854,
-      "timestamp": "2025-06-27T00:04:24.661851",
+      "duration": 2.866753578186035,
+      "timestamp": "2025-06-27T04:27:59.993160",
       "error": "mainloop: caught unexpected SystemExit!\n"
     },
     {
@@ -416,8 +434,8 @@
       "path": "tests/performance/test_load_testing.py",
       "category": "performance",
       "status": "FAILED",
-      "duration": 1.8472001552581787,
-      "timestamp": "2025-06-27T00:04:27.432044",
+      "duration": 1.91408109664917,
+      "timestamp": "2025-06-27T04:28:02.859975",
       "error": ""
     },
     {
@@ -425,8 +443,8 @@
       "path": "tests/performance/test_performance_monitoring.py",
       "category": "performance",
       "status": "FAILED",
-      "duration": 0.9467051029205322,
-      "timestamp": "2025-06-27T00:04:29.279320",
+      "duration": 0.9134001731872559,
+      "timestamp": "2025-06-27T04:28:04.774116",
       "error": ""
     },
     {
@@ -434,8 +452,8 @@
       "path": "tests/validation/test_architecture.py",
       "category": "validation",
       "status": "PASSED",
-      "duration": 1.0594210624694824,
-      "timestamp": "2025-06-27T00:04:30.226296",
+      "duration": 1.02885103225708,
+      "timestamp": "2025-06-27T04:28:05.687578",
       "error": ""
     },
     {
@@ -443,8 +461,17 @@
       "path": "test_api_endpoints.py",
       "category": "root_tests",
       "status": "FAILED",
-      "duration": 0.9093050956726074,
-      "timestamp": "2025-06-27T00:04:31.285794",
+      "duration": 0.8756039142608643,
+      "timestamp": "2025-06-27T04:28:06.716492",
+      "error": ""
+    },
+    {
+      "name": "test_config_complete",
+      "path": "test_config_complete.py",
+      "category": "root_tests",
+      "status": "PASSED",
+      "duration": 1.0366950035095215,
+      "timestamp": "2025-06-27T04:28:07.592159",
       "error": ""
     },
     {
@@ -452,8 +479,8 @@
       "path": "test_geo_client.py",
       "category": "root_tests",
       "status": "FAILED",
-      "duration": 0.8661439418792725,
-      "timestamp": "2025-06-27T00:04:32.195177",
+      "duration": 0.8791558742523193,
+      "timestamp": "2025-06-27T04:28:08.628914",
       "error": ""
     },
     {
@@ -461,8 +488,8 @@
       "path": "test_honest_results.py",
       "category": "root_tests",
       "status": "FAILED",
-      "duration": 2.7460620403289795,
-      "timestamp": "2025-06-27T00:04:33.061402",
+      "duration": 2.8283491134643555,
+      "timestamp": "2025-06-27T04:28:09.508128",
       "error": ""
     },
     {
@@ -470,8 +497,8 @@
       "path": "test_ncbi_config.py",
       "category": "root_tests",
       "status": "FAILED",
-      "duration": 1.7592508792877197,
-      "timestamp": "2025-06-27T00:04:35.807539",
+      "duration": 1.8404488563537598,
+      "timestamp": "2025-06-27T04:28:12.336541",
       "error": ""
     },
     {
@@ -479,8 +506,26 @@
       "path": "test_ncbi_connection.py",
       "category": "root_tests",
       "status": "PASSED",
-      "duration": 1.6160638332366943,
-      "timestamp": "2025-06-27T00:04:37.566876",
+      "duration": 1.5986449718475342,
+      "timestamp": "2025-06-27T04:28:14.177051",
+      "error": ""
+    },
+    {
+      "name": "test_phase6_integration",
+      "path": "test_phase6_integration.py",
+      "category": "root_tests",
+      "status": "FAILED",
+      "duration": 0.9253089427947998,
+      "timestamp": "2025-06-27T04:28:15.775759",
+      "error": ""
+    },
+    {
+      "name": "test_phase6_quick",
+      "path": "test_phase6_quick.py",
+      "category": "root_tests",
+      "status": "FAILED",
+      "duration": 0.8561739921569824,
+      "timestamp": "2025-06-27T04:28:16.701128",
       "error": ""
     },
     {
@@ -488,8 +533,8 @@
       "path": "test_progress_client.py",
       "category": "root_tests",
       "status": "FAILED",
-      "duration": 0.8506040573120117,
-      "timestamp": "2025-06-27T00:04:39.183021",
+      "duration": 0.8562140464782715,
+      "timestamp": "2025-06-27T04:28:17.557367",
       "error": ""
     },
     {
@@ -497,8 +542,8 @@
       "path": "test_progress_events.py",
       "category": "root_tests",
       "status": "FAILED",
-      "duration": 2.7304000854492188,
-      "timestamp": "2025-06-27T00:04:40.033733",
+      "duration": 2.871469020843506,
+      "timestamp": "2025-06-27T04:28:18.413645",
       "error": ""
     },
     {
@@ -506,8 +551,8 @@
       "path": "test_search.py",
       "category": "root_tests",
       "status": "FAILED",
-      "duration": 2.9822092056274414,
-      "timestamp": "2025-06-27T00:04:42.764207",
+      "duration": 2.8586299419403076,
+      "timestamp": "2025-06-27T04:28:21.285175",
       "error": ""
     }
   ]

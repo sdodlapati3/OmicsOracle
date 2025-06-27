@@ -8,4 +8,7 @@ application dependencies following the dependency injection pattern.
 from .container import Container
 from .providers import create_container
 
-__all__ = ["Container", "create_container"]
+# Alias for backward compatibility
+DIContainer = Container
+
+__all__ = ["Container", "DIContainer", "create_container"]

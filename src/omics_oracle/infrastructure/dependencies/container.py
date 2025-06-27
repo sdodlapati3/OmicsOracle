@@ -103,3 +103,48 @@ class Container:
             info[interface.__name__] = "instance"
 
         return info
+
+    # Service-specific getter methods for presentation layer
+    async def get_search_use_case(self):
+        """Get enhanced search use case."""
+        from ...application.use_cases.enhanced_search_datasets import (
+            EnhancedSearchDatasetsUseCase,
+        )
+        from ...infrastructure.configuration.config import get_config
+        from ...infrastructure.external_apis.geo_client import GEOClient
+        from ...infrastructure.repositories.geo_search_repository import (
+            GEOSearchRepository,
+        )
+        from ..messaging.event_bus import EventBus
+
+        # Get or create dependencies
+        config = get_config()
+        geo_client = GEOClient(config.geo)
+        repository = GEOSearchRepository(geo_client)
+        event_bus = await self.get_event_bus()
+
+        return EnhancedSearchDatasetsUseCase(repository, event_bus)
+
+    async def get_event_bus(self):
+        """Get event bus singleton."""
+        from ..messaging.event_bus import EventBus
+
+        if not hasattr(self, "_event_bus"):
+            self._event_bus = EventBus()
+        return self._event_bus
+
+    async def get_websocket_service(self):
+        """Get WebSocket service singleton."""
+        from ..messaging.websocket_service import WebSocketService
+
+        if not hasattr(self, "_websocket_service"):
+            self._websocket_service = WebSocketService()
+        return self._websocket_service
+
+    async def get_cache(self):
+        """Get memory cache singleton."""
+        from ..caching.memory_cache import MemoryCache
+
+        if not hasattr(self, "_cache"):
+            self._cache = MemoryCache(default_ttl=3600)
+        return self._cache

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="1" failures="0" skipped="0" tests="1" time="1.604" timestamp="2025-06-27T00:04:25.324122-04:00" hostname="Sanjeevas-iMac.local"><testcase classname="pytest" name="internal" time="0.000"><error message="internal error">Traceback (most recent call last):
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="1" failures="0" skipped="0" tests="1" time="1.716" timestamp="2025-06-27T04:28:00.650242-04:00" hostname="Sanjeevas-iMac.local"><testcase classname="pytest" name="internal" time="0.000"><error message="internal error">Traceback (most recent call last):
   File "/Users/sanjeevadodlapati/Downloads/Repos/OmicsOracle/tests/e2e/test_search_pipeline.py", line 46, in &lt;module&gt;
     from src.omics_oracle.geo_tools.geo_client import GEOClient
 ImportError: cannot import name 'GEOClient' from 'src.omics_oracle.geo_tools.geo_client' (/Users/sanjeevadodlapati/Downloads/Repos/OmicsOracle/src/omics_oracle/geo_tools/geo_client.py)

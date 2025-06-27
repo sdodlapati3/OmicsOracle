@@ -18,3 +18,21 @@ from .config import (
     reload_config,
     set_config,
 )
+
+# Alias for backward compatibility
+Config = AppConfig
+
+__all__ = [
+    "AppConfig",
+    "Config",
+    "DatabaseConfig",
+    "Environment",
+    "GEOConfig",
+    "LoggingConfig",
+    "MonitoringConfig",
+    "RedisConfig",
+    "SecurityConfig",
+    "get_config",
+    "reload_config",
+    "set_config",
+]

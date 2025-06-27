@@ -199,6 +199,49 @@ class MonitoringConfig:
 
 
 @dataclass
+class OpenAIConfig:
+    """OpenAI API configuration."""
+
+    api_key: str = field(
+        default_factory=lambda: os.getenv("OPENAI_API_KEY", "")
+    )
+    model: str = field(
+        default_factory=lambda: os.getenv("OPENAI_MODEL", "gpt-4")
+    )
+    max_tokens: int = field(
+        default_factory=lambda: int(os.getenv("OPENAI_MAX_TOKENS", "4000"))
+    )
+    temperature: float = field(
+        default_factory=lambda: float(os.getenv("OPENAI_TEMPERATURE", "0.3"))
+    )
+
+    # Request settings
+    timeout_seconds: int = 60
+    max_retries: int = 3
+
+    def __post_init__(self):
+        """Validate OpenAI configuration."""
+        if not self.api_key:
+            logger.warning(
+                "OPENAI_API_KEY not set. AI features will be disabled."
+            )
+        elif not self.api_key.startswith("sk-"):
+            logger.warning("OPENAI_API_KEY appears to be invalid format.")
+
+        if self.max_tokens <= 0:
+            raise ConfigurationError(
+                "openai.max_tokens",
+                "Max tokens must be positive",
+            )
+
+        if not 0.0 <= self.temperature <= 2.0:
+            raise ConfigurationError(
+                "openai.temperature",
+                "Temperature must be between 0.0 and 2.0",
+            )
+
+
+@dataclass
 class AppConfig:
     """Main application configuration."""
 
@@ -235,6 +278,7 @@ class AppConfig:
     logging: LoggingConfig = field(default_factory=LoggingConfig)
     security: SecurityConfig = field(default_factory=SecurityConfig)
     monitoring: MonitoringConfig = field(default_factory=MonitoringConfig)
+    openai: OpenAIConfig = field(default_factory=OpenAIConfig)
 
     def __post_init__(self):
         """Validate and finalize configuration."""
@@ -349,6 +393,7 @@ class AppConfig:
                 ("logging", self.logging),
                 ("security", self.security),
                 ("monitoring", self.monitoring),
+                ("openai", self.openai),
             ]:
                 try:
                     # Re-run post_init validation
