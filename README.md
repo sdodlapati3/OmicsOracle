@@ -36,6 +36,16 @@ python -m src.omics_oracle.cli --help
 - **Real-time Monitoring**: Live updates on processing status
 - **API Integration**: RESTful API for programmatic access
 
+## 🧪 Testing and Validation Framework
+
+OmicsOracle includes a comprehensive testing and validation framework that ensures the system functions correctly at each stage:
+
+- **[Event Flow Visualization](/docs/EVENT_FLOW_README.md)**: Visual representation of system event flow and test coverage
+- **[Event Flow and Validation Map](/docs/EVENT_FLOW_VALIDATION_MAP.md)**: Detailed mapping of events to test files
+- **[Event Flow Charts](/docs/EVENT_FLOW_CHART.md)**: Simplified Mermaid diagrams of the system flow
+
+This framework provides complete observability from server startup to frontend display, with appropriate tests for each component.
+
 ## 🛠️ Technology Stack
 
 - **Backend**: Python 3.11+, FastAPI, LangChain

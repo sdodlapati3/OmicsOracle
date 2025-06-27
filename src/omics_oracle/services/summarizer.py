@@ -30,12 +30,17 @@ logger = logging.getLogger(__name__)
 class SummarizationService:
     """Service for generating AI-powered summaries of genomics datasets."""
 
-    def __init__(self, config: Optional[Config] = None) -> None:
+    def __init__(self, config: Optional[Config] = None, disable_cache: bool = True) -> None:
         """Initialize summarization service with OpenAI client."""
         self.config = config or Config()
 
-        # Initialize caching
-        self.cache = SummaryCache()
+        # Initialize caching (disabled by default)
+        if disable_cache:
+            logger.info("Initializing summarization service with caching disabled")
+            self.cache = None
+        else:
+            logger.info("Initializing summarization service with caching enabled")
+            self.cache = SummaryCache()
 
         # Initialize OpenAI client
         api_key = os.getenv("OPENAI_API_KEY")
@@ -80,11 +85,12 @@ class SummarizationService:
             f"{dataset_id}_{query_context or 'no_context'}_{summary_type}"
         )
 
-        # Check cache first
-        cached_summary = self.cache.get(cache_key, "dataset_summary")
-        if cached_summary:
-            logger.info(f"Using cached summary for dataset: {dataset_id}")
-            return cached_summary
+        # Check cache first (if caching is enabled)
+        if self.cache:
+            cached_summary = self.cache.get(cache_key, "dataset_summary")
+            if cached_summary:
+                logger.info(f"Using cached summary for dataset: {dataset_id}")
+                return cached_summary
 
         try:
             # Prepare metadata for summarization
@@ -117,16 +123,17 @@ class SummarizationService:
                     "technical_details"
                 ] = self._generate_technical_summary(cleaned_metadata)
 
-            # Cache the summary (estimate tokens used)
-            estimated_tokens = sum(
-                len(str(v).split()) * 1.3 for v in summaries.values()
-            )
-            self.cache.set(
-                cache_key,
-                "dataset_summary",
-                summaries,
-                token_count=int(estimated_tokens),
-            )
+            # Cache the summary (if caching is enabled)
+            if self.cache:
+                estimated_tokens = sum(
+                    len(str(v).split()) * 1.3 for v in summaries.values()
+                )
+                self.cache.set(
+                    cache_key,
+                    "dataset_summary",
+                    summaries,
+                    token_count=int(estimated_tokens),
+                )
 
             return summaries
 

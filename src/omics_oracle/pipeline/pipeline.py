@@ -115,22 +115,31 @@ class OmicsOracle:
     pipeline.
     """
 
-    def __init__(self, config: Optional[Config] = None):
+    def __init__(self, config: Optional[Config] = None, disable_cache: bool = True):
         """
         Initialize OmicsOracle pipeline.
 
         Args:
             config: Configuration object. If None, loads from default sources.
+            disable_cache: Whether to disable caching for search results and metadata
         """
         self.config = config or Config()
+        self.disable_cache = disable_cache
         self._setup_logging()
 
         # Initialize components
         self.geo_client = UnifiedGEOClient(self.config)
+
+        # Disable caching if requested
+        if self.disable_cache:
+            if hasattr(self.geo_client, "cache"):
+                logger.info("Disabling GEO client cache as requested")
+                self.geo_client.cache = None
+
         self.nlp_interpreter = PromptInterpreter()
         self.biomedical_ner = BiomedicalNER()
         self.synonym_mapper = EnhancedBiologicalSynonymMapper()
-        self.summarizer = SummarizationService(self.config)
+        self.summarizer = SummarizationService(self.config, disable_cache=self.disable_cache)
 
         # Initialize improved search service
         self.search_service = ImprovedSearchService(
@@ -463,8 +472,8 @@ class OmicsOracle:
 
         metadata_list = []
 
-        # Process each GEO ID
-        for geo_id in result.geo_ids[:20]:  # Limit to prevent overwhelming
+        # Process each GEO ID - no artificial limit
+        for geo_id in result.geo_ids:
             try:
                 metadata = await self.geo_client.get_geo_metadata(
                     geo_id, include_sra=include_sra
@@ -474,7 +483,17 @@ class OmicsOracle:
                     enhanced_metadata = await self._enhance_metadata(
                         metadata, result
                     )
-                    metadata_list.append(enhanced_metadata)
+                    
+                    # Only add if the enhanced metadata has a relevance score
+                    # and it's greater than a minimum threshold
+                    if enhanced_metadata.get("relevance_score", 0) > 0.1:
+                        metadata_list.append(enhanced_metadata)
+                    else:
+                        logger.debug(
+                            "Skipping %s due to low relevance score: %s", 
+                            geo_id, 
+                            enhanced_metadata.get("relevance_score", 0)
+                        )
 
             except Exception as e:
                 logger.warning(
@@ -511,7 +530,7 @@ class OmicsOracle:
         )
 
         metadata_list = []
-        total_ids = min(len(result.geo_ids), 20)  # Limit to 20 for processing
+        total_ids = len(result.geo_ids)  # Process all results, no artificial limit
 
         await self._report_progress(
             result,
@@ -522,7 +541,7 @@ class OmicsOracle:
         )
 
         # Process each GEO ID with progress updates
-        for i, geo_id in enumerate(result.geo_ids[:total_ids]):
+        for i, geo_id in enumerate(result.geo_ids):
             progress_percentage = 45.0 + ((i / total_ids) * 25.0)  # 45% to 70%
 
             await self._report_progress(
@@ -542,23 +561,35 @@ class OmicsOracle:
                     enhanced_metadata = await self._enhance_metadata(
                         metadata, result
                     )
-                    metadata_list.append(enhanced_metadata)
+                    
+                    # Only include results with sufficient relevance
+                    if enhanced_metadata.get("relevance_score", 0) > 0.1:
+                        metadata_list.append(enhanced_metadata)
 
-                    # Report success for this dataset
-                    await self._report_progress(
-                        result,
-                        "dataset_processed",
-                        f"Successfully processed dataset {geo_id}",
-                        progress_percentage,
-                        {
-                            "geo_id": geo_id,
-                            "title": metadata.get("title", "Unknown title"),
-                            "organism": metadata.get(
-                                "organism", "Unknown organism"
-                            ),
-                            "samples": metadata.get("sample_count", 0),
-                        },
-                    )
+                        # Report success for this dataset
+                        await self._report_progress(
+                            result,
+                            "dataset_processed",
+                            f"Successfully processed dataset {geo_id}",
+                            progress_percentage,
+                            {
+                                "geo_id": geo_id,
+                                "title": metadata.get("title", "Unknown title"),
+                                "organism": metadata.get(
+                                    "organism", "Unknown organism"
+                                ),
+                                "samples": metadata.get("sample_count", 0),
+                                "relevance_score": enhanced_metadata.get("relevance_score", 0),
+                            },
+                        )
+                    else:
+                        await self._report_progress(
+                            result,
+                            "dataset_skipped",
+                            f"Skipping dataset {geo_id} due to low relevance score: {enhanced_metadata.get('relevance_score', 0)}",
+                            progress_percentage,
+                            {"geo_id": geo_id, "reason": "low_relevance", "score": enhanced_metadata.get("relevance_score", 0)},
+                        )
                 else:
                     await self._report_progress(
                         result,

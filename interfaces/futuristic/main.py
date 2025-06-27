@@ -246,50 +246,48 @@ async def startup_event():
     try:
         logger.info("=> Initializing OmicsOracle Pipeline...")
 
-        # Load environment variables from .env.local
-        try:
-            from dotenv import load_dotenv
-
-            env_file = Path(".env.local")
-            if env_file.exists():
-                logger.info(f"Loading environment from {env_file}")
-                load_dotenv(env_file)
-                ncbi_email = os.environ.get("NCBI_EMAIL")
-                if ncbi_email:
-                    logger.info(f"NCBI_EMAIL loaded: {ncbi_email}")
-                else:
-                    logger.warning("NCBI_EMAIL not found in .env.local")
-            else:
-                logger.warning(".env.local file not found")
-        except ImportError:
-            logger.warning("dotenv package not available")
+        # Set NCBI email in environment variable
+        os.environ["NCBI_EMAIL"] = "omicsoracle@example.com"
+        logger.info(f"Set NCBI_EMAIL environment variable to {os.environ['NCBI_EMAIL']}")
 
         # Create configuration
         config = Config()
 
-        # Log NCBI configuration
-        if hasattr(config, "ncbi") and hasattr(config.ncbi, "email"):
+        # Ensure NCBI email is configured in the config object
+        if hasattr(config, "ncbi"):
+            if not hasattr(config.ncbi, "email") or not config.ncbi.email:
+                logger.info("Setting NCBI email in config object")
+                setattr(config.ncbi, "email", "omicsoracle@example.com")
             logger.info(f"NCBI email in config: {config.ncbi.email}")
         else:
-            logger.warning("NCBI email not configured in Config object")
+            logger.warning("Config object does not have ncbi attribute")
+                
+        # Ensure Bio.Entrez.email is set directly as well
+        try:
+            from Bio import Entrez
+            Entrez.email = "omicsoracle@example.com"
+            logger.info(f"Direct Bio.Entrez.email set to: {Entrez.email}")
+        except ImportError:
+            logger.warning("Bio.Entrez not available")
 
-            # Try to manually set it from environment
-            ncbi_email = os.environ.get("NCBI_EMAIL")
-            if ncbi_email and hasattr(config, "ncbi"):
-                logger.info(
-                    f"Setting NCBI email from environment: {ncbi_email}"
-                )
-                setattr(config.ncbi, "email", ncbi_email)
-
-        # Initialize pipeline
-        pipeline = OmicsOracle(config)
+        # Initialize pipeline with caching explicitly disabled
+        logger.info("Creating OmicsOracle pipeline instance with disable_cache=True")
+        pipeline = OmicsOracle(config, disable_cache=True)
+        
+        if pipeline is None:
+            logger.error("Pipeline initialization returned None")
+            raise Exception("Pipeline initialization failed")
 
         # Set up progress callback for real-time updates
+        logger.info("Setting up progress callback")
         pipeline.set_progress_callback(send_progress_to_frontend)
 
-        logger.info("[OK] OmicsOracle pipeline initialized successfully")
+        logger.info("[OK] OmicsOracle pipeline initialized successfully with caching disabled")
     except Exception as e:
         logger.error(f"[ERROR] Failed to initialize pipeline: {e}")
+        # Print the full exception traceback for debugging
+        import traceback
+        logger.error(f"Traceback: {traceback.format_exc()}")
         pipeline = None
 
 
@@ -601,7 +599,7 @@ async def process_search_query(
                 dataset_info = {
                     "geo_id": geo_id,
                     "title": metadata.get("title"),  # Can be None
-                    "summary": metadata.get("summary"),  # Can be None
+                    "summary": metadata.get("summary"),  # Can be None (GEO summary)
                     "organism": organism,  # Can be None
                     "sample_count": metadata.get("sample_count"),  # Can be None
                     "platform": platform,  # Can be None
@@ -609,8 +607,11 @@ async def process_search_query(
                     if pub_date != "Date not available"
                     else None,
                     "study_type": metadata.get("type"),  # Can be None
-                    "ai_insights": ai_insights,  # Can be None
+                    "ai_insights": ai_insights,  # Can be None (AI summary)
                     "relevance_score": relevance_score,  # Can be None
+                    # Include both summaries explicitly for clarity
+                    "geo_summary": metadata.get("summary"),  # Original GEO summary
+                    "ai_summary": ai_insights,  # AI-generated summary
                 }
                 datasets.append(dataset_info)
 
@@ -686,12 +687,48 @@ async def process_search_query(
 
 @app.get("/api/health")
 async def health_check():
-    """Health check endpoint"""
+    """Health check endpoint with detailed pipeline status"""
+    status = "healthy" if pipeline is not None else "unavailable"
+    
+    pipeline_info = {}
+    if pipeline is not None:
+        # Get pipeline details when available
+        pipeline_info = {
+            "geo_client_available": hasattr(pipeline, "geo_client") and pipeline.geo_client is not None,
+            "cache_disabled": getattr(pipeline, "disable_cache", False),
+            "summarizer_available": hasattr(pipeline, "summarizer") and pipeline.summarizer is not None,
+        }
+        
+        # Check NCBI email configuration
+        if hasattr(pipeline, "config") and hasattr(pipeline.config, "ncbi"):
+            pipeline_info["ncbi_email"] = getattr(pipeline.config.ncbi, "email", "Not set")
+        
+        # Check if critical components are ready
+        pipeline_info["critical_components_ready"] = all([
+            pipeline_info.get("geo_client_available", False),
+            pipeline_info.get("summarizer_available", False)
+        ])
+    
+    # Include environment information
+    env_info = {
+        "NCBI_EMAIL": os.environ.get("NCBI_EMAIL", "Not set"),
+        "python_version": sys.version,
+    }
+    
+    # Try to check Bio.Entrez email
+    try:
+        from Bio import Entrez
+        env_info["entrez_email"] = getattr(Entrez, "email", "Not set")
+    except ImportError:
+        env_info["entrez_email"] = "Bio.Entrez not available"
+    
     return {
-        "status": "healthy",
+        "status": status,
         "timestamp": time.time(),
         "pipeline_available": pipeline is not None,
-        "message": "Futuristic interface ready",
+        "pipeline_info": pipeline_info,
+        "environment": env_info,
+        "message": "Futuristic interface ready" if status == "healthy" else "Pipeline not initialized"
     }
 
 

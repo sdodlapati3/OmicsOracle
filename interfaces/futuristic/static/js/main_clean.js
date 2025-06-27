@@ -426,7 +426,7 @@ class OmicsOracleApp {
 
                 ${dataset.summary ? `
                 <div class="mb-3">
-                    <h7 class="text-sm font-medium text-gray-300 block mb-1">Summary:</h7>
+                    <h7 class="text-sm font-medium text-yellow-300 block mb-1">📊 GEO Summary:</h7>
                     <div class="expandable-content">
                         <div id="${summaryId}" class="text-gray-200 text-sm scientific-text full-text"
                              data-full-text="${this.escapeHtml(dataset.summary)}">
@@ -437,7 +437,7 @@ class OmicsOracleApp {
                 ` : ''}
 
                 ${dataset.ai_insights ? `
-                <div class="border-t border-gray-600 pt-3">
+                <div class="${dataset.summary ? 'border-t border-gray-600 pt-3' : ''}">
                     <h7 class="text-sm font-medium text-blue-300 block mb-1">🤖 AI Analysis:</h7>
                     <div class="expandable-content">
                         <div id="${aiId}" class="text-blue-100 text-sm scientific-text full-text" style="max-height: none !important; overflow: visible !important;"
