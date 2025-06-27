@@ -30,9 +30,12 @@
   "author": "OmicsOracle Team",
   "license": "MIT",
   "devDependencies": {
+    "@babel/core": "^7.27.7",
+    "@babel/preset-env": "^7.27.2",
     "@types/jest": "^29.5.3",
     "@typescript-eslint/eslint-plugin": "^6.0.0",
     "@typescript-eslint/parser": "^6.0.0",
+    "babel-loader": "^10.0.0",
     "concurrently": "^8.2.0",
     "css-loader": "^6.8.1",
     "eslint": "^8.44.0",
@@ -64,12 +67,20 @@
   "jest": {
     "preset": "ts-jest",
     "testEnvironment": "jsdom",
-    "roots": ["<rootDir>/static/js", "<rootDir>/tests/frontend"],
-    "testMatch": ["**/__tests__/**/*.ts", "**/?(*.)+(spec|test).ts"],
+    "roots": [
+      "<rootDir>/static/js",
+      "<rootDir>/tests/frontend"
+    ],
+    "testMatch": [
+      "**/__tests__/**/*.ts",
+      "**/?(*.)+(spec|test).ts"
+    ],
     "transform": {
       "^.+\\.ts$": "ts-jest"
     },
-    "setupFilesAfterEnv": ["<rootDir>/tests/frontend/setup.ts"],
+    "setupFilesAfterEnv": [
+      "<rootDir>/tests/frontend/setup.ts"
+    ],
     "collectCoverageFrom": [
       "static/js/**/*.ts",
       "!static/js/**/*.d.ts",
