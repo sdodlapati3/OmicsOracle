@@ -160,11 +160,11 @@ from dependency_injector import containers, providers
 
 class ApplicationContainer(containers.DeclarativeContainer):
     config = providers.Configuration()
-    
+
     # External services
     geo_client = providers.Singleton(GEOClient, config=config.geo)
     openai_client = providers.Singleton(OpenAIClient, config=config.openai)
-    
+
     # Use cases
     search_use_case = providers.Factory(
         SearchUseCase,

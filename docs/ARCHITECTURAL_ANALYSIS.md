@@ -135,29 +135,29 @@ from dependency_injector import containers, providers
 class ApplicationContainer(containers.DeclarativeContainer):
     # Configuration
     config = providers.Configuration()
-    
+
     # External services
     geo_client = providers.Singleton(
         GEOClientImpl,
         config=config.geo_client
     )
-    
+
     openai_client = providers.Singleton(
         OpenAIClient,
         api_key=config.openai.api_key
     )
-    
+
     # Domain services
     search_service = providers.Factory(
         SearchService,
         geo_client=geo_client
     )
-    
+
     summarization_service = providers.Factory(
         SummarizationService,
         openai_client=openai_client
     )
-    
+
     # Use cases
     search_use_case = providers.Factory(
         SearchUseCase,
@@ -191,7 +191,7 @@ class SearchUseCase:
     ):
         self._search_repo = search_repo
         self._summarization_service = summarization_service
-    
+
     async def execute(self, query: str) -> SearchResult:
         datasets = await self._search_repo.search_datasets(query)
         summaries = []
@@ -306,7 +306,7 @@ class SearchService(ABC):
 class GEOSearchService(SearchService):
     def __init__(self, geo_client: GEOClient):
         self._geo_client = geo_client
-    
+
     async def search(self, query: str) -> SearchResult:
         # Implementation details
 ```
@@ -322,18 +322,18 @@ class Settings(BaseSettings):
     # API Configuration
     api_host: str = "localhost"
     api_port: int = 8000
-    
+
     # External Services
     ncbi_email: str
     openai_api_key: Optional[str] = None
-    
+
     # Database
     database_url: str = "sqlite:///omics_oracle.db"
-    
+
     # Monitoring
     enable_monitoring: bool = True
     log_level: str = "INFO"
-    
+
     class Config:
         env_file = ".env"
         env_prefix = "OMICS_"

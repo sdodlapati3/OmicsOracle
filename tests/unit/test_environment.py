@@ -3,8 +3,9 @@ Test environment variable setup and validation.
 """
 
 import os
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import patch, MagicMock
 
 
 class TestEnvironmentSetup:
@@ -28,12 +29,12 @@ class TestEnvironmentSetup:
     def test_environment_variable_validation(self):
         """Test validation of required environment variables."""
         required_vars = ["NCBI_EMAIL"]
-        
+
         for var in required_vars:
             # Test when variable is set
             with patch.dict(os.environ, {var: "test-value"}):
                 assert os.environ.get(var) is not None
-            
+
             # Test when variable is missing
             with patch.dict(os.environ, {}, clear=True):
                 assert os.environ.get(var) is None
@@ -42,27 +43,30 @@ class TestEnvironmentSetup:
         """Test that environment variables can be overridden."""
         original_value = "original@example.com"
         new_value = "new@example.com"
-        
+
         with patch.dict(os.environ, {"NCBI_EMAIL": original_value}):
             assert os.environ.get("NCBI_EMAIL") == original_value
-            
+
             # Override the value
             os.environ["NCBI_EMAIL"] = new_value
             assert os.environ.get("NCBI_EMAIL") == new_value
 
     def test_environment_variable_types(self):
         """Test environment variable type handling."""
-        with patch.dict(os.environ, {
-            "NCBI_EMAIL": "test@example.com",
-            "DEBUG": "true",
-            "MAX_RESULTS": "10"
-        }):
+        with patch.dict(
+            os.environ,
+            {
+                "NCBI_EMAIL": "test@example.com",
+                "DEBUG": "true",
+                "MAX_RESULTS": "10",
+            },
+        ):
             # String values
             assert isinstance(os.environ.get("NCBI_EMAIL"), str)
-            
+
             # Boolean-like values (still strings in env vars)
             assert os.environ.get("DEBUG") == "true"
-            
+
             # Numeric-like values (still strings in env vars)
             assert os.environ.get("MAX_RESULTS") == "10"
             assert int(os.environ.get("MAX_RESULTS", "0")) == 10
@@ -71,6 +75,9 @@ class TestEnvironmentSetup:
         """Test default values for environment variables."""
         with patch.dict(os.environ, {}, clear=True):
             # Test with defaults
-            assert os.environ.get("NCBI_EMAIL", "default@example.com") == "default@example.com"
+            assert (
+                os.environ.get("NCBI_EMAIL", "default@example.com")
+                == "default@example.com"
+            )
             assert os.environ.get("DEBUG", "false") == "false"
             assert os.environ.get("MAX_RESULTS", "5") == "5"

@@ -191,7 +191,7 @@ src/omics_oracle/
    ```python
    # src/omics_oracle/presentation/web/__init__.py
    from .main import create_app
-   
+
    # src/omics_oracle/presentation/web/main.py
    def create_app() -> FastAPI:
        """Factory function to create FastAPI app."""
@@ -249,16 +249,16 @@ from .middleware import security, rate_limiting
 
 def create_app() -> FastAPI:
     app = FastAPI(title="OmicsOracle API")
-    
+
     # Add middleware
     app.add_middleware(SecurityHeadersMiddleware)
     app.add_middleware(RateLimitMiddleware)
-    
+
     # Include routers
     app.include_router(search.router, prefix="/api/search")
     app.include_router(analysis.router, prefix="/api/analysis")
     app.include_router(websocket.router, prefix="/ws")
-    
+
     return app
 ```
 
@@ -282,15 +282,15 @@ src/omics_oracle/presentation/web/static/
 # src/omics_oracle/presentation/web/websocket/manager.py
 class WebSocketManager:
     """Centralized WebSocket connection management."""
-    
+
     def __init__(self):
         self.connections: Dict[str, WebSocket] = {}
         self.rooms: Dict[str, Set[str]] = {}
-    
+
     async def connect(self, websocket: WebSocket, client_id: str):
         """Connect client with proper error handling."""
         pass
-    
+
     async def broadcast_to_room(self, room: str, message: dict):
         """Broadcast message to specific room."""
         pass
@@ -319,7 +319,7 @@ app.add_middleware(
 class SearchRequest(BaseModel):
     query: str = Field(..., min_length=1, max_length=200)
     max_results: int = Field(10, ge=1, le=100)
-    
+
     @validator('query')
     def validate_query(cls, v):
         # Sanitize and validate search query

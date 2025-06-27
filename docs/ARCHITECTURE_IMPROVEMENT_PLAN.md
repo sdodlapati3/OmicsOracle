@@ -6,7 +6,7 @@ This document outlines a detailed 8-week plan to transform the OmicsOracle codeb
 
 **Transformation Goals:**
 - Eliminate 51+ sys.path manipulations
-- Consolidate duplicate interfaces 
+- Consolidate duplicate interfaces
 - Implement Clean Architecture + DDD principles
 - Achieve 90%+ test coverage
 - Reduce cyclomatic complexity to <10
@@ -156,11 +156,11 @@ class Dataset:
     submission_date: Optional[datetime] = None
     last_update_date: Optional[datetime] = None
     metadata: Dict[str, Any] = None
-    
+
     def __post_init__(self):
         if self.metadata is None:
             self.metadata = {}
-    
+
     @property
     def is_valid(self) -> bool:
         """Check if dataset has minimum required information."""
@@ -187,7 +187,7 @@ class SearchQuery:
     search_type: SearchType = SearchType.COMPREHENSIVE
     organisms: Optional[List[str]] = None
     platforms: Optional[List[str]] = None
-    
+
     def __post_init__(self):
         if not self.query_text.strip():
             raise ValueError("Query text cannot be empty")
@@ -205,17 +205,17 @@ from ..value_objects.search_query import SearchQuery
 
 class SearchRepository(ABC):
     """Abstract repository for dataset search operations."""
-    
+
     @abstractmethod
     async def search(self, query: SearchQuery) -> List[Dataset]:
         """Search for datasets matching the query."""
         pass
-    
+
     @abstractmethod
     async def get_by_geo_id(self, geo_id: str) -> Optional[Dataset]:
         """Retrieve a specific dataset by GEO ID."""
         pass
-    
+
     @abstractmethod
     async def get_similar(self, dataset: Dataset, limit: int = 10) -> List[Dataset]:
         """Find datasets similar to the given dataset."""
@@ -244,10 +244,10 @@ logger = get_logger(__name__)
 
 class SearchDatasetsUseCase:
     """Use case for searching biomedical datasets."""
-    
+
     def __init__(self, search_repository: SearchRepository):
         self._search_repository = search_repository
-    
+
     async def execute(self, request: SearchRequestDTO) -> SearchResponseDTO:
         """Execute the search use case."""
         try:
@@ -257,10 +257,10 @@ class SearchDatasetsUseCase:
                 max_results=request.max_results,
                 search_type=request.search_type
             )
-            
+
             # Execute domain operation
             datasets = await self._search_repository.search(search_query)
-            
+
             # Convert back to DTO
             return SearchResponseDTO(
                 query=request.query,
@@ -268,7 +268,7 @@ class SearchDatasetsUseCase:
                 total_found=len(datasets),
                 search_time=0.0  # TODO: Implement timing
             )
-            
+
         except Exception as e:
             logger.error(f"Search use case failed: {e}")
             raise
@@ -320,19 +320,19 @@ from .geo_client import GEOClient
 
 class GEOSearchRepository(SearchRepository):
     """Concrete implementation of search repository using GEO API."""
-    
+
     def __init__(self, geo_client: GEOClient):
         self._geo_client = geo_client
-    
+
     async def search(self, query: SearchQuery) -> List[Dataset]:
         """Search datasets using GEO API."""
         raw_results = await self._geo_client.search(
             query.query_text,
             max_results=query.max_results
         )
-        
+
         return [self._map_to_dataset(raw_result) for raw_result in raw_results]
-    
+
     def _map_to_dataset(self, raw_result: dict) -> Dataset:
         """Map raw API result to domain entity."""
         return Dataset(
@@ -372,11 +372,11 @@ class AppConfig:
     log_level: str = "INFO"
     max_concurrent_requests: int = 10
     cache_ttl: int = 3600
-    
+
     # Sub-configurations
     database: DatabaseConfig = DatabaseConfig()
     geo: GEOConfig = GEOConfig()
-    
+
     @classmethod
     def from_env(cls) -> "AppConfig":
         """Create configuration from environment variables."""
@@ -408,14 +408,14 @@ from ...infrastructure.configuration.config import AppConfig
 
 def create_app(config: AppConfig) -> FastAPI:
     """Factory function to create FastAPI application."""
-    
+
     app = FastAPI(
         title="OmicsOracle API",
         description="Biomedical research platform",
         version="3.0.0",
         debug=config.debug
     )
-    
+
     # Add middleware
     app.add_middleware(
         CORSMiddleware,
@@ -426,12 +426,12 @@ def create_app(config: AppConfig) -> FastAPI:
     )
     app.add_middleware(SecurityHeadersMiddleware)
     app.add_middleware(RateLimitMiddleware)
-    
+
     # Include routers
     app.include_router(search_router, prefix="/api/search", tags=["search"])
     app.include_router(analysis_router, prefix="/api/analysis", tags=["analysis"])
     app.include_router(websocket_router, prefix="/ws", tags=["websocket"])
-    
+
     return app
 ```
 
@@ -491,7 +491,7 @@ class TestDataset:
         assert dataset.geo_id == "GSE12345"
         assert dataset.title == "Test Dataset"
         assert dataset.is_valid
-    
+
     def test_dataset_validation(self):
         """Test dataset validation."""
         dataset = Dataset(geo_id="", title="")
@@ -515,10 +515,10 @@ class TestSearchDatasetsUseCase:
         mock_repository.search = AsyncMock(return_value=[])
         use_case = SearchDatasetsUseCase(mock_repository)
         request = SearchRequestDTO(query="cancer", max_results=10)
-        
+
         # Act
         result = await use_case.execute(request)
-        
+
         # Assert
         assert result.query == "cancer"
         assert result.total_found == 0
@@ -575,10 +575,10 @@ logger = get_logger(__name__)
 
 class CacheService:
     """Redis-based caching service."""
-    
+
     def __init__(self, redis_url: str = "redis://localhost:6379"):
         self._redis = redis.from_url(redis_url)
-    
+
     async def get(self, key: str) -> Optional[Any]:
         """Get cached value."""
         try:
@@ -587,7 +587,7 @@ class CacheService:
         except Exception as e:
             logger.warning(f"Cache get failed: {e}")
             return None
-    
+
     async def set(self, key: str, value: Any, ttl: int = 3600) -> bool:
         """Set cached value with TTL."""
         try:
@@ -616,7 +616,7 @@ def monitor_search_performance(func):
     async def wrapper(*args, **kwargs):
         start_time = time.time()
         search_requests_total.inc()
-        
+
         try:
             result = await func(*args, **kwargs)
             search_duration_seconds.observe(time.time() - start_time)
@@ -624,7 +624,7 @@ def monitor_search_performance(func):
         except Exception as e:
             # Log error metrics
             raise
-    
+
     return wrapper
 ```
 
@@ -647,10 +647,10 @@ app = FastAPI(
     title="OmicsOracle API",
     description="""
     ## Biomedical Research Platform
-    
+
     OmicsOracle provides comprehensive search and analysis capabilities
     for biomedical datasets from various public repositories.
-    
+
     ### Key Features
     - **Dataset Search**: Advanced search across GEO, SRA, and other repositories
     - **AI Summarization**: Intelligent summarization of research papers
@@ -675,7 +675,7 @@ app = FastAPI(
 version: '3.8'
 services:
   omics-oracle:
-    build: 
+    build:
       context: .
       dockerfile: Dockerfile.production
     ports:
@@ -687,12 +687,12 @@ services:
     depends_on:
       - redis
       - postgres
-    
+
   redis:
     image: redis:7-alpine
     volumes:
       - redis_data:/data
-    
+
   postgres:
     image: postgres:15-alpine
     environment:

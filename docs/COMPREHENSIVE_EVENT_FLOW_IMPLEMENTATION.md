@@ -71,8 +71,8 @@ The enhanced event flow chart now includes:
 
 ### Server Initialization (22 events)
 ```
-Server Startup → Logging Setup → Path Setup → Environment Variables 
-→ Entrez Email Patch → Config Loading → NCBI Email Config 
+Server Startup → Logging Setup → Path Setup → Environment Variables
+→ Entrez Email Patch → Config Loading → NCBI Email Config
 → Bio.Entrez Setup → Pipeline Initialization → Component Initialization
 → GEO Client Init → NLP Components → Summarizer Init → Cache Disabling
 → Progress Callback Setup → API Routes → Static Files → CORS Setup

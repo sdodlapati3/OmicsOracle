@@ -4,7 +4,7 @@
 
 Based on a comprehensive analysis of the OmicsOracle codebase, the system exhibits a **moderate to poor architectural quality** with significant technical debt that impacts maintainability, scalability, and developer productivity. While the project demonstrates good intentions with modular separation and comprehensive documentation, it suffers from fundamental architectural antipatterns that require immediate attention.
 
-**Overall Assessment: 4/10** 
+**Overall Assessment: 4/10**
 - Structure: 5/10 (Good intentions, poor execution)
 - Modularity: 3/10 (High coupling, low cohesion)
 - Maintainability: 3/10 (Complex dependencies, monolithic files)
@@ -22,7 +22,7 @@ sys.path.insert(0, str(project_root))
 sys.path.insert(0, str(root_dir / "src"))
 ```
 
-**Impact:** 
+**Impact:**
 - Indicates fundamental packaging/import structure problems
 - Makes the codebase non-portable and fragile
 - Breaks Python packaging conventions
@@ -180,10 +180,10 @@ src/omics_oracle/
    # Examples:
    class Dataset(Entity):
        pass
-   
+
    class SearchQuery(ValueObject):
        pass
-   
+
    class SearchResult(Entity):
        pass
    ```
@@ -200,17 +200,17 @@ src/omics_oracle/
 1. **Implement DI Container**
    ```python
    from dependency_injector import containers, providers
-   
+
    class ApplicationContainer(containers.DeclarativeContainer):
        # Configuration
        config = providers.Configuration()
-       
+
        # Repositories
        search_repository = providers.Singleton(
            GEOSearchRepository,
            config=config.geo
        )
-       
+
        # Use Cases
        search_use_case = providers.Factory(
            SearchUseCase,
