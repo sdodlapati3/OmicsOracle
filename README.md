@@ -16,14 +16,31 @@ python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 
 # Install dependencies
+pip install -r requirements.txt
+pip install -r requirements-web.txt
 pip install -r requirements-dev.txt
 
 # Set up environment variables
-cp .env.example .env
+cp .env.example .env.local
 
-# Run the application
-python -m src.omics_oracle.cli --help
+# Start the application (full-stack)
+./start.sh
+
+# Or start specific components:
+./start.sh --backend-only    # API server only
+./start.sh --frontend-only   # Web interface only
+./start.sh --dev            # Development mode with hot reload
 ```
+
+### 🌐 Access Points
+
+After starting:
+- **Web Interface**: http://localhost:8001 (futuristic enhanced UI)
+- **API Server**: http://localhost:8000 
+- **API Documentation**: http://localhost:8000/docs
+- **Health Check**: http://localhost:8000/health
+
+For detailed startup options, see [STARTUP_GUIDE.md](STARTUP_GUIDE.md)
 
 ## 📋 Features
 
@@ -99,8 +116,12 @@ pre-commit install
 # Run tests
 pytest
 
-# Start development server
-uvicorn src.omics_oracle.api.main:app --reload
+# Start development server (full-stack with hot reload)
+./start.sh --dev
+
+# Or start individual components:
+./start.sh --backend-only     # Backend API only
+./start.sh --frontend-only    # Frontend UI only
 ```
 
 ### Running Tests

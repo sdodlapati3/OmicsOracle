@@ -68,13 +68,13 @@ interfaces/futuristic/
 
 1. **From the OmicsOracle root directory:**
    ```bash
-   ./start-futuristic-interface.sh
+   ../../start.sh
    ```
 
 2. **From the futuristic interface directory:**
    ```bash
-   cd interfaces/futuristic
-   ./start-futuristic.sh
+   cd interfaces/futuristic_enhanced
+   ./start_enhanced.sh
    ```
 
 3. **Test mode (minimal dependencies):**
@@ -209,7 +209,8 @@ The futuristic interface is designed to:
 
 ## [LINK] Related Files
 
-- `start-futuristic-interface.sh` - Main startup script
+- `../../start.sh` - Universal startup script (recommended)
+- `start_enhanced.sh` - Local development script
 - `test_futuristic_interface.py` - Integration tests
 - `/src/omics_oracle/` - Legacy system (fallback)
 - `/docs/` - Additional documentation

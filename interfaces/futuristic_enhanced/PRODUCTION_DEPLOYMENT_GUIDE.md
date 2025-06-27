@@ -56,7 +56,7 @@ OmicsOracle Futuristic Interface
 ### 1. **Start the Interface**
 ```bash
 cd /path/to/OmicsOracle
-./start-futuristic.sh
+./start.sh
 ```
 
 ### 2. **Access Points**
@@ -194,7 +194,7 @@ export SECRET_KEY=your-production-secret
 export FRONTEND_URL=https://your-domain.com
 
 # Start with production settings
-./start-futuristic.sh
+./start.sh
 ```
 
 ### 3. **Post-deployment**

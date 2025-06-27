@@ -59,7 +59,7 @@ def main():
         print("✅ Server is responding")
     except:
         print("❌ Server is not responding at http://localhost:8000")
-        print("Please start the server with: ./start_server.sh")
+        print("Please start the server with: ./start.sh --backend-only")
         sys.exit(1)
 
     # Test all endpoints

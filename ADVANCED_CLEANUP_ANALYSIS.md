@@ -166,13 +166,13 @@ git status --porcelain
 - ✅ **Backend Server Running:** FastAPI server operational on port 8000 with full API endpoints
 - ✅ **Startup Scripts Optimized:**
   - Removed redundant `start_enhanced_interface.sh`
-  - Created unified root-level `start-futuristic-enhanced.sh` for full-stack startup
+  - Created unified root-level `start.sh` for full-stack startup
   - Supports `--backend-only`, `--frontend-only`, and port configuration options
 - ✅ **Major Cleanup Completed:**
   - **Reduced to 1 UNIVERSAL startup script** (from 13 total scripts!)
-  - Created intelligent `start.sh` with auto-detection and symlinks
-  - **Symlinks:** `start_server.sh` → backend-only, `start-frontend.sh` → frontend-only
-  - Eliminated ALL redundancy and user confusion
+  - Created intelligent `start.sh` with smart argument parsing and auto-detection
+  - **All functionality consolidated**: backend-only, frontend-only, full-stack, and dev modes
+  - Eliminated ALL redundancy and user confusion - only one script to remember!
 
 The OmicsOracle project is now in a fully functional state with all essential code and documentation restored from the git history.
 
@@ -187,13 +187,9 @@ The OmicsOracle project is now in a fully functional state with all essential co
 
 # Start only backend
 ./start.sh --backend-only
-# OR use the convenient symlink:
-./start_server.sh
 
 # Start only frontend (if backend already running)
 ./start.sh --frontend-only
-# OR use the convenient symlink:
-./start-frontend.sh
 
 # Full-stack with development tools
 ./start.sh --dev

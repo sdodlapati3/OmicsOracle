@@ -61,7 +61,7 @@ if curl -s "$BACKEND_URL/api/v2/health" > /dev/null 2>&1; then
 else
     print_warning "Clean Architecture backend not detected at $BACKEND_URL"
     print_info "Starting backend first is recommended for full functionality"
-    print_info "Run './start_server.sh' from the project root to start the backend"
+    print_info "Run './start.sh --backend-only' from the project root to start the backend"
 
     read -p "Continue anyway? (y/N): " -n 1 -r
     echo

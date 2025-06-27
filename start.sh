@@ -14,32 +14,13 @@ PURPLE='\033[0;35m'
 CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
-# Default values
+# Default configuration
 START_BACKEND=true
 START_FRONTEND=true
 BACKEND_PORT=8000
 FRONTEND_PORT=8001
 SHOW_HELP=false
 DEV_MODE=false
-
-# Auto-detect mode based on script name
-SCRIPT_NAME=$(basename "$0")
-case $SCRIPT_NAME in
-    "start_server.sh"|"start-server.sh"|"backend.sh")
-        START_BACKEND=true
-        START_FRONTEND=false
-        echo -e "${BLUE}[AUTO] Detected backend-only mode from script name${NC}"
-        ;;
-    "start-frontend"*|"frontend"*)
-        START_BACKEND=false
-        START_FRONTEND=true
-        DEV_MODE=true
-        echo -e "${BLUE}[AUTO] Detected frontend development mode from script name${NC}"
-        ;;
-    *)
-        # Default full-stack mode
-        ;;
-esac
 
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
@@ -97,10 +78,6 @@ if [ "$SHOW_HELP" = true ]; then
     echo "  $0 --backend-only      # Start only backend"
     echo "  $0 --frontend-only     # Start only frontend"
     echo "  $0 --dev               # Full-stack with development tools"
-    echo ""
-    echo "Aliases (create symlinks for convenience):"
-    echo "  ln -s start.sh start_server.sh      # Backend-only mode"
-    echo "  ln -s start.sh start-frontend.sh    # Frontend-only mode"
     echo ""
     exit 0
 fi
