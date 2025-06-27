@@ -217,6 +217,10 @@ start_frontend() {
         cd ../..
     else
         echo -e "${CYAN}[START] Starting frontend server on port $FRONTEND_PORT...${NC}"
+
+        # Ensure Python is available for frontend
+        check_python
+
         cd interfaces/futuristic_enhanced
 
         # Simple start without development tools
