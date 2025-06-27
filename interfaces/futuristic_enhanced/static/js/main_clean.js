@@ -34,6 +34,11 @@ class OmicsOracleApp {
         const searchBtn = document.getElementById('search-btn');
         const searchInput = document.getElementById('search-input');
         const clearMonitorBtn = document.getElementById('clear-monitor-btn');
+        const toggleAgentBtn = document.getElementById('toggle-agent-btn');
+        const toggleAgentSidebarBtn = document.getElementById('toggle-agent-sidebar-btn');
+        const aboutLink = document.getElementById('about-link');
+        const modalClose = document.querySelector('.modal-close');
+        const themeToggleBtn = document.getElementById('theme-toggle-btn');
 
         if (searchBtn) {
             searchBtn.addEventListener('click', () => this.performSearch());
@@ -54,6 +59,32 @@ class OmicsOracleApp {
 
         if (clearMonitorBtn) {
             clearMonitorBtn.addEventListener('click', () => this.clearLiveMonitor());
+        }
+
+        // Add agent sidebar toggle functionality
+        if (toggleAgentBtn) {
+            toggleAgentBtn.addEventListener('click', () => this.toggleAgentSidebar());
+        }
+
+        if (toggleAgentSidebarBtn) {
+            toggleAgentSidebarBtn.addEventListener('click', () => this.toggleAgentSidebar());
+        }
+
+        // Add about modal functionality
+        if (aboutLink) {
+            aboutLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.showAboutModal();
+            });
+        }
+
+        if (modalClose) {
+            modalClose.addEventListener('click', () => this.hideAboutModal());
+        }
+
+        // Add theme toggle functionality
+        if (themeToggleBtn) {
+            themeToggleBtn.addEventListener('click', () => this.toggleTheme());
         }
     }
 
@@ -123,6 +154,12 @@ class OmicsOracleApp {
 
         console.log('[SEARCH] Starting search process...');
 
+        // Show loading overlay
+        const loadingOverlay = document.getElementById('loading-overlay');
+        if (loadingOverlay) {
+            loadingOverlay.style.display = 'flex';
+        }
+
         // Clear previous results immediately - FIRST PRIORITY
         this.clearPreviousResults();
 
@@ -182,7 +219,7 @@ class OmicsOracleApp {
                 },
                 body: JSON.stringify({
                     query: query,
-                    max_results: parseInt(document.getElementById('max-results').value || '10'),
+                    max_results: this.getMaxResults(),
                     search_type: 'comprehensive',
                     disable_cache: true,  // Force fresh data
                     timestamp: Date.now()  // Prevent browser caching
@@ -249,50 +286,44 @@ class OmicsOracleApp {
                 searchBtn.innerHTML = '🚀 Search NCBI GEO Database';
                 searchBtn.style.cursor = 'pointer';
             }
+
+            // Hide loading overlay
+            const loadingOverlay = document.getElementById('loading-overlay');
+            if (loadingOverlay) {
+                loadingOverlay.style.display = 'none';
+            }
         }
     }
 
     clearPreviousResults() {
-        // Reset the progress bar
-        const progressBar = document.getElementById('progress-bar');
-        const progressPercentage = document.getElementById('progress-percentage');
-        const currentStage = document.getElementById('current-stage');
-
-        if (progressBar) {
-            progressBar.style.width = '0%';
-            progressBar.className = 'bg-blue-600 h-4 rounded-full transition-all duration-300';
+        // Clear results grid
+        const resultsGrid = document.getElementById('results-grid');
+        if (resultsGrid) {
+            resultsGrid.innerHTML = '';
         }
 
-        if (progressPercentage) {
-            progressPercentage.textContent = '0%';
+        // Show loading status
+        const searchStatus = document.getElementById('search-status');
+        if (searchStatus) {
+            searchStatus.innerHTML = `
+                <div class="search-status-message">
+                    <p>Searching database...</p>
+                </div>
+            `;
         }
 
-        if (currentStage) {
-            currentStage.textContent = 'initializing...';
+        // Hide no results message
+        const noResults = document.getElementById('no-results');
+        if (noResults) {
+            noResults.style.display = 'none';
         }
 
-        // Show live monitor container
-        const monitorContainer = document.getElementById('live-monitor-container');
+        // Show live monitor container (if using monitoring features)
+        const monitorContainer = document.getElementById('log-monitor');
         if (monitorContainer) {
-            monitorContainer.style.display = 'block';
+            this.addLiveUpdate('Starting new search...', 'info');
         }
-
-        // Show live progress area instead of static "Searching..."
-        const resultsContainer = document.getElementById('search-results');
-        if (resultsContainer) {
-            resultsContainer.innerHTML = `
-                <div class="bg-blue-900/30 border border-blue-500 rounded-lg p-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-xl font-bold text-white">[SEARCH] Live Search Progress</h3>
-                        <div class="animate-pulse">
-                            <div class="w-3 h-3 bg-blue-500 rounded-full"></div>
-                        </div>
-                    </div>
-                    <div class="relative mb-4">
-                        <div class="w-full bg-gray-700 rounded-full h-4 overflow-hidden">
-                            <div id="results-progress-bar" class="bg-blue-600 h-4 rounded-full transition-all duration-300" style="width: 0%"></div>
-                        </div>
-                        <div id="results-progress-percentage" class="absolute right-0 top-0 -mt-6 text-gray-300 text-sm">0%</div>
+    }
                     </div>
                     <div id="live-progress-feed" class="space-y-2 max-h-64 overflow-y-auto bg-black bg-opacity-50 rounded p-4 font-mono text-sm">
                         <div class="text-blue-400">[${new Date().toLocaleTimeString()}] 🚀 Initializing search...</div>
@@ -325,45 +356,61 @@ class OmicsOracleApp {
     }
 
     displayResults(data) {
-        const resultsContainer = document.getElementById('search-results');
-        if (!resultsContainer) return;
+        const resultsGrid = document.getElementById('results-grid');
+        const noResults = document.getElementById('no-results');
+        const searchStatus = document.getElementById('search-status');
+
+        if (!resultsGrid || !noResults || !searchStatus) {
+            console.error('Required DOM elements not found:', { resultsGrid, noResults, searchStatus });
+            return;
+        }
+
+        // Hide loading overlay
+        const loadingOverlay = document.getElementById('loading-overlay');
+        if (loadingOverlay) {
+            loadingOverlay.style.display = 'none';
+        }
 
         if (!data.results || data.results.length === 0) {
-            resultsContainer.innerHTML = `
-                <div class="text-center py-8 text-gray-300">
+            // Show no results message
+            resultsGrid.innerHTML = '';
+            noResults.style.display = 'block';
+            searchStatus.innerHTML = `
+                <div class="search-status-message">
                     <p>No datasets found for query: "${data.query}"</p>
-                    <p class="text-sm text-gray-400 mt-2">Try a different search term or check your spelling.</p>
+                    <p class="search-status-sub">Try a different search term or check your spelling.</p>
                 </div>
             `;
             return;
         }
 
-        let resultsHTML = `
-            <div class="mb-6 bg-gray-800/50 rounded-lg p-4 border border-gray-700">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <h3 class="text-xl font-bold text-white mb-1">Search Results</h3>
-                        <p class="text-gray-300">Query: <span class="text-blue-300 font-medium">"${data.query}"</span></p>
-                    </div>
-                    <div class="text-right">
-                        <p class="text-lg font-semibold text-green-400">${data.results.length} of ${data.total_found} datasets shown</p>
-                        <p class="text-sm text-gray-400">Search time: ${data.search_time.toFixed(2)}s</p>
-                        ${data.total_found > data.results.length ?
-                            `<p class="text-xs text-yellow-400 mt-1">Showing ${data.results.length} of ${data.total_found} available results.
-                             Use the "Max Results" selector to show more.</p>` : ''}
-                    </div>
+        // Hide no results message
+        noResults.style.display = 'none';
+
+        // Update search status
+        searchStatus.innerHTML = `
+            <div class="search-status-summary">
+                <div>
+                    <h3>Results for: "${data.query}"</h3>
                 </div>
-                ${data.ai_insights ? `<p class="text-gray-300 text-sm mt-3 border-t border-gray-600 pt-3">${data.ai_insights}</p>` : ''}
+                <div class="search-status-details">
+                    <p>${data.results.length} of ${data.total_found} datasets shown</p>
+                    <p class="search-time">Search time: ${data.search_time ? data.search_time.toFixed(2) : '0.00'}s</p>
+                    ${data.total_found > data.results.length ?
+                        `<p class="search-partial-results">Showing ${data.results.length} of ${data.total_found} available results.
+                         Use the "Max Results" selector to show more.</p>` : ''}
+                </div>
             </div>
-            <div class="space-y-4">
+            ${data.ai_insights ? `<div class="search-ai-insights">${data.ai_insights}</div>` : ''}
         `;
 
+        // Update results grid
+        let resultsHTML = '';
         data.results.forEach((dataset, index) => {
             resultsHTML += this.renderDataset(dataset, index);
         });
 
-        resultsHTML += '</div>';
-        resultsContainer.innerHTML = resultsHTML;
+        resultsGrid.innerHTML = resultsHTML;
     }
 
     renderDataset(dataset, index) {
@@ -452,19 +499,37 @@ class OmicsOracleApp {
     }
 
     displayError(message) {
-        const resultsContainer = document.getElementById('search-results');
-        if (!resultsContainer) return;
+        const resultsGrid = document.getElementById('results-grid');
+        const noResults = document.getElementById('no-results');
+        const searchStatus = document.getElementById('search-status');
 
-        resultsContainer.innerHTML = `
-            <div class="text-center py-8">
-                <div class="text-red-400 text-xl mb-4">❌ Search Error</div>
-                <p class="text-gray-300 mb-4">${message}</p>
-                <button onclick="location.reload()"
-                        class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors">
+        if (!resultsGrid || !noResults || !searchStatus) {
+            console.error('Required DOM elements not found for error display');
+            return;
+        }
+
+        // Hide no results message
+        noResults.style.display = 'none';
+
+        // Update search status with error
+        searchStatus.innerHTML = `
+            <div class="search-error">
+                <h3>Search Error</h3>
+                <p>${message}</p>
+                <button onclick="location.reload()" class="reload-btn">
                     🔄 Reload Interface
                 </button>
             </div>
         `;
+
+        // Clear results grid
+        resultsGrid.innerHTML = '';
+
+        // Hide loading overlay
+        const loadingOverlay = document.getElementById('loading-overlay');
+        if (loadingOverlay) {
+            loadingOverlay.style.display = 'none';
+        }
     }
 
     truncateText(text, maxLength) {
@@ -654,6 +719,19 @@ class OmicsOracleApp {
         }
     }
 
+    getMaxResults() {
+        const maxResultsSelect = document.getElementById('max-results');
+        if (!maxResultsSelect) return 10; // Default if element not found
+
+        const value = maxResultsSelect.value;
+        if (value === '1000') {
+            // Show warning for "All Results" option
+            this.addLiveUpdate('[NOTICE] Loading all results may take longer...', 'warning');
+        }
+
+        return parseInt(value || '10');
+    }
+
     loadSearchHistory() {
         // Temporarily disable search history to avoid cached data confusion
         return [];
@@ -683,243 +761,118 @@ class OmicsOracleApp {
     }
 
     addToSearchHistory(query) {
-        // Remove duplicate if exists
-        this.searchHistory = this.searchHistory.filter(item => item.query !== query);
-        // Add to end with timestamp
-        this.searchHistory.push({
-            query: query,
-            timestamp: new Date().toISOString(),
-            count: (this.searchHistory.find(item => item.query === query)?.count || 0) + 1
-        });
+        // Add a query to search history
+        if (!query || !this.searchHistory) return;
+
+        // Don't add duplicates
+        if (this.searchHistory.includes(query)) {
+            // Move to the end of the array
+            this.searchHistory = this.searchHistory.filter(item => item !== query);
+        }
+
+        // Add to history
+        this.searchHistory.push(query);
+
+        // Save to localStorage
         this.saveSearchHistory();
     }
 
     initSearchHistory() {
-        // Create suggestions dropdown
-        const searchContainer = document.querySelector('.search-container') || document.querySelector('.relative');
-        if (!searchContainer) return;
+        // Initialize search history functionality
+        console.log('[INIT] Initializing search history...');
 
-        const suggestionsDiv = document.createElement('div');
-        suggestionsDiv.id = 'search-suggestions';
-        suggestionsDiv.className = 'absolute top-full left-0 w-full bg-gray-800 border border-gray-600 rounded-b-lg z-50 hidden max-h-60 overflow-y-auto';
-        suggestionsDiv.innerHTML = '';
+        // If we have search history, setup autocomplete
+        if (this.searchHistory && this.searchHistory.length > 0) {
+            console.log(`[INIT] Loaded ${this.searchHistory.length} search history items`);
+        }
+    }
 
-        searchContainer.appendChild(suggestionsDiv);
+    initWebSocket() {
+        // Initialize WebSocket for live monitoring if supported by the server
+        console.log('[INIT] Initializing WebSocket connection...');
+        try {
+            // For now, this is a stub - actual WebSocket implementation would go here
+            console.log('[INIT] WebSocket connection not needed or available');
+        } catch (error) {
+            console.error('[ERROR] Failed to connect WebSocket:', error);
+        }
     }
 
     showSearchSuggestions() {
-        const suggestionsDiv = document.getElementById('search-suggestions');
-        const searchInput = document.getElementById('search-input');
+        // Show search suggestions based on history
+        const suggestionsContainer = document.getElementById('search-suggestions');
+        if (!suggestionsContainer || !this.searchHistory || this.searchHistory.length === 0) return;
 
-        if (!suggestionsDiv || !searchInput || this.searchHistory.length === 0) return;
-
-        // Sort by most recent and most frequent
-        const sortedHistory = [...this.searchHistory]
-            .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
-            .slice(0, 10); // Show max 10 suggestions
-
-        if (sortedHistory.length === 0) {
-            suggestionsDiv.classList.add('hidden');
-            return;
-        }
-
-        suggestionsDiv.innerHTML = sortedHistory.map(item => `
-            <div class="search-suggestion px-3 py-2 hover:bg-gray-700 cursor-pointer border-b border-gray-600 last:border-b-0"
-                 data-query="${item.query}">
-                <div class="text-gray-200 text-sm">${item.query}</div>
-                <div class="text-gray-400 text-xs">
-                    ${new Date(item.timestamp).toLocaleDateString()} • Used ${item.count} time${item.count > 1 ? 's' : ''}
-                </div>
-            </div>
-        `).join('');
-
-        // Add click handlers
-        suggestionsDiv.querySelectorAll('.search-suggestion').forEach(suggestion => {
-            suggestion.addEventListener('click', () => {
-                const query = suggestion.getAttribute('data-query');
-                searchInput.value = query;
-                this.hideSearchSuggestions();
-                this.performSearch();
-            });
-        });
-
-        suggestionsDiv.classList.remove('hidden');
+        // Show the suggestions container
+        suggestionsContainer.style.display = 'block';
     }
 
     filterSearchSuggestions() {
+        // Filter search suggestions based on input
         const searchInput = document.getElementById('search-input');
-        const suggestionsDiv = document.getElementById('search-suggestions');
+        const suggestionsContainer = document.getElementById('search-suggestions');
+        if (!searchInput || !suggestionsContainer) return;
 
-        if (!searchInput || !suggestionsDiv) return;
-
-        const query = searchInput.value.toLowerCase().trim();
-
-        if (query === '') {
-            this.showSearchSuggestions(); // Show all if empty
+        const query = searchInput.value.trim().toLowerCase();
+        if (!query) {
+            suggestionsContainer.style.display = 'none';
             return;
         }
-
-        const filteredHistory = this.searchHistory
-            .filter(item => item.query.toLowerCase().includes(query))
-            .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
-            .slice(0, 8);
-
-        if (filteredHistory.length === 0) {
-            suggestionsDiv.classList.add('hidden');
-            return;
-        }
-
-        suggestionsDiv.innerHTML = filteredHistory.map(item => `
-            <div class="search-suggestion px-3 py-2 hover:bg-gray-700 cursor-pointer border-b border-gray-600 last:border-b-0"
-                 data-query="${item.query}">
-                <div class="text-gray-200 text-sm">${item.query}</div>
-                <div class="text-gray-400 text-xs">
-                    ${new Date(item.timestamp).toLocaleDateString()} • Used ${item.count} time${item.count > 1 ? 's' : ''}
-                </div>
-            </div>
-        `).join('');
-
-        // Add click handlers
-        suggestionsDiv.querySelectorAll('.search-suggestion').forEach(suggestion => {
-            suggestion.addEventListener('click', () => {
-                const query = suggestion.getAttribute('data-query');
-                searchInput.value = query;
-                this.hideSearchSuggestions();
-                this.performSearch();
-            });
-        });
-
-        suggestionsDiv.classList.remove('hidden');
     }
 
     hideSearchSuggestions(delay = 0) {
+        // Hide search suggestions
         setTimeout(() => {
-            const suggestionsDiv = document.getElementById('search-suggestions');
-            if (suggestionsDiv) {
-                suggestionsDiv.classList.add('hidden');
+            const suggestionsContainer = document.getElementById('search-suggestions');
+            if (suggestionsContainer) {
+                suggestionsContainer.style.display = 'none';
             }
         }, delay);
     }
 
-    addToLiveProgressFeed(htmlMessage) {
-        const progressFeed = document.getElementById('live-progress-feed');
-        if (!progressFeed) return;
+    addToSearchHistory(query) {
+        // Add a query to search history
+        if (!query || !this.searchHistory) return;
 
-        // Extract text content from HTML message
-        const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = htmlMessage;
-        const textContent = tempDiv.textContent || tempDiv.innerText || '';
-
-        if (textContent.trim()) {
-            const timestamp = new Date().toLocaleTimeString();
-            const progressLine = document.createElement('div');
-            progressLine.className = 'text-green-400 animate-fade-in';
-            progressLine.innerHTML = `[${timestamp}] ${textContent.trim()}`;
-
-            progressFeed.appendChild(progressLine);
-
-            // Auto-scroll to bottom
-            progressFeed.scrollTop = progressFeed.scrollHeight;
-
-            // Limit to last 50 messages for performance
-            while (progressFeed.children.length > 50) {
-                progressFeed.removeChild(progressFeed.firstChild);
-            }
-        }
-    }
-
-    escapeHtml(text) {
-        if (!text) return '';
-
-        // First escape HTML
-        const div = document.createElement('div');
-        div.textContent = text;
-        let escapedText = div.innerHTML;
-
-        // Properly format line breaks
-        escapedText = escapedText.replace(/\n/g, '<br>');
-
-        // Format scientific notation (superscripts for 10^x)
-        escapedText = escapedText.replace(/(\d+)\^(\d+)/g, '$1<sup>$2</sup>');
-        escapedText = escapedText.replace(/10\s*-\s*(\d+)/g, '10<sup>-$1</sup>'); // Handle 10-6 format
-        escapedText = escapedText.replace(/10\s*\^\s*-\s*(\d+)/g, '10<sup>-$1</sup>'); // Handle 10^-6 format
-
-        // Italicize scientific names (Genus species format)
-        escapedText = escapedText.replace(/\b([A-Z][a-z]+\s+[a-z]+)\b/g, '<em>$1</em>');
-
-        // Preserve multi-paragraph structure
-        escapedText = escapedText.replace(/\.\s+([A-Z])/g, '.<br><br>$1');
-
-        return escapedText;
-    }
-
-    toggleText(elementId) {
-        const element = document.getElementById(elementId);
-        if (!element) return;
-
-        const fullText = element.getAttribute('data-full-text');
-        const isExpanded = element.getAttribute('data-is-expanded') === 'true';
-
-        if (isExpanded) {
-            // Show full text by default - we're not truncating anymore
-            element.innerHTML = this.escapeHtml(fullText);
-            element.setAttribute('data-is-expanded', 'true');
-            const button = element.parentElement.querySelector('button');
-            if (button) button.textContent = 'Show less';
-        } else {
-            // Show full text
-            element.innerHTML = this.escapeHtml(fullText);
-            element.setAttribute('data-is-expanded', 'true');
-            const button = element.parentElement.querySelector('button');
-            if (button) button.textContent = 'Show less';
-        }
-    }
-
-    updateProgressBars(percentage, stage) {
-        // Update main progress bar
-        const progressBar = document.getElementById('progress-bar');
-        const progressPercentage = document.getElementById('progress-percentage');
-        const currentStage = document.getElementById('current-stage');
-
-        if (progressBar) {
-            progressBar.style.width = `${percentage}%`;
-            if (stage === "error") {
-                progressBar.className = 'bg-red-600 h-4 rounded-full transition-all duration-300';
-            } else if (stage === "complete") {
-                progressBar.className = 'bg-green-600 h-4 rounded-full transition-all duration-300';
-            }
+        // Don't add duplicates
+        if (this.searchHistory.includes(query)) {
+            // Move to the end of the array
+            this.searchHistory = this.searchHistory.filter(item => item !== query);
         }
 
-        if (progressPercentage) {
-            progressPercentage.textContent = `${Math.round(percentage)}%`;
-        }
+        // Add to history
+        this.searchHistory.push(query);
 
-        if (currentStage) {
-            currentStage.textContent = stage.replace(/_/g, ' ');
-        }
-
-        // Update results progress bar if it exists
-        const resultsProgressBar = document.getElementById('results-progress-bar');
-        const resultsProgressPercentage = document.getElementById('results-progress-percentage');
-
-        if (resultsProgressBar) {
-            resultsProgressBar.style.width = `${percentage}%`;
-            if (stage === "error") {
-                resultsProgressBar.className = 'bg-red-600 h-4 rounded-full transition-all duration-300';
-            } else if (stage === "complete") {
-                resultsProgressBar.className = 'bg-green-600 h-4 rounded-full transition-all duration-300';
-            }
-        }
-
-        if (resultsProgressPercentage) {
-            resultsProgressPercentage.textContent = `${Math.round(percentage)}%`;
-        }
+        // Save to localStorage
+        this.saveSearchHistory();
     }
 }
 
 // Initialize the application when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    window.omicsApp = new OmicsOracleApp();
+    window.omicsOracleApp = new OmicsOracleApp();
+
+    // Set initial state for the agent sidebar
+    const sidebar = document.getElementById('agent-sidebar');
+    if (sidebar) {
+        sidebar.classList.add('hidden'); // Start with sidebar hidden
+    }
+
+    // Set initial state for modal
+    const modal = document.getElementById('about-modal');
+    if (modal) {
+        modal.style.display = 'none'; // Start with modal hidden
+    }
+
+    // Set up global event listener for modal close when clicking outside
+    window.addEventListener('click', (e) => {
+        const modal = document.getElementById('about-modal');
+        if (modal && e.target === modal) {
+            modal.style.display = 'none';
+        }
+    });
+
+    console.log('[INIT] DOM fully loaded and parsed');
 });
 
 // Health check on load

@@ -36,7 +36,7 @@ cp .env.example .env.local
 
 After starting:
 - **Web Interface**: http://localhost:8001 (futuristic enhanced UI)
-- **API Server**: http://localhost:8000 
+- **API Server**: http://localhost:8000
 - **API Documentation**: http://localhost:8000/docs
 - **Health Check**: http://localhost:8000/health
 
@@ -60,6 +60,51 @@ OmicsOracle includes a comprehensive testing and validation framework that ensur
 - **[Event Flow Visualization](/docs/EVENT_FLOW_README.md)**: Visual representation of system event flow and test coverage
 - **[Event Flow and Validation Map](/docs/EVENT_FLOW_VALIDATION_MAP.md)**: Detailed mapping of events to test files
 - **[Event Flow Charts](/docs/EVENT_FLOW_CHART.md)**: Simplified Mermaid diagrams of the system flow
+- **[Search System Technical Documentation](/docs/SEARCH_SYSTEM_TECHNICAL_DOCUMENTATION.md)**: Architecture and implementation details of the search system
+
+### Comprehensive Testing Suite
+
+The project includes a robust testing framework with several specialized tools:
+
+```bash
+# Run all comprehensive tests at once
+./run_all_tests.sh
+
+# Run specific test components
+python test_endpoints_comprehensive.py  # Test all API endpoints
+python validate_enhanced_query_handler.py  # Validate the enhanced query handling
+python validate_advanced_search.py  # Validate advanced search features
+python search_performance_monitor.py  # Monitor search system performance
+python search_error_analyzer.py --logs server.log  # Analyze search system errors
+```
+
+### Query Tracing and Validation
+
+OmicsOracle includes a sophisticated query tracing system that monitors and reports on query processing:
+
+- **Component Extraction**: Identifies diseases, tissues, organisms, and data types in queries
+- **Synonym Expansion**: Expands biomedical terms with common synonyms
+- **Multi-Strategy Search**: Falls back to alternative queries when needed
+- **Trace Reports**: Generates detailed reports of query processing in Markdown format
+- **Performance Monitoring**: Tracks query execution time and resource usage
+- **Error Analysis**: Identifies patterns in errors to guide improvements
+
+### Advanced Search Features
+
+The system includes advanced search capabilities for improved result quality:
+
+- **Semantic Ranking**: Ranks results based on biomedical relevance to the query
+- **Result Clustering**: Groups results into meaningful categories
+- **Query Reformulation**: Suggests alternative query formulations to users
+- **Context-Aware Filtering**: Filters results based on biomedical context
+
+```bash
+# Test the advanced search features
+python integrate_search_enhancer.py --demo
+
+# Run the advanced search feature validation
+python validate_advanced_search.py
+```
 
 This framework provides complete observability from server startup to frontend display, with appropriate tests for each component.
 
@@ -88,12 +133,15 @@ OmicsOracle/
 
 ## 📚 Documentation
 
-- [Development Plan](DEVELOPMENT_PLAN.md) - Comprehensive development roadmap
-- [Core Philosophy](CORE_PHILOSOPHY.md) - Project principles and values
-- [System Architecture](docs/SYSTEM_ARCHITECTURE.md) - Technical architecture details
-- [Code Quality Guide](docs/CODE_QUALITY_GUIDE.md) - Development standards
-- [ASCII Enforcement Guide](docs/ASCII_ENFORCEMENT_GUIDE.md) - Character encoding standards
-- [Reference Materials](data/references/) - Source PDFs and research documents
+OmicsOracle's documentation is organized in the `docs/` directory:
+
+- **[Search System Technical Documentation](/docs/SEARCH_SYSTEM_TECHNICAL_DOCUMENTATION.md)**: Comprehensive technical details of the query handling and search system
+- **[Search System Case Study](/docs/SEARCH_SYSTEM_CASE_STUDY.md)**: Real-world examples demonstrating the effectiveness of the search system
+- **[Documentation Index](/docs/README.md)**: Complete listing of all available documentation
+- **[Event Flow Visualization](/docs/EVENT_FLOW_README.md)**: Visual representation of system event flow and test coverage
+
+For API documentation, visit the interactive API docs when the server is running:
+- http://localhost:8000/docs
 
 ## 🧪 Development
 

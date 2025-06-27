@@ -8,7 +8,7 @@ We've consolidated all startup functionality into a single, smart script: `start
 
 This universal launcher can handle:
 - ✅ Backend-only mode
-- ✅ Frontend-only mode  
+- ✅ Frontend-only mode
 - ✅ Full-stack mode (both backend and frontend)
 - ✅ Development mode with hot reload
 - ✅ Automatic port detection and conflict resolution
@@ -67,7 +67,7 @@ After starting, you can access:
 
 ### Backend (API Server)
 - **Main API**: http://localhost:8000
-- **API Documentation**: http://localhost:8000/docs  
+- **API Documentation**: http://localhost:8000/docs
 - **Health Check**: http://localhost:8000/health
 - **Alternative Docs**: http://localhost:8000/redoc
 
@@ -88,7 +88,7 @@ The script is smart enough to detect what you want based on how you call it:
 ./start.sh --api
 
 # These all start frontend-only mode:
-./start.sh --frontend-only  
+./start.sh --frontend-only
 ./start.sh --frontend
 ./start.sh --ui
 ```

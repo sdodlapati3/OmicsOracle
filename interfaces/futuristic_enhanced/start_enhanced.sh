@@ -5,9 +5,12 @@
 
 set -e
 
-# Get script directory
+# Get script directory and project root
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
-cd "$SCRIPT_DIR"
+PROJECT_ROOT="$( cd "$SCRIPT_DIR/../.." &> /dev/null && pwd )"
+
+# Change to project root for proper module imports
+cd "$PROJECT_ROOT"
 
 echo "🚀 Starting OmicsOracle Enhanced Futuristic Interface..."
 echo "📁 Working directory: $(pwd)"
@@ -18,10 +21,11 @@ print_error() { echo -e "\033[31m❌ $1\033[0m"; }
 print_info() { echo -e "\033[34mℹ️  $1\033[0m"; }
 print_warning() { echo -e "\033[33m⚠️  $1\033[0m"; }
 
-# Check if we're in the right directory
-if [[ ! -f "main_enhanced.py" && ! -f "main.py" ]]; then
+# Check if we're in the right directory structure
+INTERFACE_DIR="$PROJECT_ROOT/interfaces/futuristic_enhanced"
+if [[ ! -f "$INTERFACE_DIR/main_enhanced.py" && ! -f "$INTERFACE_DIR/main.py" ]]; then
     print_error "Enhanced interface files not found!"
-    print_info "Make sure you're in the interfaces/futuristic_enhanced/ directory"
+    print_info "Expected files in: $INTERFACE_DIR"
     exit 1
 fi
 
@@ -136,11 +140,11 @@ fi
 
 # Determine which main file to use
 MAIN_FILE=""
-if [[ -f "main_enhanced.py" ]]; then
-    MAIN_FILE="main_enhanced.py"
+if [[ -f "$INTERFACE_DIR/main_enhanced.py" ]]; then
+    MAIN_FILE="$INTERFACE_DIR/main_enhanced.py"
     print_info "Using enhanced main file: $MAIN_FILE"
-elif [[ -f "main.py" ]]; then
-    MAIN_FILE="main.py"
+elif [[ -f "$INTERFACE_DIR/main.py" ]]; then
+    MAIN_FILE="$INTERFACE_DIR/main.py"
     print_info "Using standard main file: $MAIN_FILE"
 else
     print_error "No main Python file found!"
@@ -148,13 +152,19 @@ else
 fi
 
 # Start development mode if Node.js is available
-if [[ "$NODE_AVAILABLE" == "true" && -f "package.json" ]]; then
+if [[ "$NODE_AVAILABLE" == "true" && -f "$INTERFACE_DIR/package.json" ]]; then
     print_info "Starting in enhanced development mode with build tools..."
     print_info "Frontend assets will be built and watched for changes"
+
+    # Change to interface directory for npm commands
+    cd "$INTERFACE_DIR"
 
     # Start frontend build in background
     npm run build:watch &
     BUILD_PID=$!
+
+    # Change back to project root for Python imports
+    cd "$PROJECT_ROOT"
 
     # Give build process time to start
     sleep 3
@@ -198,12 +208,16 @@ echo ""
 # Start the enhanced interface
 if command -v uvicorn &> /dev/null; then
     print_info "Using uvicorn directly..."
-    exec uvicorn "$(basename "$MAIN_FILE" .py):app" \
+
+    # Get relative path for uvicorn module import
+    MAIN_MODULE=$(echo "$MAIN_FILE" | sed 's|^./||' | sed 's|/|.|g' | sed 's|\.py$||')
+
+    exec uvicorn "$MAIN_MODULE:app" \
         --host 0.0.0.0 \
         --port "$INTERFACE_PORT" \
         --reload \
         --log-level info \
-        --reload-dir . \
+        --reload-dir "$INTERFACE_DIR" \
         --reload-exclude "node_modules" \
         --reload-exclude "dist" \
         --reload-exclude "__pycache__"

@@ -185,6 +185,19 @@ start_frontend() {
         sleep 2
     fi
 
+    check_python
+
+    # Check and activate virtual environment
+    if [ -d "venv" ]; then
+        echo -e "${CYAN}[CONFIG] Activating virtual environment...${NC}"
+        source venv/bin/activate
+    else
+        echo -e "${YELLOW}[WARN] No virtual environment found (venv)${NC}"
+    fi
+
+    # Set up environment
+    export PYTHONPATH="$(pwd)/src:$PYTHONPATH"
+
     # Check if backend is running (unless we're starting it ourselves)
     if [ "$START_BACKEND" = false ]; then
         echo -e "${CYAN}[CHECK] Verifying backend connectivity...${NC}"
@@ -196,40 +209,44 @@ start_frontend() {
 
     if [ "$DEV_MODE" = true ]; then
         echo -e "${CYAN}[BUILD] Building frontend assets with development tools...${NC}"
-        cd interfaces/futuristic_enhanced
 
-        # Install npm dependencies if needed
-        if [ ! -d "node_modules" ] || [ "package.json" -nt "node_modules" ]; then
-            echo -e "${CYAN}[BUILD] Installing npm dependencies...${NC}"
-            npm install
-        fi
+        # Check if package.json exists in the interface directory
+        if [ ! -f "interfaces/futuristic_enhanced/package.json" ]; then
+            echo -e "${YELLOW}[WARN] No package.json found, skipping npm build${NC}"
+        else
+            cd interfaces/futuristic_enhanced
 
-        # Build frontend
-        if ! npm run build; then
-            echo -e "${RED}[ERROR] Frontend build failed${NC}"
+            # Install npm dependencies if needed
+            if [ ! -d "node_modules" ] || [ "package.json" -nt "node_modules" ]; then
+                echo -e "${CYAN}[BUILD] Installing npm dependencies...${NC}"
+                npm install
+            fi
+
+            # Build frontend
+            if ! npm run build; then
+                echo -e "${RED}[ERROR] Frontend build failed${NC}"
+                cd ../..
+                return 1
+            fi
+
             cd ../..
-            return 1
         fi
 
         # Start with enhanced development features
-        ./start_enhanced.sh &
+        INTERFACE_PORT=$FRONTEND_PORT ./interfaces/futuristic_enhanced/start_enhanced.sh &
         FRONTEND_PID=$!
-        cd ../..
     else
         echo -e "${CYAN}[START] Starting frontend server on port $FRONTEND_PORT...${NC}"
 
         # Ensure Python is available for frontend
         check_python
 
-        cd interfaces/futuristic_enhanced
-
-        # Simple start without development tools
-        $PYTHON_CMD -m uvicorn main:app \
+        # Simple start without development tools - run from project root for proper imports
+        $PYTHON_CMD -m uvicorn interfaces.futuristic_enhanced.main:app \
             --host 0.0.0.0 \
             --port $FRONTEND_PORT \
             --log-level info &
         FRONTEND_PID=$!
-        cd ../..
     fi
 
     # Wait for frontend to start

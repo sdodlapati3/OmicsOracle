@@ -375,3 +375,10 @@ async def detailed_health_check_v2(
             },
             status_code=503,
         )
+
+
+# Import and include the enhanced search router
+from .enhanced_search import router as enhanced_search_router
+
+# Include the enhanced search router
+router.include_router(enhanced_search_router, prefix="")

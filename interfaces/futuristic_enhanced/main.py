@@ -66,25 +66,50 @@ except ImportError as e:
 
 # Import OmicsOracle classes
 try:
-    from src.omics_oracle.pipeline.pipeline import OmicsOracle
     from src.omics_oracle.core.config import Config
+    from src.omics_oracle.pipeline.pipeline import OmicsOracle
+
     logger.info("Successfully imported OmicsOracle classes")
 except ImportError as e:
     logger.error(f"Failed to import OmicsOracle classes: {e}")
+
     # Define fallback classes to prevent crash
     class OmicsOracle:
         def __init__(self, *args, **kwargs):
             raise NotImplementedError("OmicsOracle class not available")
-    
+
     class Config:
         def __init__(self):
-            self.ncbi = type('NCBIConfig', (), {'email': 'omicsoracle@example.com'})()
+            self.ncbi = type(
+                "NCBIConfig", (), {"email": "omicsoracle@example.com"}
+            )()
 
 
 # Enhanced API models for Clean Architecture integration
 class SearchRequest(BaseModel):
     query: str = Field(..., description="Search query for biomedical datasets")
-    max_results: int = Field(10, description="Maximum number of results")
+    max_results: int = Field(
+        10,
+        description="Maximum number of results (5, 10, 20, 50, 100, or 1000 for 'All Results')",
+    )
+    search_type: str = Field(
+        "comprehensive",
+        description="Search type (quick, comprehensive, or advanced)",
+    )
+    disable_cache: bool = Field(
+        False, description="Force fresh data by disabling the cache"
+    )
+    timestamp: Optional[float] = Field(
+        None, description="Client timestamp for cache-busting"
+    )
+
+
+class SearchResponse(BaseModel):
+    query: str
+    results: List[Dict[str, Any]]
+    total_found: int
+    search_time: float
+    timestamp: float
 
 
 class EnhancedSearchRequest(BaseModel):
@@ -92,7 +117,10 @@ class EnhancedSearchRequest(BaseModel):
     filters: Dict[str, Any] = Field(
         default_factory=dict, description="Search filters"
     )
-    max_results: int = Field(10, description="Maximum number of results")
+    max_results: int = Field(
+        10,
+        description="Maximum number of results (5, 10, 20, 50, 100, or 1000 for 'All Results')",
+    )
     include_metadata: bool = Field(
         True, description="Include metadata in response"
     )
@@ -359,23 +387,30 @@ async def startup_event():
         except ImportError:
             logger.warning("Bio.Entrez not available")
 
-        # Initialize pipeline with caching explicitly disabled
-        logger.info(
-            "Creating OmicsOracle pipeline instance with disable_cache=True"
-        )
-        pipeline = OmicsOracle(config, disable_cache=True)
+        # Initialize pipeline
+        logger.info("Creating OmicsOracle pipeline instance")
+        pipeline = OmicsOracle(config)
 
         if pipeline is None:
             logger.error("Pipeline initialization returned None")
             raise Exception("Pipeline initialization failed")
 
-        # Set up progress callback for real-time updates
+        # Set up progress callback for real-time updates (if available)
         logger.info("Setting up progress callback")
-        pipeline.set_progress_callback(send_progress_to_frontend)
+        try:
+            if hasattr(pipeline, "set_progress_callback"):
+                pipeline.set_progress_callback(send_progress_to_frontend)
+                logger.info("Progress callback successfully configured")
+            else:
+                logger.warning("Pipeline does not support progress callbacks")
+        except Exception as callback_error:
+            logger.warning(f"Failed to set progress callback: {callback_error}")
 
-        logger.info(
-            "[OK] OmicsOracle pipeline initialized successfully with caching disabled"
-        )
+        logger.info("[OK] OmicsOracle pipeline initialized successfully")
+
+        # Store pipeline in app state for use by API endpoints
+        app.state.pipeline = pipeline
+
     except Exception as e:
         logger.error(f"[ERROR] Failed to initialize pipeline: {e}")
         # Print the full exception traceback for debugging
@@ -383,140 +418,15 @@ async def startup_event():
 
         logger.error(f"Traceback: {traceback.format_exc()}")
         pipeline = None
+        app.state.pipeline = None
 
 
 @app.get("/", response_class=HTMLResponse)
 async def futuristic_interface():
-    """Serve the futuristic interface"""
-    return """
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>OmicsOracle - Futuristic Research Platform</title>
-        <link rel="stylesheet" href="/static/css/main_clean.css">
-        <script src="https://cdn.tailwindcss.com"></script>
-    </head>
-    <body class="min-h-screen">
-        <div id="app" class="container mx-auto px-4 py-8">
-            <!-- Header -->
-            <header class="text-center mb-12">
-                <h1 class="text-6xl font-bold text-white mb-4">
-                    🧬 OmicsOracle
-                </h1>
-                <p class="text-xl text-gray-200 mb-6">
-                    Next-Generation Biomedical Research Intelligence Platform
-                </p>
-            </header>
-
-            <!-- Main Interface -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <!-- Left Panel: Search -->
-                <div class="lg:col-span-2">
-                    <!-- Smart Search -->
-                    <div class="glass-effect rounded-xl p-6 mb-8">
-                        <h2 class="text-2xl font-bold text-white mb-4">🔍 Intelligent Search</h2>
-                        <div class="search-container">
-                            <input
-                                id="search-input"
-                                type="text"
-                                placeholder="Search for biomedical datasets (e.g., 'cancer RNA-seq', 'diabetes microarray')..."
-                                class="w-full p-4 rounded-lg bg-gray-800 text-white border border-gray-600 focus:border-blue-500 focus:outline-none"
-                            >
-                            <button id="search-btn" class="w-full mt-4 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition-colors">
-                                🚀 Search NCBI GEO Database
-                            </button>
-                            <div class="flex justify-between items-center mt-4">
-                                <div class="flex items-center">
-                                    <label for="max-results" class="mr-2 text-gray-300">Max Results:</label>
-                                    <select id="max-results" class="bg-gray-800 text-white border border-gray-600 rounded p-2">
-                                        <option value="10">10</option>
-                                        <option value="20">20</option>
-                                        <option value="50">50</option>
-                                        <option value="100">100</option>
-                                    </select>
-                                </div>
-                                <div class="text-gray-400 text-xs">Higher values may increase search time</div>
-                            </div>
-                            <div class="mt-3 p-3 bg-blue-900 bg-opacity-30 rounded-lg border border-blue-600">
-                                <div class="text-blue-300 text-sm">
-                                    ⏱️ <strong>Search Times:</strong> Complex biomedical searches may take 1-3 minutes with real-time progress updates
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Live Query Progress Monitor -->
-                    <div id="live-monitor-container" class="glass-effect rounded-xl p-6 mb-8" style="display: none;">
-                        <h3 class="text-xl font-bold text-white mb-4">🔄 Live Query Progress</h3>
-                        <div class="relative mb-4">
-                            <div id="progress-bar-container" class="w-full bg-gray-700 rounded-full h-4 overflow-hidden">
-                                <div id="progress-bar" class="bg-blue-600 h-4 rounded-full transition-all duration-300" style="width: 0%"></div>
-                            </div>
-                            <div id="progress-percentage" class="absolute right-0 top-0 -mt-6 text-gray-300 text-sm">0%</div>
-                        </div>
-                        <div id="live-monitor" class="bg-black bg-opacity-80 rounded-lg p-4 h-64 overflow-y-auto font-mono text-sm">
-                            <div class="text-green-400">🚀 Query monitor ready...</div>
-                        </div>
-                        <div class="mt-2 flex justify-between items-center">
-                            <div class="text-gray-400 text-xs">Real-time backend monitoring</div>
-                            <div class="flex items-center">
-                                <span id="current-stage" class="text-blue-400 text-xs mr-3"></span>
-                                <button id="clear-monitor-btn" class="text-gray-400 hover:text-white text-xs">Clear</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Search Results -->
-                    <div class="glass-effect rounded-xl p-6">
-                        <h3 class="text-xl font-bold text-white mb-4">📊 Search Results</h3>
-                        <div id="search-results">
-                            <div class="text-center py-8 text-gray-300">
-                                Enter a search query to find biomedical datasets...
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Right Panel: Status & Updates -->
-                <div class="lg:col-span-1">
-                    <!-- Live Updates -->
-                    <div class="glass-effect rounded-xl p-6 mb-8">
-                        <h2 class="text-2xl font-bold text-white mb-4">📡 Live Updates</h2>
-                        <div id="live-updates" class="space-y-2">
-                            <div class="text-gray-300 text-center py-4">
-                                🔮 Ready for biomedical search
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- System Monitor -->
-                    <div class="glass-effect rounded-xl p-6">
-                        <h2 class="text-2xl font-bold text-white mb-4">⚡ System Status</h2>
-                        <div id="system-stats" class="space-y-2">
-                            <div class="flex justify-between text-white">
-                                <span>Search Queries:</span>
-                                <span id="search-queries">0</span>
-                            </div>
-                            <div class="flex justify-between text-white">
-                                <span>Response Time:</span>
-                                <span id="avg-response-time">--</span>
-                            </div>
-                            <div class="flex justify-between text-white">
-                                <span>Pipeline Status:</span>
-                                <span id="pipeline-status">Active</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <script src="/static/js/main_clean.js"></script>
-    </body>
-    </html>
-    """
+    """Serve the futuristic interface from static HTML file"""
+    static_path = Path(__file__).parent / "static" / "index.html"
+    with open(static_path, "r", encoding="utf-8") as f:
+        return f.read()
 
 
 @app.post("/api/search")
@@ -528,7 +438,7 @@ async def search_datasets(
         f"[SEARCH] New search query received: '{request.query}'", "info"
     )
 
-    if not pipeline:
+    if not hasattr(app.state, "pipeline") or not app.state.pipeline:
         await log_to_frontend("[ERROR] Pipeline not available", "error")
         raise HTTPException(
             status_code=503, detail="OmicsOracle pipeline not available"
@@ -578,10 +488,23 @@ async def process_search_query(
     """Process search query using the existing OmicsOracle pipeline"""
     try:
         # Check if pipeline is available
-        if not pipeline:
+        if not hasattr(app.state, "pipeline") or not app.state.pipeline:
             raise Exception("Pipeline not initialized")
 
-        logger.info(f"[SEARCH] Starting pipeline query processing for: {query}")
+        # Validate max_results
+        valid_values = [5, 10, 20, 50, 100, 1000]
+        if max_results not in valid_values:
+            logger.warning(
+                f"Invalid max_results value: {max_results}. Defaulting to 10."
+            )
+            max_results = 10
+
+        # Handle "All Results" option (value of 1000)
+        actual_max_results = 1000 if max_results == 1000 else max_results
+
+        logger.info(
+            f"[SEARCH] Starting pipeline query processing for: {query} with max_results={max_results}"
+        )
         await log_to_frontend(
             "[SEARCH] Starting pipeline query processing...", "info"
         )
@@ -590,11 +513,83 @@ async def process_search_query(
             "[DATA] Connecting to NCBI GEO database...", "info"
         )
 
-        # Use the pipeline's process_query method (it's async!)
-        # This will handle GEO query preparation, extraction, and AI summary
-        query_result = await pipeline.process_query(
-            query, max_results=max_results
-        )
+        # First try to import the enhanced query handler for better handling of complex queries
+        try:
+            from src.omics_oracle.search.enhanced_query_handler import (
+                perform_multi_strategy_search,
+            )
+
+            await log_to_frontend(
+                "[SEARCH] Using enhanced query handling for complex queries...",
+                "info",
+            )
+
+            # Use the enhanced query handler first
+            geo_ids, metadata_info = await perform_multi_strategy_search(
+                app.state.pipeline, query, max_results=actual_max_results
+            )
+
+            # Create a compatible result object
+            if geo_ids:
+                # Get components used in the search from metadata_info
+                components = metadata_info.get("components", {})
+                search_strategy = metadata_info.get(
+                    "search_strategy", "original"
+                )
+                query_used = metadata_info.get("query_used", query)
+
+                # Add search strategy information to the frontend
+                if search_strategy == "alternative":
+                    await log_to_frontend(
+                        f"[SEARCH] Used alternative query: '{query_used}' for better results",
+                        "info",
+                    )
+
+                    # If we have identified components, show them to the user
+                    components_found = [
+                        k
+                        for k, v in components.items()
+                        if v and k != "original_query"
+                    ]
+                    if components_found:
+                        await log_to_frontend(
+                            f"[ANALYSIS] Identified query components: {', '.join(components_found)}",
+                            "info",
+                        )
+
+                # Create a compatible result object with all the necessary fields
+                query_result = type(
+                    "QueryResult",
+                    (),
+                    {
+                        "geo_ids": geo_ids,
+                        "metadata": metadata_info.get("metadata", []),
+                        "ai_summaries": metadata_info.get("ai_summaries", {}),
+                        "intent": f"Find {components.get('data_type', 'gene expression data')} related to {components.get('disease', components.get('tissue', 'biomedical conditions'))} in {components.get('organism', 'organisms')}",
+                        "duration": 0.0,
+                        "status": type("Status", (), {"value": "COMPLETED"}),
+                    },
+                )
+            else:
+                # Fall back to standard query processing if no results from enhanced search
+                await log_to_frontend(
+                    "[SEARCH] Enhanced search found no results, trying standard pipeline...",
+                    "info",
+                )
+                # Use the pipeline's process_query method (it's async!)
+                query_result = await app.state.pipeline.process_query(
+                    query, max_results=actual_max_results
+                )
+
+        except ImportError:
+            # If enhanced query handler is not available, use the standard pipeline
+            await log_to_frontend(
+                "[SEARCH] Using standard pipeline search...", "info"
+            )
+            # Use the pipeline's process_query method (it's async!)
+            query_result = await app.state.pipeline.process_query(
+                query, max_results=actual_max_results
+            )
 
         await log_to_frontend(
             f"[RESULTS] Pipeline results: {len(query_result.geo_ids)} GEO IDs found",
@@ -786,6 +781,7 @@ async def process_search_query(
 @app.get("/api/health")
 async def health_check():
     """Health check endpoint with detailed pipeline status"""
+    pipeline = getattr(app.state, "pipeline", None)
     status = "healthy" if pipeline is not None else "unavailable"
 
     pipeline_info = {}

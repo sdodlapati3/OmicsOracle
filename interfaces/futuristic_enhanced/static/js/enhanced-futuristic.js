@@ -187,6 +187,10 @@ class EnhancedFuturisticInterface {
         const query = searchInput.value.trim();
         const startTime = Date.now();
 
+        // Get max results value from UI
+        const maxResultsSelect = document.getElementById('max-results-select');
+        const maxResults = maxResultsSelect ? parseInt(maxResultsSelect.value) : 10;
+
         this.showSearchProgress(true);
         this.updateSearchProgress({ stage: 'initializing', progress: 0 });
 
@@ -195,6 +199,7 @@ class EnhancedFuturisticInterface {
             const searchRequest = {
                 query: query,
                 filters: this.getSearchFilters(),
+                max_results: maxResults,
                 include_metadata: true,
                 enable_ai_summary: true
             };
@@ -244,6 +249,10 @@ class EnhancedFuturisticInterface {
     async performFallbackSearch(query) {
         console.log('[🔄 Search] Attempting fallback search...');
 
+        // Get max results value from UI or use default
+        const maxResultsSelect = document.getElementById('max-results-select');
+        const maxResults = maxResultsSelect ? parseInt(maxResultsSelect.value) : 10;
+
         const response = await fetch(`${this.apiBaseUrl}/v1/search`, {
             method: 'POST',
             headers: {
@@ -251,7 +260,7 @@ class EnhancedFuturisticInterface {
             },
             body: JSON.stringify({
                 query: query,
-                max_results: 10
+                max_results: maxResults
             })
         });
 
@@ -394,6 +403,45 @@ class EnhancedFuturisticInterface {
 
     setupUI() {
         console.log('[🎨 UI] Setting up user interface...');
+
+        // Add max results dropdown to the search form
+        const searchForm = document.querySelector('.search-form') || document.getElementById('app');
+        if (searchForm) {
+            // Create max results select element if it doesn't exist
+            if (!document.getElementById('max-results-select')) {
+                const maxResultsContainer = document.createElement('div');
+                maxResultsContainer.className = 'max-results-container';
+                maxResultsContainer.innerHTML = `
+                    <label for="max-results-select">Max Results:</label>
+                    <select id="max-results-select" class="max-results-select">
+                        <option value="5">5</option>
+                        <option value="10" selected>10</option>
+                        <option value="20">20</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                        <option value="1000">All Results</option>
+                    </select>
+                `;
+
+                // Find the appropriate place to insert the dropdown
+                const searchButton = document.getElementById('enhanced-search-btn');
+                if (searchButton) {
+                    searchButton.parentNode.insertBefore(maxResultsContainer, searchButton);
+                } else {
+                    searchForm.appendChild(maxResultsContainer);
+                }
+
+                // Add warning for "All Results" option
+                const maxResultsSelect = document.getElementById('max-results-select');
+                if (maxResultsSelect) {
+                    maxResultsSelect.addEventListener('change', (e) => {
+                        if (parseInt(e.target.value) === 1000) {
+                            this.showNotification('All Results may take longer to load for complex queries', 'warning');
+                        }
+                    });
+                }
+            }
+        }
     }
 
     switchTheme(themeName) {
