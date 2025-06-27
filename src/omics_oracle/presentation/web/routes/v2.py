@@ -28,7 +28,7 @@ from ....infrastructure.caching.cache_hierarchy import CacheHierarchy
 from ....infrastructure.dependencies.container import Container
 from ....infrastructure.microservices.service_discovery import ServiceRegistry
 from ....infrastructure.websocket.realtime_service import RealtimeService
-from ..dependencies import get_container
+from ..dependencies import get_di_container
 
 logger = logging.getLogger(__name__)
 
@@ -86,7 +86,7 @@ async def advanced_search_v2(
     realtime_updates: bool = Query(
         False, description="Enable real-time progress updates"
     ),
-    container: Container = Depends(get_container),
+    container: Container = Depends(get_di_container),
 ) -> SearchResponseDTO:
     """
     Advanced search with enhanced features (v2.0).
@@ -163,7 +163,7 @@ async def advanced_search_v2(
         )
 
         logger.info(
-            f"v2 advanced search completed: {len(response.results)} results"
+            f"v2 advanced search completed: {len(response.datasets)} results"
         )
         return response
 
@@ -177,22 +177,45 @@ async def advanced_search_v2(
 
 
 @router.get("/cache/stats")
-async def get_cache_stats_v2(container: Container = Depends(get_container)):
+async def get_cache_stats_v2(container: Container = Depends(get_di_container)):
     """Get comprehensive cache statistics (v2 feature)."""
     try:
         cache_hierarchy = await container.get(CacheHierarchy)
 
+        # Get stats from each cache level, awaiting if necessary
+        l1_stats = {}
+        l2_stats = {}
+        l3_stats = {}
+
+        if hasattr(cache_hierarchy.l1_cache, "get_stats"):
+            l1_result = cache_hierarchy.l1_cache.get_stats()
+            l1_stats = (
+                await l1_result
+                if hasattr(l1_result, "__await__")
+                else l1_result
+            )
+
+        if hasattr(cache_hierarchy.l2_cache, "get_stats"):
+            l2_result = cache_hierarchy.l2_cache.get_stats()
+            l2_stats = (
+                await l2_result
+                if hasattr(l2_result, "__await__")
+                else l2_result
+            )
+
+        if hasattr(cache_hierarchy.l3_cache, "get_stats"):
+            l3_result = cache_hierarchy.l3_cache.get_stats()
+            l3_stats = (
+                await l3_result
+                if hasattr(l3_result, "__await__")
+                else l3_result
+            )
+
         stats = {
             "cache_levels": {
-                "L1_memory": cache_hierarchy.l1_cache.get_stats()
-                if hasattr(cache_hierarchy.l1_cache, "get_stats")
-                else {},
-                "L2_redis": cache_hierarchy.l2_cache.get_stats()
-                if hasattr(cache_hierarchy.l2_cache, "get_stats")
-                else {},
-                "L3_file": cache_hierarchy.l3_cache.get_stats()
-                if hasattr(cache_hierarchy.l3_cache, "get_stats")
-                else {},
+                "L1_memory": l1_stats,
+                "L2_redis": l2_stats,
+                "L3_file": l3_stats,
             },
             "hierarchy_stats": {
                 "total_hits": getattr(cache_hierarchy, "total_hits", 0),
@@ -216,7 +239,7 @@ async def get_cache_stats_v2(container: Container = Depends(get_container)):
 
 @router.get("/services/registry")
 async def get_service_registry_v2(
-    container: Container = Depends(get_container),
+    container: Container = Depends(get_di_container),
 ):
     """Get microservices registry status (v2 feature)."""
     try:
@@ -226,10 +249,28 @@ async def get_service_registry_v2(
         registry_stats = {
             "total_services": len(services),
             "healthy_services": len(
-                [s for s in services.values() if s.get("healthy", False)]
+                [
+                    s
+                    for s in services
+                    if s.status == "healthy" or getattr(s, "healthy", False)
+                ]
             ),
-            "services": services,
-            "registry_uptime": getattr(service_registry, "uptime", 0),
+            "services": [
+                {
+                    "id": s.service_id,
+                    "name": s.name,
+                    "type": s.service_type.value
+                    if hasattr(s.service_type, "value")
+                    else str(s.service_type),
+                    "url": s.url,
+                    "status": s.status.value
+                    if hasattr(s.status, "value")
+                    else str(s.status),
+                    "version": getattr(s, "version", "unknown"),
+                    "last_seen": getattr(s, "last_seen", None),
+                }
+                for s in services
+            ],
         }
 
         return JSONResponse(registry_stats)
@@ -245,7 +286,7 @@ async def get_service_registry_v2(
 async def websocket_search_updates_v2(
     websocket: WebSocket,
     search_id: str,
-    container: Container = Depends(get_container),
+    container: Container = Depends(get_di_container),
 ):
     """
     WebSocket endpoint for real-time search progress updates (v2 feature).
@@ -275,7 +316,7 @@ async def websocket_search_updates_v2(
 
 @router.get("/health/detailed")
 async def detailed_health_check_v2(
-    container: Container = Depends(get_container),
+    container: Container = Depends(get_di_container),
 ):
     """Comprehensive health check with service dependencies (v2 feature)."""
     try:

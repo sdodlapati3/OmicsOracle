@@ -115,10 +115,10 @@ class EnhancedSearchDatasetsUseCase:
 
             return SearchResponseDTO(
                 query=request.query,
-                results=result_dtos,
+                datasets=result_dtos,
                 total_found=len(datasets),
                 search_time=search_duration,
-                timestamp=datetime.now(),
+                timestamp=datetime.now().isoformat(),
             )
 
         except ValidationError:

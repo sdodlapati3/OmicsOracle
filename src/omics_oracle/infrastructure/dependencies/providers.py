@@ -7,16 +7,22 @@ all application services and repositories.
 
 import logging
 
+from ...application.use_cases.enhanced_search_datasets import (
+    EnhancedSearchDatasetsUseCase,
+)
 from ...application.use_cases.search_datasets import SearchDatasetsUseCase
 from ...domain.repositories.simple_search_repository import (
     SimpleSearchRepository,
 )
+from ..caching.cache_hierarchy import CacheHierarchy
 from ..caching.memory_cache import MemoryCache
 from ..configuration.config import get_config
 from ..external_apis.geo_client import GEOClient
 from ..messaging.event_bus import EventBus
 from ..messaging.websocket_service import WebSocketService
+from ..microservices.service_discovery import ServiceRegistry
 from ..repositories.geo_search_repository import GEOSearchRepository
+from ..websocket.realtime_service import RealtimeService
 from .container import Container
 
 logger = logging.getLogger(__name__)
@@ -38,6 +44,9 @@ async def create_container() -> Container:
     )
     await container.register_singleton(EventBus, EventBus())
     await container.register_singleton(WebSocketService, WebSocketService())
+    await container.register_singleton(CacheHierarchy, CacheHierarchy())
+    await container.register_singleton(ServiceRegistry, ServiceRegistry())
+    await container.register_singleton(RealtimeService, RealtimeService())
 
     # External API clients
     geo_client = GEOClient(config.geo)
@@ -60,6 +69,15 @@ async def create_container() -> Container:
 
     await container.register_factory(
         SearchDatasetsUseCase, create_search_use_case
+    )
+
+    async def create_enhanced_search_use_case() -> EnhancedSearchDatasetsUseCase:
+        search_repository = await container.get(SimpleSearchRepository)
+        event_bus = await container.get(EventBus)
+        return EnhancedSearchDatasetsUseCase(search_repository, event_bus)
+
+    await container.register_factory(
+        EnhancedSearchDatasetsUseCase, create_enhanced_search_use_case
     )
 
     logger.info("Dependency injection container configured successfully")

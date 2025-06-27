@@ -19,7 +19,7 @@ from ...infrastructure.messaging.websocket_service import WebSocketService
 from ...infrastructure.websocket.connection_manager import ConnectionManager
 from ...infrastructure.websocket.realtime_service import RealtimeService
 from ...infrastructure.websocket.room_manager import RoomManager
-from .dependencies import get_container, get_event_bus, get_websocket_service
+from .dependencies import get_di_container, get_event_bus, get_websocket_service
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +31,7 @@ def setup_websockets(app: FastAPI) -> None:
     async def enhanced_websocket_realtime(
         websocket: WebSocket,
         room_id: str,
-        container: Container = Depends(get_container),
+        container: Container = Depends(get_di_container),
     ):
         """Enhanced WebSocket endpoint with room management and real-time features."""
         await websocket.accept()

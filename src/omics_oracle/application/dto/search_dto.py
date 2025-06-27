@@ -38,6 +38,9 @@ class SearchRequestDTO:
     exact_match: bool = False
     include_supplementary: bool = True
 
+    # Generic filters parameter for additional filtering
+    filters: Optional[Dict[str, Any]] = None
+
     # Quality filters
     min_quality_score: Optional[float] = None
     require_complete_metadata: bool = False
@@ -45,7 +48,9 @@ class SearchRequestDTO:
     # Request metadata
     request_id: Optional[str] = None
     user_id: Optional[str] = None
-    session_id: Optional[str] = None
+
+    # Advanced options for enhanced search functionality
+    options: Optional[Dict[str, Any]] = None
 
     def __post_init__(self):
         """Validate search request after initialization."""
@@ -193,6 +198,9 @@ class SearchResponseDTO:
     search_type: str = SearchType.COMPREHENSIVE.value
     sort_order: str = SortOrder.RELEVANCE.value
     filters_applied: Dict[str, Any] = field(default_factory=dict)
+
+    # Additional metadata for enhanced responses
+    metadata: Dict[str, Any] = field(default_factory=dict)
 
     # Quality metrics
     average_relevance_score: float = 0.0

@@ -55,7 +55,7 @@ class DatabaseConfig:
 class GEOConfig:
     """GEO API configuration."""
 
-    base_url: str = "https://www.ncbi.nlm.nih.gov/geo/"
+    base_url: str = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/"
     email: str = field(default_factory=lambda: os.getenv("NCBI_EMAIL", ""))
     api_key: Optional[str] = field(
         default_factory=lambda: os.getenv("NCBI_API_KEY")

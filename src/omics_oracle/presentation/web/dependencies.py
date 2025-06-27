@@ -8,7 +8,7 @@ integrating with the Clean Architecture's dependency injection container.
 import logging
 from typing import Annotated, AsyncGenerator
 
-from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi import Depends, FastAPI, HTTPException, Request, status
 
 from ...application.use_cases.enhanced_search_datasets import (
     EnhancedSearchDatasetsUseCase,
@@ -27,11 +27,6 @@ from ...infrastructure.websocket.room_manager import RoomManager
 logger = logging.getLogger(__name__)
 
 
-def get_container() -> Container:
-    """Get the dependency injection container."""
-    return Container()
-
-
 def setup_dependencies(app: FastAPI) -> None:
     """Setup FastAPI dependencies."""
     # Store container in app state for lifespan management
@@ -46,14 +41,9 @@ def get_app_config() -> AppConfig:
 
 
 # Container dependencies
-async def get_di_container() -> AsyncGenerator[Container, None]:
-    """Get dependency injection container."""
-    container = Container()
-    try:
-        yield container
-    finally:
-        # Cleanup if needed
-        pass
+async def get_di_container(request: Request) -> Container:
+    """Get dependency injection container from app state."""
+    return request.app.state.container
 
 
 # Service dependencies

@@ -306,6 +306,10 @@ class ServiceRegistry:
         """List all registered services"""
         return list(self._services.values())
 
+    def list_services(self) -> List[ServiceInfo]:
+        """List all registered services (alias for list_all_services)"""
+        return self.list_all_services()
+
     async def _health_monitor(self):
         """Monitor service health and cleanup stale services"""
         while self._running:

@@ -28,8 +28,14 @@ async def lifespan(app: FastAPI):
     # Startup
     logger.info("Starting OmicsOracle application...")
 
-    # Initialize dependency injection container
-    container = Container()
+    # Initialize dependency injection container with all registrations
+    from ...infrastructure.dependencies.providers import (
+        create_container,
+        setup_event_subscribers,
+    )
+
+    container = await create_container()
+    await setup_event_subscribers(container)
     app.state.container = container
 
     logger.info("Application startup complete")
@@ -41,8 +47,7 @@ async def lifespan(app: FastAPI):
 
     # Cleanup resources
     if hasattr(app.state, "container"):
-        # Cleanup container resources if needed
-        pass
+        await app.state.container.clear()
 
     logger.info("Application shutdown complete")
 

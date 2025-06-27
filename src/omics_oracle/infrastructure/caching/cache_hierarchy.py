@@ -112,6 +112,21 @@ class CacheHierarchy:
 
         self.logger = logging.getLogger(__name__)
 
+    @property
+    def l1_cache(self) -> MemoryCache:
+        """Access L1 memory cache"""
+        return self._l1_memory
+
+    @property
+    def l2_cache(self) -> RedisCache:
+        """Access L2 Redis cache"""
+        return self._l2_redis
+
+    @property
+    def l3_cache(self) -> FileCache:
+        """Access L3 file cache"""
+        return self._l3_file
+
     async def start(self):
         """Initialize cache hierarchy"""
         self.logger.info("Starting cache hierarchy")

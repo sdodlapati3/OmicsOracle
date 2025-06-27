@@ -17,7 +17,7 @@ from ....application.use_cases.enhanced_search_datasets import (
 )
 from ....domain.value_objects.search_query import SearchQuery
 from ....infrastructure.dependencies.container import Container
-from ..dependencies import get_container
+from ..dependencies import get_di_container
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +50,7 @@ async def search_datasets_v1(
     ),
     organism: Optional[str] = Query(None, description="Filter by organism"),
     study_type: Optional[str] = Query(None, description="Filter by study type"),
-    container: Container = Depends(get_container),
+    container: Container = Depends(get_di_container),
 ) -> SearchResponseDTO:
     """
     Search for GEO datasets (v1.0 compatibility endpoint).
@@ -75,7 +75,7 @@ async def search_datasets_v1(
         response = await use_case.execute(search_request)
 
         logger.info(
-            f"v1 search completed: {len(response.results)} results for query '{query}'"
+            f"v1 search completed: {len(response.datasets)} results for query '{query}'"
         )
         return response
 
