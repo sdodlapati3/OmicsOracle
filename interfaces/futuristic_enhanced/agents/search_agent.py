@@ -72,7 +72,9 @@ class EnhancedSearchAgent(BaseAgent):
     async def initialize(self) -> bool:
         """Initialize the enhanced search agent"""
         try:
-            logger.info(f"[SEARCH] Initializing enhanced search agent {self.agent_id}")
+            logger.info(
+                f"[SEARCH] Initializing enhanced search agent {self.agent_id}"
+            )
 
             # Try to import legacy pipeline as fallback
             try:
@@ -91,10 +93,14 @@ class EnhancedSearchAgent(BaseAgent):
                 logger.info("[OK] Legacy pipeline initialized as fallback")
 
             except Exception as e:
-                logger.warning(f"[WARNING] Could not initialize legacy pipeline: {e}")
+                logger.warning(
+                    f"[WARNING] Could not initialize legacy pipeline: {e}"
+                )
                 logger.info("[REFRESH] Running in enhanced-only mode")
 
-            logger.info(f"[OK] Enhanced search agent {self.agent_id} initialized")
+            logger.info(
+                f"[OK] Enhanced search agent {self.agent_id} initialized"
+            )
             return True
 
         except Exception as e:
@@ -105,7 +111,9 @@ class EnhancedSearchAgent(BaseAgent):
 
     async def cleanup(self) -> None:
         """Clean up search agent resources"""
-        logger.info(f"[CLEANUP] Cleaning up enhanced search agent {self.agent_id}")
+        logger.info(
+            f"[CLEANUP] Cleaning up enhanced search agent {self.agent_id}"
+        )
         if self.legacy_pipeline:
             try:
                 # Cleanup legacy pipeline if available

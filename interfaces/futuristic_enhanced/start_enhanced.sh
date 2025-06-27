@@ -62,7 +62,7 @@ else
     print_warning "Clean Architecture backend not detected at $BACKEND_URL"
     print_info "Starting backend first is recommended for full functionality"
     print_info "Run './start_server.sh' from the project root to start the backend"
-    
+
     read -p "Continue anyway? (y/N): " -n 1 -r
     echo
     if [[ ! $REPLY =~ ^[Yy]$ ]]; then
@@ -96,7 +96,7 @@ fi
 # Install Node.js dependencies if available
 if [[ "$NODE_AVAILABLE" == "true" && -f "package.json" ]]; then
     print_info "Installing/updating Node.js dependencies..."
-    
+
     if [[ ! -d "node_modules" || "package.json" -nt "node_modules" ]]; then
         npm install
         print_success "Node.js dependencies installed"
@@ -116,7 +116,7 @@ check_port() {
             print_info "Attempting to stop existing process..."
             kill "$pid" 2>/dev/null || print_warning "Could not stop process"
             sleep 2
-            
+
             if lsof -Pi ":$port" -sTCP:LISTEN -t >/dev/null 2>&1; then
                 print_error "Port $port is still in use after cleanup attempt"
                 return 1
@@ -151,14 +151,14 @@ fi
 if [[ "$NODE_AVAILABLE" == "true" && -f "package.json" ]]; then
     print_info "Starting in enhanced development mode with build tools..."
     print_info "Frontend assets will be built and watched for changes"
-    
+
     # Start frontend build in background
     npm run build:watch &
     BUILD_PID=$!
-    
+
     # Give build process time to start
     sleep 3
-    
+
     # Function to cleanup background processes
     cleanup() {
         print_info "Shutting down enhanced interface..."
@@ -171,9 +171,9 @@ if [[ "$NODE_AVAILABLE" == "true" && -f "package.json" ]]; then
         print_success "Cleanup complete"
         exit 0
     }
-    
+
     trap cleanup SIGINT SIGTERM
-    
+
     print_success "Frontend build process started (PID: $BUILD_PID)"
 fi
 

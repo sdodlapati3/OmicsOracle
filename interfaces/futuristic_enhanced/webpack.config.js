@@ -4,20 +4,20 @@ const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
 module.exports = (env, argv) => {
   const isProduction = argv.mode === 'production';
-  
+
   return {
     entry: {
       main: './static/js/main.js',
       futuristic: './static/js/futuristic-interface.js'
     },
-    
+
     output: {
       path: path.resolve(__dirname, 'dist'),
       filename: isProduction ? '[name].[contenthash].js' : '[name].js',
       clean: true,
       publicPath: '/static/'
     },
-    
+
     resolve: {
       extensions: ['.ts', '.js'],
       alias: {
@@ -26,7 +26,7 @@ module.exports = (env, argv) => {
         '@css': path.resolve(__dirname, 'static/css')
       }
     },
-    
+
     module: {
       rules: [
         {
@@ -61,14 +61,14 @@ module.exports = (env, argv) => {
         }
       ]
     },
-    
+
     plugins: [
       ...(isProduction ? [
         new MiniCssExtractPlugin({
           filename: '[name].[contenthash].css'
         })
       ] : []),
-      
+
       new HtmlWebpackPlugin({
         template: './static/index.html',
         filename: 'index.html',
@@ -76,9 +76,9 @@ module.exports = (env, argv) => {
         inject: 'body'
       })
     ],
-    
+
     devtool: isProduction ? 'source-map' : 'eval-source-map',
-    
+
     devServer: {
       static: {
         directory: path.join(__dirname, 'dist'),
@@ -94,7 +94,7 @@ module.exports = (env, argv) => {
         }
       }
     },
-    
+
     optimization: {
       splitChunks: {
         chunks: 'all',

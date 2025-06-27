@@ -31,7 +31,9 @@ class VisualizationAgent(BaseAgent):
     async def initialize(self) -> bool:
         """Initialize the visualization agent"""
         try:
-            logger.info(f"[CHART] Initializing visualization agent {self.agent_id}")
+            logger.info(
+                f"[CHART] Initializing visualization agent {self.agent_id}"
+            )
             return True
         except Exception as e:
             logger.error(
@@ -41,7 +43,9 @@ class VisualizationAgent(BaseAgent):
 
     async def cleanup(self) -> None:
         """Clean up visualization agent resources"""
-        logger.info(f"[CLEANUP] Cleaning up visualization agent {self.agent_id}")
+        logger.info(
+            f"[CLEANUP] Cleaning up visualization agent {self.agent_id}"
+        )
 
     async def process_message(
         self, message: AgentMessage

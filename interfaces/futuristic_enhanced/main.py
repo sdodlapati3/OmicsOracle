@@ -55,8 +55,9 @@ except Exception as e:
 # Import existing OmicsOracle modules
 try:
     # Try to import from Clean Architecture backend
-    import requests
     import httpx
+    import requests
+
     BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
     logger.info(f"Enhanced interface will connect to backend at: {BACKEND_URL}")
 except ImportError as e:
@@ -67,10 +68,16 @@ except ImportError as e:
 # Enhanced API models for Clean Architecture integration
 class EnhancedSearchRequest(BaseModel):
     query: str = Field(..., description="Search query for biomedical datasets")
-    filters: Dict[str, Any] = Field(default_factory=dict, description="Search filters")
+    filters: Dict[str, Any] = Field(
+        default_factory=dict, description="Search filters"
+    )
     max_results: int = Field(10, description="Maximum number of results")
-    include_metadata: bool = Field(True, description="Include metadata in response")
-    enable_ai_summary: bool = Field(True, description="Enable AI-powered summary")
+    include_metadata: bool = Field(
+        True, description="Include metadata in response"
+    )
+    enable_ai_summary: bool = Field(
+        True, description="Enable AI-powered summary"
+    )
 
 
 class EnhancedSearchResponse(BaseModel):
@@ -107,34 +114,35 @@ static_path = Path(__file__).parent / "static"
 static_path.mkdir(exist_ok=True)
 app.mount("/static", StaticFiles(directory=str(static_path)), name="static")
 
+
 # Backend client for Clean Architecture integration
 class BackendClient:
     def __init__(self, base_url: str):
         self.base_url = base_url
         self.session = None
-    
+
     async def __aenter__(self):
         self.session = httpx.AsyncClient(base_url=self.base_url)
         return self
-    
+
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         if self.session:
             await self.session.aclose()
-    
+
     async def search_enhanced(self, request: EnhancedSearchRequest) -> dict:
         """Perform enhanced search via Clean Architecture backend"""
         try:
             response = await self.session.post(
-                "/api/v2/search/enhanced",
-                json=request.dict(),
-                timeout=30.0
+                "/api/v2/search/enhanced", json=request.dict(), timeout=30.0
             )
             response.raise_for_status()
             return response.json()
         except httpx.HTTPError as e:
             logger.error(f"Backend search failed: {e}")
-            raise HTTPException(status_code=503, detail="Backend service unavailable")
-    
+            raise HTTPException(
+                status_code=503, detail="Backend service unavailable"
+            )
+
     async def get_dataset_details(self, dataset_id: str) -> dict:
         """Get dataset details from backend"""
         try:
@@ -144,7 +152,7 @@ class BackendClient:
         except httpx.HTTPError as e:
             logger.error(f"Failed to get dataset details: {e}")
             raise HTTPException(status_code=404, detail="Dataset not found")
-    
+
     async def health_check(self) -> dict:
         """Check backend health"""
         try:
@@ -305,7 +313,9 @@ async def startup_event():
 
         # Set NCBI email in environment variable
         os.environ["NCBI_EMAIL"] = "omicsoracle@example.com"
-        logger.info(f"Set NCBI_EMAIL environment variable to {os.environ['NCBI_EMAIL']}")
+        logger.info(
+            f"Set NCBI_EMAIL environment variable to {os.environ['NCBI_EMAIL']}"
+        )
 
         # Create configuration
         config = Config()
@@ -318,19 +328,22 @@ async def startup_event():
             logger.info(f"NCBI email in config: {config.ncbi.email}")
         else:
             logger.warning("Config object does not have ncbi attribute")
-                
+
         # Ensure Bio.Entrez.email is set directly as well
         try:
             from Bio import Entrez
+
             Entrez.email = "omicsoracle@example.com"
             logger.info(f"Direct Bio.Entrez.email set to: {Entrez.email}")
         except ImportError:
             logger.warning("Bio.Entrez not available")
 
         # Initialize pipeline with caching explicitly disabled
-        logger.info("Creating OmicsOracle pipeline instance with disable_cache=True")
+        logger.info(
+            "Creating OmicsOracle pipeline instance with disable_cache=True"
+        )
         pipeline = OmicsOracle(config, disable_cache=True)
-        
+
         if pipeline is None:
             logger.error("Pipeline initialization returned None")
             raise Exception("Pipeline initialization failed")
@@ -339,11 +352,14 @@ async def startup_event():
         logger.info("Setting up progress callback")
         pipeline.set_progress_callback(send_progress_to_frontend)
 
-        logger.info("[OK] OmicsOracle pipeline initialized successfully with caching disabled")
+        logger.info(
+            "[OK] OmicsOracle pipeline initialized successfully with caching disabled"
+        )
     except Exception as e:
         logger.error(f"[ERROR] Failed to initialize pipeline: {e}")
         # Print the full exception traceback for debugging
         import traceback
+
         logger.error(f"Traceback: {traceback.format_exc()}")
         pipeline = None
 
@@ -656,7 +672,9 @@ async def process_search_query(
                 dataset_info = {
                     "geo_id": geo_id,
                     "title": metadata.get("title"),  # Can be None
-                    "summary": metadata.get("summary"),  # Can be None (GEO summary)
+                    "summary": metadata.get(
+                        "summary"
+                    ),  # Can be None (GEO summary)
                     "organism": organism,  # Can be None
                     "sample_count": metadata.get("sample_count"),  # Can be None
                     "platform": platform,  # Can be None
@@ -667,7 +685,9 @@ async def process_search_query(
                     "ai_insights": ai_insights,  # Can be None (AI summary)
                     "relevance_score": relevance_score,  # Can be None
                     # Include both summaries explicitly for clarity
-                    "geo_summary": metadata.get("summary"),  # Original GEO summary
+                    "geo_summary": metadata.get(
+                        "summary"
+                    ),  # Original GEO summary
                     "ai_summary": ai_insights,  # AI-generated summary
                 }
                 datasets.append(dataset_info)
@@ -746,46 +766,55 @@ async def process_search_query(
 async def health_check():
     """Health check endpoint with detailed pipeline status"""
     status = "healthy" if pipeline is not None else "unavailable"
-    
+
     pipeline_info = {}
     if pipeline is not None:
         # Get pipeline details when available
         pipeline_info = {
-            "geo_client_available": hasattr(pipeline, "geo_client") and pipeline.geo_client is not None,
+            "geo_client_available": hasattr(pipeline, "geo_client")
+            and pipeline.geo_client is not None,
             "cache_disabled": getattr(pipeline, "disable_cache", False),
-            "summarizer_available": hasattr(pipeline, "summarizer") and pipeline.summarizer is not None,
+            "summarizer_available": hasattr(pipeline, "summarizer")
+            and pipeline.summarizer is not None,
         }
-        
+
         # Check NCBI email configuration
         if hasattr(pipeline, "config") and hasattr(pipeline.config, "ncbi"):
-            pipeline_info["ncbi_email"] = getattr(pipeline.config.ncbi, "email", "Not set")
-        
+            pipeline_info["ncbi_email"] = getattr(
+                pipeline.config.ncbi, "email", "Not set"
+            )
+
         # Check if critical components are ready
-        pipeline_info["critical_components_ready"] = all([
-            pipeline_info.get("geo_client_available", False),
-            pipeline_info.get("summarizer_available", False)
-        ])
-    
+        pipeline_info["critical_components_ready"] = all(
+            [
+                pipeline_info.get("geo_client_available", False),
+                pipeline_info.get("summarizer_available", False),
+            ]
+        )
+
     # Include environment information
     env_info = {
         "NCBI_EMAIL": os.environ.get("NCBI_EMAIL", "Not set"),
         "python_version": sys.version,
     }
-    
+
     # Try to check Bio.Entrez email
     try:
         from Bio import Entrez
+
         env_info["entrez_email"] = getattr(Entrez, "email", "Not set")
     except ImportError:
         env_info["entrez_email"] = "Bio.Entrez not available"
-    
+
     return {
         "status": status,
         "timestamp": time.time(),
         "pipeline_available": pipeline is not None,
         "pipeline_info": pipeline_info,
         "environment": env_info,
-        "message": "Futuristic interface ready" if status == "healthy" else "Pipeline not initialized"
+        "message": "Futuristic interface ready"
+        if status == "healthy"
+        else "Pipeline not initialized",
     }
 
 

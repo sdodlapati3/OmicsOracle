@@ -14,7 +14,14 @@ current_dir = Path(__file__).parent
 sys.path.insert(0, str(current_dir.parent))
 
 from models.futuristic_models import AnalysisInsight
-from .base import AgentCapability, AgentMessage, AgentType, BaseAgent, MessageType
+
+from .base import (
+    AgentCapability,
+    AgentMessage,
+    AgentType,
+    BaseAgent,
+    MessageType,
+)
 
 logger = logging.getLogger(__name__)
 

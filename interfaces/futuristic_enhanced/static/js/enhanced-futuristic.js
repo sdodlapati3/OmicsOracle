@@ -1,6 +1,6 @@
 /**
  * Enhanced Futuristic Interface - v2 API Integration
- * 
+ *
  * Modern TypeScript/JavaScript interface that integrates with the Clean Architecture backend
  */
 
@@ -14,10 +14,10 @@ class EnhancedFuturisticInterface {
         this.searchHistory = [];
         this.apiBaseUrl = 'http://localhost:8000/api';
         this.wsBaseUrl = 'ws://localhost:8000';
-        
+
         // Chart.js instances
         this.charts = new Map();
-        
+
         // Initialize interface
         this.init();
     }
@@ -28,22 +28,22 @@ class EnhancedFuturisticInterface {
 
     async init() {
         console.log('[🚀 LAUNCH] Initializing Enhanced Futuristic Interface');
-        
+
         // Setup event listeners
         this.setupEventListeners();
-        
+
         // Check backend connectivity
         await this.checkBackendConnectivity();
-        
+
         // Connect WebSocket
         this.connectWebSocket();
-        
+
         // Setup UI components
         this.setupUI();
-        
+
         // Load initial data
         await this.loadInitialData();
-        
+
         console.log('[✅ READY] Enhanced interface initialized successfully');
     }
 
@@ -81,13 +81,13 @@ class EnhancedFuturisticInterface {
         try {
             // Try Clean Architecture WebSocket first
             this.websocket = new WebSocket(`${this.wsBaseUrl}/ws/${this.clientId}`);
-            
+
             this.websocket.onopen = () => {
                 console.log('[🔗 WebSocket] Connected to Clean Architecture backend');
                 this.isConnected = true;
                 this.updateWebSocketStatus('connected');
             };
-            
+
             this.websocket.onmessage = (event) => {
                 try {
                     const data = JSON.parse(event.data);
@@ -96,12 +96,12 @@ class EnhancedFuturisticInterface {
                     console.error('[❌ WebSocket] Failed to parse message:', error);
                 }
             };
-            
+
             this.websocket.onclose = () => {
                 console.log('[🔌 WebSocket] Connection closed');
                 this.isConnected = false;
                 this.updateWebSocketStatus('disconnected');
-                
+
                 // Attempt reconnection
                 setTimeout(() => {
                     if (!this.isConnected) {
@@ -110,13 +110,13 @@ class EnhancedFuturisticInterface {
                     }
                 }, 5000);
             };
-            
+
             this.websocket.onerror = (error) => {
                 console.error('[❌ WebSocket] Connection error:', error);
                 this.isConnected = false;
                 this.updateWebSocketStatus('error');
             };
-            
+
         } catch (error) {
             console.error('[❌ WebSocket] Failed to initialize connection:', error);
         }
@@ -124,7 +124,7 @@ class EnhancedFuturisticInterface {
 
     handleWebSocketMessage(data) {
         console.log('[📨 WebSocket] Message received:', data);
-        
+
         switch (data.type) {
             case 'search_progress':
                 this.updateSearchProgress(data.payload);
@@ -150,7 +150,7 @@ class EnhancedFuturisticInterface {
         // Search functionality
         const searchBtn = document.getElementById('enhanced-search-btn');
         const searchInput = document.getElementById('enhanced-search-input');
-        
+
         if (searchBtn && searchInput) {
             searchBtn.addEventListener('click', () => this.performEnhancedSearch());
             searchInput.addEventListener('keypress', (e) => {
@@ -186,7 +186,7 @@ class EnhancedFuturisticInterface {
 
         const query = searchInput.value.trim();
         const startTime = Date.now();
-        
+
         this.showSearchProgress(true);
         this.updateSearchProgress({ stage: 'initializing', progress: 0 });
 
@@ -220,15 +220,15 @@ class EnhancedFuturisticInterface {
 
             // Display results
             this.displayEnhancedSearchResults(result, searchTime);
-            
+
             // Add to search history
             this.addToSearchHistory(query, result, searchTime);
-            
+
             this.showNotification(`Search completed in ${searchTime}ms`, 'success');
 
         } catch (error) {
             console.error('[❌ Search] Enhanced search failed:', error);
-            
+
             // Fallback to v1 API
             try {
                 await this.performFallbackSearch(query);
@@ -243,7 +243,7 @@ class EnhancedFuturisticInterface {
 
     async performFallbackSearch(query) {
         console.log('[🔄 Search] Attempting fallback search...');
-        
+
         const response = await fetch(`${this.apiBaseUrl}/v1/search`, {
             method: 'POST',
             headers: {
@@ -327,13 +327,13 @@ class EnhancedFuturisticInterface {
                 </div>
                 <div class="card-content">
                     <p class="dataset-summary">${dataset.summary || 'No summary available'}</p>
-                    
+
                     ${dataset.organism ? `
                         <div class="dataset-metadata">
                             <span class="metadata-tag">🧬 ${dataset.organism}</span>
                         </div>
                     ` : ''}
-                    
+
                     ${dataset.sample_count ? `
                         <div class="dataset-stats">
                             <span class="stat-badge">📊 ${dataset.sample_count} samples</span>

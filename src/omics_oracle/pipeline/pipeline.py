@@ -477,7 +477,10 @@ class OmicsOracle:
                         summary_type="comprehensive",
                     )
                     individual_summaries.append(
-                        {"accession": metadata.get("accession", "Unknown"), "summary": summary}
+                        {
+                            "accession": metadata.get("accession", "Unknown"),
+                            "summary": summary,
+                        }
                     )
                 except Exception as e:
                     logger.warning(
@@ -499,10 +502,16 @@ class OmicsOracle:
                 )
                 result.ai_summaries["brief_overview"] = brief_summary
 
-            logger.debug("AI summaries generated successfully: %s", result.query_id)
+            logger.debug(
+                "AI summaries generated successfully: %s", result.query_id
+            )
 
         except Exception as e:
-            logger.error("Failed to generate AI summaries: %s - %s", result.query_id, str(e))
+            logger.error(
+                "Failed to generate AI summaries: %s - %s",
+                result.query_id,
+                str(e),
+            )
             # Don't fail the entire pipeline if summarization fails
             result.ai_summaries["error"] = f"Summarization failed: {str(e)}"
 
@@ -518,9 +527,9 @@ class OmicsOracle:
     ) -> QueryResult:
         """
         Search for datasets with optional filters.
-        
+
         This is a wrapper around process_query that adds filtering capabilities.
-        
+
         Args:
             query: Natural language query
             max_results: Maximum number of results to return
@@ -529,66 +538,74 @@ class OmicsOracle:
             assay_type: Assay type filter (e.g., 'RNA-seq')
             date_from: Start date filter (YYYY-MM-DD)
             date_to: End date filter (YYYY-MM-DD)
-            
+
         Returns:
             QueryResult object with processing results
         """
         # For now, we'll process the query and then filter results
         # In a more advanced implementation, these filters could be
         # passed to the GEO search to reduce the initial result set
-        
+
         result = await self.process_query(
             query=query,
-            max_results=max_results * 2,  # Get more results to allow for filtering
+            max_results=max_results
+            * 2,  # Get more results to allow for filtering
             include_sra=include_sra,
         )
-        
+
         # Apply filters to the results
         if any([organism, assay_type, date_from, date_to]):
             filtered_metadata = []
-            
+
             for dataset in result.metadata:
                 # Apply organism filter
-                if organism and organism.lower() not in (dataset.get('organism', '').lower()):
+                if organism and organism.lower() not in (
+                    dataset.get("organism", "").lower()
+                ):
                     continue
-                    
+
                 # Apply assay type filter (check in title, summary, or platform)
                 if assay_type:
                     assay_text = f"{dataset.get('title', '')} {dataset.get('summary', '')} {dataset.get('platform', '')}".lower()
                     if assay_type.lower() not in assay_text:
                         continue
-                
+
                 # Apply date filters
-                pub_date = dataset.get('publication_date', '')
+                pub_date = dataset.get("publication_date", "")
                 if date_from and pub_date and pub_date < date_from:
                     continue
                 if date_to and pub_date and pub_date > date_to:
                     continue
-                    
+
                 filtered_metadata.append(dataset)
-                
+
                 # Stop when we have enough results
                 if len(filtered_metadata) >= max_results:
                     break
-            
+
             result.metadata = filtered_metadata
-            
+
             # Update result summary
-            result.add_step("filtering", {
-                "applied_filters": {
-                    "organism": organism,
-                    "assay_type": assay_type,
-                    "date_from": date_from,
-                    "date_to": date_to
+            result.add_step(
+                "filtering",
+                {
+                    "applied_filters": {
+                        "organism": organism,
+                        "assay_type": assay_type,
+                        "date_from": date_from,
+                        "date_to": date_to,
+                    },
+                    "filtered_count": len(filtered_metadata),
                 },
-                "filtered_count": len(filtered_metadata)
-            })
-            
+            )
+
             logger.info(
                 "Applied filters to query %s: %d -> %d results",
                 result.query_id,
-                len(result.metadata) if not any([organism, assay_type, date_from, date_to]) else "unknown",
-                len(filtered_metadata)
+                len(result.metadata)
+                if not any([organism, assay_type, date_from, date_to])
+                else "unknown",
+                len(filtered_metadata),
             )
-        
+
         return result

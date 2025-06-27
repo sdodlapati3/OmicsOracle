@@ -23,10 +23,10 @@
    ```bash
    # Option 1: Full development mode (recommended)
    npm run dev
-   
+
    # Option 2: Backend only
    npm run serve
-   
+
    # Option 3: Frontend build watch mode
    npm run build:watch
    ```
@@ -234,14 +234,14 @@ class RealtimeDataManager {
         this.ws = websocket;
         this.subscribers = new Map();
     }
-    
+
     subscribe(eventType, callback) {
         if (!this.subscribers.has(eventType)) {
             this.subscribers.set(eventType, []);
         }
         this.subscribers.get(eventType).push(callback);
     }
-    
+
     handleMessage(data) {
         const { type, payload } = data;
         const callbacks = this.subscribers.get(type) || [];
@@ -316,7 +316,7 @@ pm2 start main.py --name futuristic-interface
    ```bash
    # Check what's using port 8001
    lsof -i :8001
-   
+
    # Kill process if needed
    kill -9 <PID>
    ```
@@ -325,7 +325,7 @@ pm2 start main.py --name futuristic-interface
    ```bash
    # Check version
    node --version
-   
+
    # Use nvm to manage versions
    nvm use 18
    ```
@@ -334,7 +334,7 @@ pm2 start main.py --name futuristic-interface
    ```bash
    # Ensure you're in the right directory
    cd interfaces/futuristic_enhanced/
-   
+
    # Check Python path
    python -c "import sys; print(sys.path)"
    ```

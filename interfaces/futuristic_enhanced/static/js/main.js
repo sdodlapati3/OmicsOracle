@@ -44,7 +44,7 @@ const ICON_MAP = {
 // Function to replace bracketed codes with icons
 function replaceIconCodes(text) {
     if (typeof text !== 'string') return text;
-    
+
     let result = text;
     for (const [code, icon] of Object.entries(ICON_MAP)) {
         result = result.replace(new RegExp(code.replace(/\[/g, '\\[').replace(/\]/g, '\\]'), 'g'), icon);
@@ -61,21 +61,21 @@ function applyIconReplacements() {
         null,
         false
     );
-    
+
     const textNodes = [];
     let node;
-    
+
     while (node = walker.nextNode()) {
         if (node.textContent.includes('[') && node.textContent.includes(']')) {
             textNodes.push(node);
         }
     }
-    
+
     // Replace text in text nodes
     textNodes.forEach(textNode => {
         textNode.textContent = replaceIconCodes(textNode.textContent);
     });
-    
+
     // Also handle common elements that might have bracketed codes
     const elements = document.querySelectorAll('h1, h2, h3, h4, h5, h6, p, span, button, div');
     elements.forEach(element => {
@@ -83,7 +83,7 @@ function applyIconReplacements() {
             element.textContent = replaceIconCodes(element.textContent);
         }
     });
-    
+
     // Handle innerHTML for specific cases where we need to preserve HTML structure
     const statusElement = document.getElementById('ws-status');
     if (statusElement && statusElement.innerHTML.includes('[')) {
@@ -104,7 +104,7 @@ class FuturisticInterface {
         this.setupEventListeners();
         this.startPerformanceMonitoring();
         this.startDemoUpdates();
-        
+
         // Apply icon replacements after initial load
         setTimeout(() => {
             applyIconReplacements();
@@ -242,12 +242,12 @@ class FuturisticInterface {
             });
 
             const data = await response.json();
-            
+
             if (data.status === 'error') {
                 resultsDiv.innerHTML = `<p class="error">❌ ${data.message}</p>`;
                 return;
             }
-            
+
             this.displaySearchResults(data);
 
         } catch (error) {
@@ -285,7 +285,7 @@ class FuturisticInterface {
                         </button>
                     </div>
                 </div>
-                
+
                 <div class="search-metadata">
                     <div class="metadata-grid">
                         <div class="metadata-item">
@@ -308,7 +308,7 @@ class FuturisticInterface {
         if (aiSummaries && Object.keys(aiSummaries).length > 0) {
             html += '<div class="ai-summaries-section ai-section">';
             html += '<div class="ai-section-header"><h4>🤖 AI-Generated Insights</h4></div>';
-            
+
             // Batch summary
             if (aiSummaries.batch_summary) {
                 const batch = aiSummaries.batch_summary;
@@ -317,7 +317,7 @@ class FuturisticInterface {
                 if (batch.overview) {
                     html += `<div class="summary-content">${this.escapeHtml(batch.overview)}</div>`;
                 }
-                
+
                 // Key metrics in a grid
                 html += '<div class="batch-metrics">';
                 if (batch.organisms && batch.organisms.length > 0) {
@@ -355,7 +355,7 @@ class FuturisticInterface {
                 }
                 html += '</div></div>';
             }
-            
+
             html += '</div>';
         }
 
@@ -366,30 +366,30 @@ class FuturisticInterface {
             const organism = this.extractOrganism(result);
             const sampleCount = this.formatSampleCount(result.sample_count);
             const studyTitle = this.extractStudyTitle(result);
-            
+
             html += `
                 <div class="result-item dataset-item" data-index="${index}">
                     <div class="dataset-header">
                         <div class="dataset-title-row">
                             <h5 class="dataset-title">
-                                <a href="https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=${geoId}" 
+                                <a href="https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=${geoId}"
                                    target="_blank" title="View on NCBI GEO" class="geo-link">
                                     📊 ${this.escapeHtml(studyTitle)}
                                 </a>
                             </h5>
                             <div class="dataset-actions">
-                                <a href="https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=${geoId}" 
+                                <a href="https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=${geoId}"
                                    target="_blank" title="View on NCBI GEO" class="btn btn-external">
                                     🔗 View GEO
                                 </a>
-                                <button class="btn-abstract-toggle" onclick="window.futuristicInterface.toggleAbstract(${index})" 
+                                <button class="btn-abstract-toggle" onclick="window.futuristicInterface.toggleAbstract(${index})"
                                         title="Show/Hide Raw Abstract">
                                     <span class="abstract-toggle-icon">📄</span>
                                     <span class="abstract-toggle-text">Show Raw Abstract</span>
                                 </button>
                             </div>
                         </div>
-                        
+
                         <div class="dataset-metadata-compact">
                             <span class="meta-badge geo-badge">
                                 <span class="meta-icon">🆔</span>
@@ -411,12 +411,12 @@ class FuturisticInterface {
                             ` : ''}
                         </div>
                     </div>
-                    
+
                     <!-- AI Summary (Displayed by Default) -->
                     <div class="dataset-ai-summary">
                         ${this.generateAISummarySection(result, aiSummaries, index)}
                     </div>
-                    
+
                     <!-- Raw Abstract (Hidden by Default) -->
                     <div class="dataset-abstract" id="abstract-${index}" style="display: none;">
                         <div class="abstract-content">
@@ -429,11 +429,11 @@ class FuturisticInterface {
                 </div>
             `;
         });
-        
+
         html += '</div></div>';
-        
+
         resultsDiv.innerHTML = html;
-        
+
         // Update live updates
         this.addLiveUpdate(`🔍 Found ${results.length} datasets from NCBI GEO for "${data.expanded_query || 'query'}"`);
         if (aiSummaries && Object.keys(aiSummaries).length > 0) {
@@ -447,13 +447,13 @@ class FuturisticInterface {
         if (result.organism && result.organism !== 'Unknown' && result.organism.trim() !== '') {
             return result.organism;
         }
-        
+
         // Check title and description for common organism indicators
         const text = ((result.title || '') + ' ' + (result.description || '')).toLowerCase();
-        
+
         // Human indicators - prioritize human matches for cancer/medical studies
-        if (text.includes('human') || text.includes('homo sapiens') || text.includes('patient') || 
-            text.includes('clinical') || text.includes('cancer') || text.includes('tumor') || 
+        if (text.includes('human') || text.includes('homo sapiens') || text.includes('patient') ||
+            text.includes('clinical') || text.includes('cancer') || text.includes('tumor') ||
             text.includes('carcinoma') || text.includes('malignancy') || text.includes('leukemia') ||
             text.includes('glioblastoma') || text.includes('astrocytoma') || text.includes('myeloid') ||
             text.includes('brain') || text.includes('lung cancer') || text.includes('nsclc') ||
@@ -461,38 +461,38 @@ class FuturisticInterface {
             text.includes('mda-mb') || text.includes('hek') || text.includes('hela') || text.includes('mcf')) {
             return 'Homo sapiens';
         }
-        
+
         // Mouse indicators
         if (text.includes('mouse') || text.includes('mus musculus') || text.includes('murine') ||
             text.includes('c57bl') || text.includes('balb/c')) {
             return 'Mus musculus';
         }
-        
+
         // Rat indicators
         if (text.includes('rat') || text.includes('rattus norvegicus') || text.includes('sprague')) {
             return 'Rattus norvegicus';
         }
-        
+
         // Drosophila indicators
         if (text.includes('drosophila') || text.includes('fly') || text.includes('d. melanogaster')) {
             return 'Drosophila melanogaster';
         }
-        
+
         // Yeast indicators
         if (text.includes('yeast') || text.includes('saccharomyces') || text.includes('s. cerevisiae')) {
             return 'Saccharomyces cerevisiae';
         }
-        
+
         // C. elegans indicators
         if (text.includes('elegans') || text.includes('caenorhabditis') || text.includes('worm')) {
             return 'Caenorhabditis elegans';
         }
-        
+
         // Cell line indicators (assume human if cell line mentioned)
         if (text.includes('cell line') || text.includes('cell culture') || text.includes('cultured cells')) {
             return 'Homo sapiens (cell line)';
         }
-        
+
         return 'Not specified';
     }
 
@@ -510,21 +510,21 @@ class FuturisticInterface {
     filterDuplicateResults(results) {
         const seen = new Set();
         const filtered = [];
-        
+
         for (const result of results) {
             // Create a composite key for deduplication
             const geoId = this.extractGeoId(result);
             const title = this.extractStudyTitle(result);
             const titleWords = title.toLowerCase().split(' ').slice(0, 5).join(' '); // First 5 words
             const sampleCount = result.sample_count || 0;
-            
+
             // Use multiple criteria for duplicate detection
             const keys = [
                 geoId,
                 `${titleWords}_${sampleCount}`,
                 result.id
             ];
-            
+
             let isDuplicate = false;
             for (const key of keys) {
                 if (seen.has(key)) {
@@ -532,43 +532,43 @@ class FuturisticInterface {
                     break;
                 }
             }
-            
+
             if (!isDuplicate) {
                 // Add all keys to seen set
                 keys.forEach(key => seen.add(key));
                 filtered.push(result);
             }
         }
-        
+
         return filtered;
     }
 
     extractGeoId(result) {
         // Extract proper GEO accession number (GSE, GDS, etc.)
-        
+
         // First check standard fields for GEO IDs
         if (result.accession && result.accession.match(/^G[SD][ES]\d+/)) {
             return result.accession;
         }
-        
+
         if (result.id && result.id.match(/^G[SD][ES]\d+/)) {
             return result.id;
         }
-        
+
         // Look for GEO ID in title or description
         const text = (result.title || '') + ' ' + (result.description || '');
         const geoMatch = text.match(/\b(G[SD][ES]\d+)\b/);
         if (geoMatch) {
             return geoMatch[1];
         }
-        
+
         // Generate realistic GEO IDs based on known patterns
         const datasetPatterns = [
             'GSE151469', 'GSE134946', 'GSE191778', 'GSE196502', 'GSE165828',
             'GSE167701', 'GSE163854', 'GSE188321', 'GSE159462', 'GSE179234',
             'GSE145689', 'GSE172845', 'GSE184065', 'GSE156723', 'GSE198456'
         ];
-        
+
         // Create a hash from the result data to consistently map to the same GEO ID
         let hash = 0;
         const hashString = (result.title || '') + (result.description || '') + (result.sample_count || 0);
@@ -577,7 +577,7 @@ class FuturisticInterface {
             hash = ((hash << 5) - hash) + char;
             hash = hash & hash;
         }
-        
+
         // Use hash to select from realistic patterns
         const index = Math.abs(hash) % datasetPatterns.length;
         return datasetPatterns[index];
@@ -588,10 +588,10 @@ class FuturisticInterface {
         if (result.study_title && result.study_title !== 'Unknown' && result.study_title.trim() !== '') {
             return result.study_title;
         }
-        
+
         if (result.title && result.title !== 'Unknown' && result.title.trim() !== '') {
             let title = result.title;
-            
+
             // Clean up common GEO prefixes and make more readable
             title = title.replace(/^Expression profiling by array\s*:?\s*/i, '');
             title = title.replace(/^Expression profiling by high throughput sequencing\s*:?\s*/i, '');
@@ -599,31 +599,31 @@ class FuturisticInterface {
             title = title.replace(/^Methylation profiling by array\s*:?\s*/i, '');
             title = title.replace(/^SNP genotyping by SNP array\s*:?\s*/i, '');
             title = title.replace(/^\[.*?\]\s*/, ''); // Remove bracketed prefixes
-            
+
             // Ensure title is not empty after cleaning
             if (title.trim().length > 0) {
                 return title.trim();
             }
         }
-        
+
         // Generate a descriptive title from description if available
         if (result.description && result.description.length > 10) {
             let desc = result.description;
-            
+
             // Try to extract the first sentence or up to 100 characters
             const firstSentence = desc.split('.')[0];
             if (firstSentence.length < 100 && firstSentence.length > 10) {
                 return firstSentence.trim() + (desc.includes('.') ? '.' : '');
             }
-            
+
             // Fallback to first 80 characters
             if (desc.length > 80) {
                 return desc.substring(0, 80).trim() + '...';
             }
-            
+
             return desc.trim();
         }
-        
+
         // Fallback to generating a title from available data
         const geoId = this.extractGeoId(result);
         const organism = this.extractOrganism(result);
@@ -634,13 +634,13 @@ class FuturisticInterface {
         const organism = this.extractOrganism(result);
         const samples = this.formatSampleCount(result.sample_count);
         const geoId = this.extractGeoId(result);
-        
+
         let summary = `<div class="dataset-quick-info">`;
         summary += `<span class="info-badge">🆔 ${geoId}</span>`;
         summary += `<span class="info-badge">🧬 ${organism}</span>`;
         summary += `<span class="info-badge">🧪 ${samples} samples</span>`;
         summary += `</div>`;
-        
+
         return summary;
     }
 
@@ -649,7 +649,7 @@ class FuturisticInterface {
         const toggleBtn = document.querySelector(`[onclick="window.futuristicInterface.toggleAbstract(${index})"]`);
         const toggleText = toggleBtn?.querySelector('.abstract-toggle-text');
         const toggleIcon = toggleBtn?.querySelector('.abstract-toggle-icon');
-        
+
         if (abstractDiv && toggleBtn) {
             if (abstractDiv.style.display === 'none') {
                 abstractDiv.style.display = 'block';
@@ -761,7 +761,7 @@ class FuturisticInterface {
                 const theme = option.dataset.theme;
                 this.applyTheme(theme);
                 localStorage.setItem('omics-oracle-theme', theme);
-                
+
                 // Update active state
                 themeOptions.forEach(opt => opt.classList.remove('active'));
                 option.classList.add('active');
@@ -778,15 +778,15 @@ class FuturisticInterface {
 
     applyTheme(themeName) {
         const body = document.body;
-        
+
         // Remove any existing theme
         body.removeAttribute('data-theme');
-        
+
         // Apply new theme (except for default)
         if (themeName && themeName !== 'default') {
             body.setAttribute('data-theme', themeName);
         }
-        
+
         console.log(`[THEME] Applied theme: ${themeName}`);
     }
 }

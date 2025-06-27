@@ -23,8 +23,9 @@ sys.path.insert(0, str(root_dir))
 sys.path.insert(0, str(root_dir / "src"))
 
 try:
-    from omics_oracle.pipeline.pipeline import OmicsOracle
     from omics_oracle.core.config import Config
+    from omics_oracle.pipeline.pipeline import OmicsOracle
+
     PIPELINE_AVAILABLE = True
     logger.info("OmicsOracle pipeline imports successful")
 except ImportError as e:
@@ -73,13 +74,12 @@ pipeline_instance = None
 async def get_pipeline():
     """Get or initialize the OmicsOracle pipeline"""
     global pipeline_instance
-    
+
     if not PIPELINE_AVAILABLE:
         raise HTTPException(
-            status_code=503,
-            detail="OmicsOracle pipeline not available"
+            status_code=503, detail="OmicsOracle pipeline not available"
         )
-    
+
     if pipeline_instance is None:
         try:
             config = Config()
@@ -89,9 +89,9 @@ async def get_pipeline():
             logger.error(f"Failed to initialize pipeline: {e}")
             raise HTTPException(
                 status_code=503,
-                detail=f"Failed to initialize pipeline: {str(e)}"
+                detail=f"Failed to initialize pipeline: {str(e)}",
             )
-    
+
     return pipeline_instance
 
 
@@ -110,49 +110,59 @@ def create_api_router(config: EnhancedConfig) -> APIRouter:
             if PIPELINE_AVAILABLE:
                 # Use real OmicsOracle pipeline
                 pipeline = await get_pipeline()
-                
+
                 # Execute search with real NCBI GEO data
                 logger.info(f"Searching for: {request.query}")
-                
+
                 pipeline_result = await pipeline.process_query(
                     query=request.query,
                     max_results=request.max_results,
-                    include_sra=request.include_sra
+                    include_sra=request.include_sra,
                 )
-                
+
                 if pipeline_result.is_failed:
-                    logger.error(f"Pipeline search failed: {pipeline_result.error}")
+                    logger.error(
+                        f"Pipeline search failed: {pipeline_result.error}"
+                    )
                     return {
                         "results": [],
                         "status": "error",
                         "message": f"Search failed: {pipeline_result.error}",
-                        "ai_summaries": None
+                        "ai_summaries": None,
                     }
-                
+
                 # Convert pipeline results to API format
                 search_results = []
                 for i, dataset in enumerate(pipeline_result.metadata):
-                    search_results.append(SearchResult(
-                        id=dataset.get("accession", dataset.get("id", f"dataset_{i}")),
-                        title=dataset.get("title", "Unknown Dataset"),
-                        description=dataset.get("summary", "No description available"),
-                        relevance_score=dataset.get("relevance_score", 0.8),
-                        source="NCBI GEO",
-                        timestamp=datetime.now().isoformat(),
-                        organism=dataset.get("organism"),
-                        platform=dataset.get("platform"),
-                        sample_count=dataset.get("sample_count"),
-                        publication_date=dataset.get("submission_date"),
-                    ))
-                
+                    search_results.append(
+                        SearchResult(
+                            id=dataset.get(
+                                "accession", dataset.get("id", f"dataset_{i}")
+                            ),
+                            title=dataset.get("title", "Unknown Dataset"),
+                            description=dataset.get(
+                                "summary", "No description available"
+                            ),
+                            relevance_score=dataset.get("relevance_score", 0.8),
+                            source="NCBI GEO",
+                            timestamp=datetime.now().isoformat(),
+                            organism=dataset.get("organism"),
+                            platform=dataset.get("platform"),
+                            sample_count=dataset.get("sample_count"),
+                            publication_date=dataset.get("submission_date"),
+                        )
+                    )
+
                 # Store in history
-                search_history.append({
-                    "query": request.query,
-                    "timestamp": datetime.now().isoformat(),
-                    "results_count": len(search_results),
-                    "processing_time": pipeline_result.duration,
-                })
-                
+                search_history.append(
+                    {
+                        "query": request.query,
+                        "timestamp": datetime.now().isoformat(),
+                        "results_count": len(search_results),
+                        "processing_time": pipeline_result.duration,
+                    }
+                )
+
                 return {
                     "results": [result.dict() for result in search_results],
                     "status": "success",
@@ -162,18 +172,18 @@ def create_api_router(config: EnhancedConfig) -> APIRouter:
                     "ai_summaries": pipeline_result.ai_summaries,
                     "total_found": len(pipeline_result.metadata),
                 }
-                
+
             else:
                 # Fallback to mock results if pipeline not available
                 return await _fallback_search(request, config)
-                
+
         except Exception as e:
             logger.error(f"Search error: {e}")
             return {
                 "results": [],
                 "status": "error",
                 "message": f"Search error: {str(e)}",
-                "ai_summaries": None
+                "ai_summaries": None,
             }
 
     @router.post("/summarize")
@@ -186,9 +196,9 @@ def create_api_router(config: EnhancedConfig) -> APIRouter:
 
     async def _fallback_search(request: SearchRequest, config: EnhancedConfig):
         """Fallback search with mock results when pipeline unavailable"""
-        
+
         await asyncio.sleep(1)  # Simulate processing time
-        
+
         mock_results = [
             SearchResult(
                 id=f"mock_result_{i}",
@@ -205,11 +215,13 @@ def create_api_router(config: EnhancedConfig) -> APIRouter:
             for i in range(min(3, request.max_results))
         ]
 
-        search_history.append({
-            "query": request.query,
-            "timestamp": datetime.now().isoformat(),
-            "results_count": len(mock_results),
-        })
+        search_history.append(
+            {
+                "query": request.query,
+                "timestamp": datetime.now().isoformat(),
+                "results_count": len(mock_results),
+            }
+        )
 
         return {
             "results": [result.dict() for result in mock_results],

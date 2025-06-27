@@ -27,13 +27,13 @@ fi
 if command -v node &> /dev/null; then
     NODE_VERSION=$(node --version)
     echo "🟢 Node.js detected: $NODE_VERSION"
-    
+
     # Check if dependencies are installed
     if [ ! -d "node_modules" ]; then
         echo "📦 Installing Node.js dependencies..."
         npm install
     fi
-    
+
     # Start development mode if package.json exists
     if [ -f "package.json" ]; then
         echo "🛠️  Development mode available"

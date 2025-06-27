@@ -1,6 +1,6 @@
 /**
  * Enhanced Futuristic Interface JavaScript
- * 
+ *
  * Advanced client-side functionality for the next-generation OmicsOracle interface
  * Features:
  * - Clean Architecture backend integration
@@ -23,7 +23,7 @@ class EnhancedFuturisticInterface {
 
         // Chart.js instances for visualizations
         this.charts = new Map();
-        
+
         // API configuration
         this.apiConfig = {
             baseUrl: window.location.origin,
@@ -43,7 +43,7 @@ class EnhancedFuturisticInterface {
         // Auto-detect backend URL based on environment
         const hostname = window.location.hostname;
         const protocol = window.location.protocol;
-        
+
         if (hostname === 'localhost' || hostname === '127.0.0.1') {
             return `${protocol}//${hostname}:8000`;
         }
@@ -57,19 +57,19 @@ class EnhancedFuturisticInterface {
         try {
             // Setup UI components first
             this.setupUI();
-            
+
             // Setup event listeners
             this.setupEventListeners();
-            
+
             // Connect WebSocket
             await this.connectWebSocket();
-            
+
             // Check system status
             await this.checkSystemStatus();
-            
+
             // Initialize enhanced features
             this.initEnhancedFeatures();
-            
+
             console.log('[✅ SUCCESS] Enhanced interface initialization complete');
         } catch (error) {
             console.error('[❌ ERROR] Failed to initialize interface:', error);
@@ -81,10 +81,10 @@ class EnhancedFuturisticInterface {
         // Enhanced status indicators
         this.updateStatus('backend-status', 'checking', 'Backend: Checking...');
         this.updateStatus('websocket-status', 'connecting', 'WebSocket: Connecting...');
-        
+
         // Setup enhanced search form
         this.setupSearchForm();
-        
+
         // Setup system monitoring
         this.setupSystemMonitoring();
     }
@@ -137,11 +137,11 @@ class EnhancedFuturisticInterface {
         try {
             const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
             const wsUrl = `${wsProtocol}//${window.location.host}/ws/${this.clientId}`;
-            
+
             console.log(`[📡 WEBSOCKET] Connecting to: ${wsUrl}`);
-            
+
             this.websocket = new WebSocket(wsUrl);
-            
+
             this.websocket.onopen = (event) => {
                 console.log('[✅ WEBSOCKET] Connected successfully');
                 this.isConnected = true;
@@ -269,12 +269,12 @@ class EnhancedFuturisticInterface {
                 ...options,
                 signal: controller.signal
             });
-            
+
             clearTimeout(timeout);
             return response;
         } catch (error) {
             clearTimeout(timeout);
-            
+
             if (error.name === 'AbortError') {
                 throw new Error('Request timeout');
             }
@@ -317,7 +317,7 @@ class EnhancedFuturisticInterface {
 
         // Display results
         if (result.results && result.results.length > 0) {
-            resultsContainer.innerHTML = result.results.map((dataset, index) => 
+            resultsContainer.innerHTML = result.results.map((dataset, index) =>
                 this.renderEnhancedDatasetCard(dataset, index)
             ).join('');
         } else {
@@ -369,9 +369,9 @@ class EnhancedFuturisticInterface {
     async checkSystemStatus() {
         try {
             console.log('[⚙️ SYSTEM] Checking system status...');
-            
+
             const response = await this.makeApiRequest('/api/v2/health');
-            
+
             if (response.ok) {
                 const health = await response.json();
                 this.updateSystemStatus(health);
@@ -391,7 +391,7 @@ class EnhancedFuturisticInterface {
     async updateCacheStats() {
         try {
             const response = await this.makeApiRequest('/api/v2/system/cache/stats');
-            
+
             if (response.ok) {
                 const stats = await response.json();
                 this.displayCacheStats(stats);
@@ -421,16 +421,16 @@ class EnhancedFuturisticInterface {
 
     initEnhancedFeatures() {
         console.log('[🎯 ENHANCED] Initializing enhanced features...');
-        
+
         // Initialize real-time monitoring
         this.setupRealtimeMonitoring();
-        
+
         // Initialize advanced visualizations
         this.setupAdvancedVisualizations();
-        
+
         // Initialize keyboard shortcuts
         this.setupKeyboardShortcuts();
-        
+
         // Initialize theme management
         this.setupThemeManagement();
     }
@@ -447,7 +447,7 @@ class EnhancedFuturisticInterface {
         // Update real-time status indicator
         const realtimeStatus = document.getElementById('realtime-status');
         if (realtimeStatus) {
-            realtimeStatus.innerHTML = this.isConnected ? 
+            realtimeStatus.innerHTML = this.isConnected ?
                 '<span class="status-indicator connected">🟢 Active</span>' :
                 '<span class="status-indicator disconnected">🔴 Inactive</span>';
         }
@@ -464,7 +464,7 @@ class EnhancedFuturisticInterface {
                     searchInput.select();
                 }
             }
-            
+
             // Escape to clear search
             if (e.key === 'Escape') {
                 const searchInput = document.getElementById('search-input');
@@ -487,7 +487,7 @@ class EnhancedFuturisticInterface {
 
     showError(title, message) {
         console.error(`[❌ ERROR] ${title}: ${message}`);
-        
+
         // You could implement a toast notification system here
         // For now, we'll use a simple alert
         alert(`${title}: ${message}`);
@@ -515,7 +515,7 @@ class EnhancedFuturisticInterface {
         if (this.websocket) {
             this.websocket.close();
         }
-        
+
         // Clear any intervals or timeouts
         if (this.heartbeatInterval) {
             clearInterval(this.heartbeatInterval);

@@ -13,7 +13,9 @@ from typing import Dict, List
 from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
 
 from .models import (
+    AISummary,
     AnalyzeRequest,
+    BatchAISummary,
     BatchRequest,
     BatchResult,
     ConfigResponse,
@@ -23,10 +25,8 @@ from .models import (
     SearchRequest,
     SearchResult,
     StatusResponse,
-    WebSocketMessage,
     SummarizeRequest,
-    AISummary,
-    BatchAISummary,
+    WebSocketMessage,
 )
 
 logger = logging.getLogger(__name__)
@@ -74,10 +74,49 @@ manager = ConnectionManager()
 
 
 # Search endpoints
+def validate_search_input(request: SearchRequest):
+    """Validate search request input for security."""
+    import re
+
+    # Basic input sanitization
+    if not request.query or len(request.query.strip()) == 0:
+        raise HTTPException(status_code=400, detail="Query cannot be empty")
+
+    if len(request.query) > 1000:
+        raise HTTPException(
+            status_code=400, detail="Query too long (max 1000 characters)"
+        )
+
+    # Check for potential SQL injection patterns
+    sql_patterns = [
+        r"('|(\\')|(\\\\')|(;|\s;)",
+        r"((union)|(select)|(insert)|(update)|(delete)|(drop)|(create)|(alter))\s",
+        r"(script|javascript|vbscript|onload|onerror)",
+    ]
+
+    query_lower = request.query.lower()
+    for pattern in sql_patterns:
+        if re.search(pattern, query_lower):
+            raise HTTPException(
+                status_code=400, detail="Invalid characters detected in query"
+            )
+
+    # Validate max_results range
+    if request.max_results and (
+        request.max_results < 1 or request.max_results > 1000
+    ):
+        raise HTTPException(
+            status_code=400, detail="max_results must be between 1 and 1000"
+        )
+
+
 @search_router.post("/search", response_model=SearchResult)
 async def search_datasets(request: SearchRequest):
     """Search GEO datasets with natural language query."""
     try:
+        # Validate input
+        validate_search_input(request)
+
         from .main import active_queries, pipeline
 
         if not pipeline:
@@ -336,7 +375,10 @@ async def process_batch(request: BatchRequest):
                     )
 
                     # Convert entities and metadata
-                    for entity_type, entity_list in pipeline_result.entities.items():
+                    for (
+                        entity_type,
+                        entity_list,
+                    ) in pipeline_result.entities.items():
                         for entity in entity_list:
                             search_result.entities.append(
                                 EntityInfo(

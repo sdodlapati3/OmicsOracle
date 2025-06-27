@@ -66,7 +66,9 @@ async def lifespan(app: FastAPI):
         startup_time = asyncio.get_event_loop().time()
 
         logger.info("[OK] Futuristic Interface initialized successfully")
-        logger.info("[SECURITY] Legacy pipeline available as processing backend")
+        logger.info(
+            "[SECURITY] Legacy pipeline available as processing backend"
+        )
 
         yield
 

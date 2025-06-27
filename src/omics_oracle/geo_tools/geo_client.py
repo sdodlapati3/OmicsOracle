@@ -382,7 +382,7 @@ class UnifiedGEOClient:
                     verify_ssl=False,  # Disable SSL for testing
                 )
                 logger.info(
-                    f"Direct NCBI client initialized with email {self.config.ncbi.email} "
+                    "Direct NCBI client initialized "
                     "(SSL verification disabled)"
                 )
             except Exception as e:
@@ -390,21 +390,7 @@ class UnifiedGEOClient:
                 self.ncbi_client = None
         else:
             logger.warning("NCBI client not available - no email configured")
-            # Set a default email in the config
-            setattr(self.config.ncbi, "email", "omicsoracle@example.com")
-            try:
-                self.ncbi_client = NCBIDirectClient(
-                    email=self.config.ncbi.email,
-                    api_key=self.config.ncbi.api_key,
-                    verify_ssl=False,  # Disable SSL for testing
-                )
-                logger.info(
-                    f"Direct NCBI client initialized with default email {self.config.ncbi.email} "
-                    "(SSL verification disabled)"
-                )
-            except Exception as e:
-                logger.error("Failed to initialize NCBI client with default email: %s", str(e))
-                self.ncbi_client = None
+            self.ncbi_client = None
 
         if not HAS_PYSRADB:
             logger.warning("SRA client not available")

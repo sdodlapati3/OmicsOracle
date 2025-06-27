@@ -44,15 +44,23 @@ DEBUG_MODE = os.getenv("DEBUG_MODE", "false").lower() == "true"
 
 class EnhancedSearchRequest(BaseModel):
     """Enhanced search request with v2 API features"""
+
     query: str = Field(..., description="Search query for biomedical datasets")
-    filters: Optional[Dict[str, Any]] = Field(None, description="Search filters")
-    include_metadata: bool = Field(True, description="Include enhanced metadata")
+    filters: Optional[Dict[str, Any]] = Field(
+        None, description="Search filters"
+    )
+    include_metadata: bool = Field(
+        True, description="Include enhanced metadata"
+    )
     max_results: int = Field(10, description="Maximum number of results")
-    search_type: str = Field("enhanced", description="Search type: basic, enhanced, or comprehensive")
+    search_type: str = Field(
+        "enhanced", description="Search type: basic, enhanced, or comprehensive"
+    )
 
 
 class EnhancedSearchResponse(BaseModel):
     """Enhanced search response with v2 API features"""
+
     query: str
     results: List[Dict[str, Any]]
     total_found: int
@@ -64,18 +72,20 @@ class EnhancedSearchResponse(BaseModel):
 
 class WebSocketManager:
     """Enhanced WebSocket manager for real-time communication"""
-    
+
     def __init__(self):
         self.active_connections: Dict[str, WebSocket] = {}
         self.client_data: Dict[str, Dict[str, Any]] = {}
-    
+
     async def connect(self, websocket: WebSocket, client_id: str):
         """Connect a new WebSocket client"""
         await websocket.accept()
         self.active_connections[client_id] = websocket
-        self.client_data[client_id] = {"connected_at": asyncio.get_event_loop().time()}
+        self.client_data[client_id] = {
+            "connected_at": asyncio.get_event_loop().time()
+        }
         logger.info(f"WebSocket client {client_id} connected")
-    
+
     def disconnect(self, client_id: str):
         """Disconnect a WebSocket client"""
         if client_id in self.active_connections:
@@ -83,7 +93,7 @@ class WebSocketManager:
         if client_id in self.client_data:
             del self.client_data[client_id]
         logger.info(f"WebSocket client {client_id} disconnected")
-    
+
     async def send_personal_message(self, message: dict, client_id: str):
         """Send a message to a specific client"""
         if client_id in self.active_connections:
@@ -92,12 +102,12 @@ class WebSocketManager:
             except Exception as e:
                 logger.error(f"Error sending message to {client_id}: {e}")
                 self.disconnect(client_id)
-    
+
     async def broadcast(self, message: dict):
         """Broadcast a message to all connected clients"""
         if not self.active_connections:
             return
-        
+
         disconnected_clients = []
         for client_id, websocket in self.active_connections.items():
             try:
@@ -105,7 +115,7 @@ class WebSocketManager:
             except Exception as e:
                 logger.error(f"Error broadcasting to {client_id}: {e}")
                 disconnected_clients.append(client_id)
-        
+
         # Clean up disconnected clients
         for client_id in disconnected_clients:
             self.disconnect(client_id)
@@ -117,14 +127,11 @@ websocket_manager = WebSocketManager()
 
 class BackendClient:
     """HTTP client for Clean Architecture backend"""
-    
+
     def __init__(self, base_url: str = BACKEND_URL):
         self.base_url = base_url
-        self.client = httpx.AsyncClient(
-            timeout=30.0,
-            follow_redirects=True
-        )
-    
+        self.client = httpx.AsyncClient(timeout=30.0, follow_redirects=True)
+
     async def health_check(self) -> Dict[str, Any]:
         """Check backend health"""
         try:
@@ -134,32 +141,38 @@ class BackendClient:
         except Exception as e:
             logger.error(f"Backend health check failed: {e}")
             return {"status": "error", "message": str(e)}
-    
-    async def search_datasets(self, request: EnhancedSearchRequest) -> Dict[str, Any]:
+
+    async def search_datasets(
+        self, request: EnhancedSearchRequest
+    ) -> Dict[str, Any]:
         """Search datasets using v2 API"""
         try:
             if request.search_type == "enhanced":
                 endpoint = f"{self.base_url}/api/v2/search/enhanced"
             else:
                 endpoint = f"{self.base_url}/api/v2/search"
-            
+
             response = await self.client.post(endpoint, json=request.dict())
             response.raise_for_status()
             return response.json()
         except Exception as e:
             logger.error(f"Search request failed: {e}")
-            raise HTTPException(status_code=500, detail=f"Search failed: {str(e)}")
-    
+            raise HTTPException(
+                status_code=500, detail=f"Search failed: {str(e)}"
+            )
+
     async def get_cache_stats(self) -> Dict[str, Any]:
         """Get cache statistics"""
         try:
-            response = await self.client.get(f"{self.base_url}/api/v2/system/cache/stats")
+            response = await self.client.get(
+                f"{self.base_url}/api/v2/system/cache/stats"
+            )
             response.raise_for_status()
             return response.json()
         except Exception as e:
             logger.error(f"Cache stats request failed: {e}")
             return {"error": str(e)}
-    
+
     async def close(self):
         """Close the HTTP client"""
         await self.client.aclose()
@@ -173,7 +186,7 @@ backend_client = BackendClient()
 async def lifespan(app: FastAPI):
     """Application lifespan management"""
     logger.info("Starting Enhanced Futuristic Interface")
-    
+
     # Startup
     try:
         # Check backend connectivity
@@ -181,9 +194,9 @@ async def lifespan(app: FastAPI):
         logger.info(f"Backend health: {health}")
     except Exception as e:
         logger.warning(f"Backend connectivity issue: {e}")
-    
+
     yield
-    
+
     # Shutdown
     logger.info("Shutting down Enhanced Futuristic Interface")
     await backend_client.close()
@@ -195,13 +208,15 @@ app = FastAPI(
     description="Next-generation biomedical research platform with Clean Architecture integration",
     version="2.0.0",
     lifespan=lifespan,
-    debug=DEBUG_MODE
+    debug=DEBUG_MODE,
 )
 
 # Enhanced CORS configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"] if DEBUG_MODE else ["http://localhost:3000", "http://localhost:8001"],
+    allow_origins=["*"]
+    if DEBUG_MODE
+    else ["http://localhost:3000", "http://localhost:8001"],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
@@ -249,7 +264,7 @@ async def home():
                     </div>
                 </div>
             </header>
-            
+
             <main class="main-content">
                 <div class="search-section">
                     <h2>🔍 Enhanced Search</h2>
@@ -269,13 +284,13 @@ async def home():
                         <button id="search-btn" class="search-btn">Search Datasets</button>
                     </div>
                 </div>
-                
+
                 <div class="results-section" id="results-section" style="display: none;">
                     <h2>📊 Search Results</h2>
                     <div class="results-metadata" id="results-metadata"></div>
                     <div class="results-container" id="results-container"></div>
                 </div>
-                
+
                 <div class="system-section">
                     <h2>⚙️ System Status</h2>
                     <div class="system-grid">
@@ -295,7 +310,7 @@ async def home():
                 </div>
             </main>
         </div>
-        
+
         <script src="/static/js/futuristic-interface.js"></script>
         <script>
             // Initialize enhanced interface
@@ -313,15 +328,15 @@ async def home():
 async def enhanced_search(
     request: EnhancedSearchRequest,
     backend: BackendClient = Depends(get_backend_client),
-    background_tasks: BackgroundTasks = BackgroundTasks()
+    background_tasks: BackgroundTasks = BackgroundTasks(),
 ):
     """Enhanced search with Clean Architecture backend integration"""
     logger.info(f"Enhanced search request: {request.query}")
-    
+
     try:
         # Send search request to backend
         result = await backend.search_datasets(request)
-        
+
         # Broadcast search event to WebSocket clients
         background_tasks.add_task(
             websocket_manager.broadcast,
@@ -329,19 +344,19 @@ async def enhanced_search(
                 "type": "search_completed",
                 "query": request.query,
                 "results_count": len(result.get("datasets", [])),
-                "timestamp": asyncio.get_event_loop().time()
-            }
+                "timestamp": asyncio.get_event_loop().time(),
+            },
         )
-        
+
         return EnhancedSearchResponse(
             query=request.query,
             results=result.get("datasets", []),
             total_found=len(result.get("datasets", [])),
             search_time=result.get("search_time", 0.0),
             metadata=result.get("metadata"),
-            timestamp=asyncio.get_event_loop().time()
+            timestamp=asyncio.get_event_loop().time(),
         )
-    
+
     except Exception as e:
         logger.error(f"Enhanced search failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -351,14 +366,14 @@ async def enhanced_search(
 async def health_check(backend: BackendClient = Depends(get_backend_client)):
     """Enhanced health check"""
     backend_health = await backend.health_check()
-    
+
     return {
         "interface_status": "healthy",
         "backend_status": backend_health.get("status", "unknown"),
         "websocket_connections": len(websocket_manager.active_connections),
         "backend_url": BACKEND_URL,
         "version": "2.0.0",
-        "timestamp": asyncio.get_event_loop().time()
+        "timestamp": asyncio.get_event_loop().time(),
     }
 
 
@@ -372,7 +387,7 @@ async def get_cache_stats(backend: BackendClient = Depends(get_backend_client)):
 async def websocket_endpoint(websocket: WebSocket, client_id: str):
     """Enhanced WebSocket endpoint for real-time communication"""
     await websocket_manager.connect(websocket, client_id)
-    
+
     try:
         # Send welcome message
         await websocket_manager.send_personal_message(
@@ -380,28 +395,31 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
                 "type": "connection_established",
                 "client_id": client_id,
                 "message": "Connected to Enhanced Interface",
-                "timestamp": asyncio.get_event_loop().time()
+                "timestamp": asyncio.get_event_loop().time(),
             },
-            client_id
+            client_id,
         )
-        
+
         while True:
             # Listen for client messages
             data = await websocket.receive_json()
-            
+
             # Handle different message types
             if data.get("type") == "ping":
                 await websocket_manager.send_personal_message(
-                    {"type": "pong", "timestamp": asyncio.get_event_loop().time()},
-                    client_id
+                    {
+                        "type": "pong",
+                        "timestamp": asyncio.get_event_loop().time(),
+                    },
+                    client_id,
                 )
             elif data.get("type") == "subscribe":
                 # Handle subscription to specific events
                 await websocket_manager.send_personal_message(
                     {"type": "subscribed", "event": data.get("event")},
-                    client_id
+                    client_id,
                 )
-            
+
     except WebSocketDisconnect:
         websocket_manager.disconnect(client_id)
     except Exception as e:
@@ -415,5 +433,5 @@ if __name__ == "__main__":
         host="0.0.0.0",
         port=INTERFACE_PORT,
         reload=DEBUG_MODE,
-        log_level="info" if DEBUG_MODE else "warning"
+        log_level="info" if DEBUG_MODE else "warning",
     )
