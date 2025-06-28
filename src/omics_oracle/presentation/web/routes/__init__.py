@@ -6,8 +6,10 @@ versioned APIs and legacy compatibility routes.
 """
 
 import logging
+from pathlib import Path
 
 from fastapi import FastAPI
+from fastapi.responses import FileResponse
 
 from .analysis import router as analysis_router
 from .enhanced_search import router as enhanced_search_router
@@ -39,31 +41,17 @@ def setup_routes(app: FastAPI) -> None:
 
     app.include_router(v2_router, prefix="/api", tags=["v2", "advanced"])
 
-    # Default route for API version discovery
+    # Default route to serve the web interface
     @app.get("/", tags=["root"])
     async def root():
-        """Welcome page for OmicsOracle API."""
-        return {
-            "message": "Welcome to OmicsOracle - Genomics Data Analysis Platform",
-            "description": "Natural language queries for NCBI GEO genomics data with AI-powered summarization",
-            "version": "2.0.0",
-            "status": "production",
-            "api_documentation": "/docs",
-            "health_check": "/health",
-            "api_discovery": "/api",
-            "quick_start": {
-                "example_query": "POST /api/v2/query with {'query': 'cancer stem cells'}",
-                "enhanced_search": "GET /api/v2/search/enhanced?query=cancer+stem+cells",
-                "health_status": "GET /health",
-            },
-            "capabilities": [
-                "Enhanced query processing with biomedical NLP",
-                "Semantic search and result ranking",
-                "AI-powered data summarization",
-                "Real-time search enhancement",
-                "Comprehensive genomics data analysis",
-            ],
-        }
+        """Serve the main web interface."""
+        static_dir = Path(__file__).parent.parent / "static"
+        index_path = static_dir / "index.html"
+
+        if index_path.exists():
+            return FileResponse(str(index_path))
+        else:
+            return {"error": "Web interface not found"}
 
     @app.get("/api", tags=["version-discovery"])
     async def api_version_discovery():

@@ -6,10 +6,12 @@ AdvancedSearchEnhancer and EnhancedQueryHandler.
 """
 
 import logging
-from typing import Any, Dict, List, Optional
+from dataclasses import asdict
+from typing import Any, Dict
 
 from fastapi import APIRouter, HTTPException, Query
 
+from ....pipeline.pipeline import OmicsOracle, ResultFormat
 from ....search.advanced_search_enhancer import AdvancedSearchEnhancer
 from ....search.enhanced_query_handler import EnhancedQueryHandler
 
@@ -21,11 +23,10 @@ router = APIRouter(tags=["enhanced-search"])
 # Initialize the enhanced query handler and search enhancer
 query_handler = EnhancedQueryHandler()
 search_enhancer = AdvancedSearchEnhancer()
+omics_oracle = OmicsOracle()
 
 
-@router.get(
-    "/search/enhanced", summary="Enhanced Search with Advanced Features"
-)
+@router.get("/search/enhanced", summary="Enhanced Search with Advanced Features")
 async def enhanced_search(
     query: str = Query(..., description="The search query"),
     limit: int = Query(20, description="Maximum number of results"),
@@ -43,49 +44,22 @@ async def enhanced_search(
     Returns:
         Enhanced search results with additional features
     """
-    logger.info(
-        f"Enhanced search request: query='{query}', limit={limit}, trace={trace}"
-    )
+    logger.info(f"Enhanced search request: query='{query}', limit={limit}, trace={trace}")
 
     try:
-        # Extract query components and enhance the query
-        enhanced_query = query_handler.enhance_query(query)
-        
-        # For now, return a simple response - full integration requires more work
-        # This is a placeholder that allows the server to start properly
-        results = [
-            {
-                "title": f"Enhanced search for: {query}",
-                "description": f"Query enhanced to: {enhanced_query}",
-                "enhanced_query": enhanced_query,
-                "limit": limit,
-                "trace": trace
-            }
-        ]
-
-        # Apply clustering if there are enough results
-        # Simplified clustering for now
-        clusters = {"default": results} if len(results) > 0 else {}
-
-        # Generate query reformulations (simplified)
-        reformulations = [enhanced_query, query]
-
-        # Construct response
-        response = {
-            "query": query,
-            "results": results,
-            "total_results": len(results),
-            "enhanced_query": enhanced_query,
-            "reformulations": reformulations,
-        }
-
-        return response
+        # Use the OmicsOracle pipeline for real enhanced search
+        query_result = await omics_oracle.process_query(
+            query,
+            max_results=limit,
+            result_format=ResultFormat.JSON,
+        )
+        # Convert dataclass to dict for JSON response
+        result_dict = asdict(query_result)
+        return result_dict
 
     except Exception as e:
         logger.error(f"Error in enhanced search: {str(e)}")
-        raise HTTPException(
-            status_code=500, detail=f"Enhanced search error: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Enhanced search error: {str(e)}")
 
 
 @router.get("/query/components", summary="Extract Query Components")
@@ -119,6 +93,4 @@ async def query_components(
 
     except Exception as e:
         logger.error(f"Error extracting query components: {str(e)}")
-        raise HTTPException(
-            status_code=500, detail=f"Component extraction error: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Component extraction error: {str(e)}")

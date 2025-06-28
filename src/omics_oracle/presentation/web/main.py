@@ -6,10 +6,12 @@ with comprehensive middleware and routing.
 """
 
 import logging
+import pathlib
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from ...core.config import Config
 from .dependencies import setup_dependencies
@@ -73,6 +75,12 @@ def create_app() -> FastAPI:
 
     # Setup routes
     setup_routes(app)
+
+    # Mount static files for frontend
+    static_dir = pathlib.Path(__file__).parent / "static"
+    if static_dir.exists():
+        app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
+        logger.info(f"Static files mounted from {static_dir}")
 
     # Setup WebSocket endpoints
     setup_websockets(app)
