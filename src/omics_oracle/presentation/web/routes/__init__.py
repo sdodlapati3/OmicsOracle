@@ -46,12 +46,18 @@ def setup_routes(app: FastAPI) -> None:
     async def root():
         """Serve the main web interface."""
         static_dir = Path(__file__).parent.parent / "static"
-        index_path = static_dir / "index.html"
+        # Use the advanced research intelligence dashboard
+        dashboard_path = static_dir / "research_intelligence_dashboard.html"
 
-        if index_path.exists():
-            return FileResponse(str(index_path))
+        if dashboard_path.exists():
+            return FileResponse(str(dashboard_path))
         else:
-            return {"error": "Web interface not found"}
+            # Fallback to basic index if advanced dashboard not available
+            index_path = static_dir / "index.html"
+            if index_path.exists():
+                return FileResponse(str(index_path))
+            else:
+                return {"error": "Web interface not found"}
 
     @app.get("/api", tags=["version-discovery"])
     async def api_version_discovery():
@@ -80,5 +86,72 @@ def setup_routes(app: FastAPI) -> None:
             "recommended_version": "v2",
             "deprecation_notice": "v1 will be deprecated in 6 months",
         }
+
+    # Additional dashboard routes
+    @app.get("/dashboard/basic", tags=["dashboard"])
+    async def basic_dashboard():
+        """Serve the basic dashboard interface."""
+        static_dir = Path(__file__).parent.parent / "static"
+        index_path = static_dir / "index.html"
+        if index_path.exists():
+            return FileResponse(str(index_path))
+        else:
+            return {"error": "Basic dashboard not found"}
+
+    @app.get("/dashboard/research", tags=["dashboard"])
+    async def research_dashboard():
+        """Serve the research dashboard interface."""
+        static_dir = Path(__file__).parent.parent / "static"
+        dashboard_path = static_dir / "research_dashboard.html"
+        if dashboard_path.exists():
+            return FileResponse(str(dashboard_path))
+        else:
+            return {"error": "Research dashboard not found"}
+
+    @app.get("/dashboard/intelligence", tags=["dashboard"])
+    async def intelligence_dashboard():
+        """Serve the research intelligence dashboard interface."""
+        static_dir = Path(__file__).parent.parent / "static"
+        dashboard_path = static_dir / "research_intelligence_dashboard.html"
+        if dashboard_path.exists():
+            return FileResponse(str(dashboard_path))
+        else:
+            return {"error": "Research intelligence dashboard not found"}
+
+    @app.get("/dashboard/advanced", tags=["dashboard"])
+    async def advanced_dashboard():
+        """Serve the most advanced dashboard interface."""
+        static_dir = Path(__file__).parent.parent / "static"
+        dashboard_path = static_dir / "dashboard.html"
+        if dashboard_path.exists():
+            return FileResponse(str(dashboard_path))
+        else:
+            return {"error": "Advanced dashboard not found"}
+
+    @app.get("/dashboards", tags=["dashboard"])
+    async def list_dashboards():
+        """List all available dashboard interfaces."""
+        static_dir = Path(__file__).parent.parent / "static"
+        dashboards = []
+
+        dashboard_files = {
+            "basic": "index.html",
+            "research": "research_dashboard.html",
+            "intelligence": "research_intelligence_dashboard.html",
+            "advanced": "dashboard.html",
+        }
+
+        for name, filename in dashboard_files.items():
+            file_path = static_dir / filename
+            if file_path.exists():
+                dashboards.append(
+                    {
+                        "name": name,
+                        "url": f"/dashboard/{name}",
+                        "description": f"{name.title()} dashboard interface",
+                    }
+                )
+
+        return {"available_dashboards": dashboards, "default": "/", "current_default": "intelligence"}
 
     logger.info("All routes configured successfully (including v1 & v2 APIs)")
