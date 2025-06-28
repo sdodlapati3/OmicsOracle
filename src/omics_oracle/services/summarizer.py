@@ -40,9 +40,7 @@ class SummarizationService:
         # Initialize OpenAI client
         api_key = os.getenv("OPENAI_API_KEY")
         if not api_key:
-            logger.warning(
-                "OpenAI API key not found. Summarization will use fallback mode."
-            )
+            logger.warning("OpenAI API key not found. AI summarization will be unavailable.")
             self.client = None
         else:
             self.client = OpenAI(api_key=api_key)
@@ -59,7 +57,8 @@ class SummarizationService:
         metadata: Dict[str, Any],
         query_context: Optional[str] = None,
         summary_type: str = "comprehensive",
-    ) -> Dict[str, str]:
+        dataset_id: Optional[str] = None,
+    ) -> Optional[Dict[str, str]]:
         """
         Generate AI-powered summary of a GEO dataset.
 
@@ -67,24 +66,28 @@ class SummarizationService:
             metadata: Dataset metadata from GEO
             query_context: Original user query for context
             summary_type: Type of summary ('brief', 'comprehensive', 'technical')
+            dataset_id: Explicit dataset ID (e.g., geo_id) for cache key generation
 
         Returns:
-            Dictionary with summary components
+            Dictionary with summary components OR None if AI service unavailable
         """
         if not self.client:
-            return self._generate_fallback_summary(metadata)
+            logger.warning("OpenAI client not available - cannot generate real AI summary")
+            return None
 
         # Create cache key based on dataset and query context
-        dataset_id = metadata.get("accession", metadata.get("id", "unknown"))
-        cache_key = (
-            f"{dataset_id}_{query_context or 'no_context'}_{summary_type}"
+        # Use provided dataset_id or fall back to metadata extraction
+        actual_dataset_id = (
+            dataset_id
+            or metadata.get("accession")
+            or metadata.get("id")
+            or metadata.get("geo_id")
+            or "unknown"
         )
+        cache_key = f"{actual_dataset_id}_{query_context or 'no_context'}_{summary_type}"
 
-        # Check cache first
-        cached_summary = self.cache.get(cache_key, "dataset_summary")
-        if cached_summary:
-            logger.info(f"Using cached summary for dataset: {dataset_id}")
-            return cached_summary
+        # CACHE REMOVED: Always generate fresh AI summaries for accurate results
+        logger.info(f"Generating fresh AI summary for dataset: {actual_dataset_id} (cache disabled)")
 
         try:
             # Prepare metadata for summarization
@@ -94,45 +97,46 @@ class SummarizationService:
             summaries = {}
 
             if summary_type in ["brief", "comprehensive"]:
-                summaries["overview"] = self._generate_overview(
-                    cleaned_metadata, query_context
-                )
+                overview = self._generate_overview(cleaned_metadata, query_context)
+                if overview:  # Only add if real content was generated
+                    summaries["overview"] = overview
 
             if summary_type in ["comprehensive", "technical"]:
-                summaries["methodology"] = self._generate_methodology_summary(
-                    cleaned_metadata
-                )
-                summaries["significance"] = self._generate_significance_summary(
-                    cleaned_metadata, query_context
-                )
+                methodology = self._generate_methodology_summary(cleaned_metadata)
+                if methodology:  # Only add if real content was generated
+                    summaries["methodology"] = methodology
+
+                significance = self._generate_significance_summary(cleaned_metadata, query_context)
+                if significance:  # Only add if real content was generated
+                    summaries["significance"] = significance
 
             if summary_type == "brief":
-                summaries["brief"] = self._generate_brief_summary(
-                    cleaned_metadata, query_context
-                )
+                brief = self._generate_brief_summary(cleaned_metadata, query_context)
+                if brief:  # Only add if real content was generated
+                    summaries["brief"] = brief
 
             # Add technical details for comprehensive summaries
             if summary_type == "comprehensive":
-                summaries[
-                    "technical_details"
-                ] = self._generate_technical_summary(cleaned_metadata)
+                technical = self._generate_technical_summary(cleaned_metadata)
+                if technical:  # Only add if real content was generated
+                    summaries["technical_details"] = technical
 
-            # Cache the summary (estimate tokens used)
-            estimated_tokens = sum(
-                len(str(v).split()) * 1.3 for v in summaries.values()
-            )
-            self.cache.set(
-                cache_key,
-                "dataset_summary",
-                summaries,
-                token_count=int(estimated_tokens),
-            )
-
-            return summaries
+            # Only return if we have real content (cache removed for fresh results)
+            if summaries:
+                # Log for query flow analysis (no caching of user-facing results)
+                estimated_tokens = sum(len(str(v).split()) * 1.3 for v in summaries.values())
+                logger.info(
+                    f"Generated fresh AI summary for {cache_key} "
+                    f"(estimated {int(estimated_tokens)} tokens)"
+                )
+                return summaries
+            else:
+                logger.warning(f"No real AI content generated for {dataset_id}")
+                return None
 
         except Exception as e:
             logger.error(f"Error generating AI summary: {e}")
-            return self._generate_fallback_summary(metadata)
+            return None
 
     def _prepare_metadata(self, metadata: Dict[str, Any]) -> Dict[str, Any]:
         """Clean and prepare metadata for LLM processing."""
@@ -140,9 +144,7 @@ class SummarizationService:
         if isinstance(metadata, str):
             return {
                 "accession": "Unknown",
-                "title": metadata[:200]
-                if len(metadata) > 200
-                else str(metadata),
+                "title": metadata[:200] if len(metadata) > 200 else str(metadata),
                 "summary": str(metadata),
                 "type": "Unknown",
                 "organism": "Unknown",
@@ -154,20 +156,14 @@ class SummarizationService:
 
         # Extract key fields and clean them
         cleaned = {
-            "accession": metadata.get(
-                "accession", metadata.get("geo_id", "Unknown")
-            ),
+            "accession": metadata.get("accession", metadata.get("geo_id", "Unknown")),
             "title": metadata.get("title", metadata.get("name", "")),
             "summary": metadata.get("summary", metadata.get("description", "")),
             "type": metadata.get("type", metadata.get("study_type", "")),
             "organism": metadata.get("organism", metadata.get("species", "")),
-            "platform": metadata.get(
-                "platform", metadata.get("technology", "")
-            ),
+            "platform": metadata.get("platform", metadata.get("technology", "")),
             "sample_count": len(metadata.get("samples", [])),
-            "submission_date": metadata.get(
-                "submission_date", metadata.get("date", "")
-            ),
+            "submission_date": metadata.get("submission_date", metadata.get("date", "")),
             "last_update_date": metadata.get("last_update_date", ""),
         }
 
@@ -184,15 +180,13 @@ class SummarizationService:
 
         return cleaned
 
-    def _generate_overview(
-        self, metadata: Dict[str, Any], query_context: Optional[str]
-    ) -> str:
-        """Generate high-level overview summary."""
+    def _generate_overview(self, metadata: Dict[str, Any], query_context: Optional[str]) -> Optional[str]:
+        """Generate high-level overview summary using real AI only."""
         prompt = self._build_overview_prompt(metadata, query_context)
 
         try:
             if not self.client:
-                return f"Dataset {metadata.get('accession', 'Unknown')}: {metadata.get('title', 'No title available')}"
+                return None  # No fake summaries
 
             response = self.client.chat.completions.create(
                 model=self.model,
@@ -212,18 +206,14 @@ class SummarizationService:
             )
 
             content = response.choices[0].message.content
-            return (
-                content.strip()
-                if content
-                else f"Dataset {metadata.get('accession', 'Unknown')}: {metadata.get('title', 'No title available')}"
-            )
+            return content.strip() if content and content.strip() else None
 
         except Exception as e:
             logger.error(f"Error generating overview: {e}")
-            return f"Dataset {metadata.get('accession', 'Unknown')}: {metadata.get('title', 'No title available')}"
+            return None
 
-    def _generate_methodology_summary(self, metadata: Dict[str, Any]) -> str:
-        """Generate methodology and experimental design summary."""
+    def _generate_methodology_summary(self, metadata: Dict[str, Any]) -> Optional[str]:
+        """Generate methodology and experimental design summary using real AI only."""
         prompt = f"""
         Analyze this genomics dataset and provide a concise summary of the experimental methodology:
 
@@ -247,7 +237,7 @@ class SummarizationService:
 
         try:
             if not self.client:
-                return f"Experimental methodology using {metadata.get('platform', 'unknown platform')} technology."
+                return None  # No fake summaries
 
             response = self.client.chat.completions.create(
                 model=self.model,
@@ -266,20 +256,16 @@ class SummarizationService:
             )
 
             content = response.choices[0].message.content
-            return (
-                content.strip()
-                if content
-                else f"Experimental methodology using {metadata.get('platform', 'unknown platform')} technology."
-            )
+            return content.strip() if content and content.strip() else None
 
         except Exception as e:
             logger.error(f"Error generating methodology summary: {e}")
-            return f"Experimental methodology using {metadata.get('platform', 'unknown platform')} technology."
+            return None
 
     def _generate_significance_summary(
         self, metadata: Dict[str, Any], query_context: Optional[str]
-    ) -> str:
-        """Generate research significance and implications summary."""
+    ) -> Optional[str]:
+        """Generate research significance and implications summary using real AI only."""
         prompt = f"""
         Analyze the research significance of this genomics dataset:
 
@@ -301,7 +287,7 @@ class SummarizationService:
 
         try:
             if not self.client:
-                return "This dataset contributes to our understanding of genomic mechanisms and biological processes."
+                return None  # No fake summaries
 
             response = self.client.chat.completions.create(
                 model=self.model,
@@ -320,27 +306,21 @@ class SummarizationService:
             )
 
             content = response.choices[0].message.content
-            return (
-                content.strip()
-                if content
-                else "This dataset contributes to our understanding of genomic mechanisms and biological processes."
-            )
+            return content.strip() if content and content.strip() else None
 
         except Exception as e:
             logger.error(f"Error generating significance summary: {e}")
-            return "This dataset contributes to our understanding of genomic mechanisms and biological processes."
+            return None
 
     def _generate_brief_summary(
         self, metadata: Dict[str, Any], query_context: Optional[str]
-    ) -> str:
-        """Generate brief, one-paragraph summary."""
-        prompt = self._build_overview_prompt(
-            metadata, query_context, brief=True
-        )
+    ) -> Optional[str]:
+        """Generate brief, one-paragraph summary using real AI only."""
+        prompt = self._build_overview_prompt(metadata, query_context, brief=True)
 
         try:
             if not self.client:
-                return f"{metadata.get('accession', 'Dataset')}: {metadata.get('title', 'Genomics study')} using {metadata.get('platform', 'genomics technology')}."
+                return None  # No fake summaries
 
             response = self.client.chat.completions.create(
                 model=self.model,
@@ -360,37 +340,30 @@ class SummarizationService:
             )
 
             content = response.choices[0].message.content
-            return (
-                content.strip()
-                if content
-                else f"{metadata.get('accession', 'Dataset')}: {metadata.get('title', 'Genomics study')} using {metadata.get('platform', 'genomics technology')}."
-            )
+            return content.strip() if content and content.strip() else None
 
         except Exception as e:
             logger.error(f"Error generating brief summary: {e}")
-            return f"{metadata.get('accession', 'Dataset')}: {metadata.get('title', 'Genomics study')} using {metadata.get('platform', 'genomics technology')}."
+            return None
 
-    def _generate_technical_summary(self, metadata: Dict[str, Any]) -> str:
-        """Generate technical details summary."""
+    def _generate_technical_summary(self, metadata: Dict[str, Any]) -> Optional[str]:
+        """Generate technical details summary - only real data, no placeholders."""
         technical_info = []
 
-        if metadata.get("platform"):
+        if metadata.get("platform") and metadata["platform"] != "Unknown":
             technical_info.append(f"Platform: {metadata['platform']}")
 
-        if metadata.get("sample_count"):
+        if metadata.get("sample_count") and metadata["sample_count"] > 0:
             technical_info.append(f"Samples: {metadata['sample_count']}")
 
-        if metadata.get("organism"):
+        if metadata.get("organism") and metadata["organism"] != "Unknown":
             technical_info.append(f"Organism: {metadata['organism']}")
 
         if metadata.get("submission_date"):
             technical_info.append(f"Submitted: {metadata['submission_date']}")
 
-        return (
-            " | ".join(technical_info)
-            if technical_info
-            else "Technical details not available"
-        )
+        # Only return if we have real technical information
+        return " | ".join(technical_info) if technical_info else None
 
     def _build_overview_prompt(
         self,
@@ -399,9 +372,7 @@ class SummarizationService:
         brief: bool = False,
     ) -> str:
         """Build the prompt for overview generation."""
-        context_text = (
-            f" in the context of '{query_context}'" if query_context else ""
-        )
+        context_text = f" in the context of '{query_context}'" if query_context else ""
         length_instruction = "1-2 sentences" if brief else "2-3 sentences"
 
         prompt = f"""
@@ -426,45 +397,13 @@ class SummarizationService:
 
         return prompt
 
-    def _generate_fallback_summary(
-        self, metadata: Dict[str, Any]
-    ) -> Dict[str, str]:
-        """Generate basic summary when LLM is not available."""
-        accession = metadata.get("accession", "Unknown")
-        title = metadata.get("title", "No title available")
-        platform = metadata.get("platform", "unknown platform")
-        sample_count = len(metadata.get("samples", []))
-        organism = metadata.get("organism", "unknown organism")
-
-        overview = (
-            f"Dataset {accession} contains {sample_count} samples from {organism} "
-            f"using {platform} technology. {title}"
-        )
-
-        return {
-            "overview": overview,
-            "methodology": f"Study conducted using {platform} on {organism} samples.",
-            "technical_details": f"Platform: {platform} | Samples: {sample_count} | Organism: {organism}",
-            "significance": "This dataset contributes to genomics research and understanding of biological processes.",
-        }
-
-    def summarize_batch_results(
-        self, results: List[Dict[str, Any]], query: str
-    ) -> Dict[str, Any]:
+    def summarize_batch_results(self, results: List[Dict[str, Any]], query: str) -> Dict[str, Any]:
         """Generate summary of multiple dataset results."""
         if not results:
             return {"summary": "No datasets found for the given query."}
 
-        # Check cache first
-        cache_key = f"{query}_batch_{len(results)}"
-        cached_summary = self.cache.get(
-            cache_key, "batch_summary", len(results)
-        )
-        if cached_summary:
-            logger.info(
-                f"Using cached batch summary for query: {query[:50]}..."
-            )
-            return cached_summary
+        # CACHE REMOVED: Always generate fresh batch summaries for accurate results
+        logger.info(f"Generating fresh batch summary for query: {query[:50]}... (cache disabled)")
 
         # Extract key statistics
         total_datasets = len(results)
@@ -497,8 +436,9 @@ class SummarizationService:
             ),
         }
 
-        # Cache the summary
-        self.cache.set(cache_key, "batch_summary", summary, len(results))
+        # Log for query flow analysis (no caching of user-facing results)
+        cache_key = f"{query}_batch_{len(results)}"
+        logger.info(f"Generated fresh batch summary for {cache_key}")
 
         return summary
 

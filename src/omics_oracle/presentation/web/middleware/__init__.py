@@ -13,12 +13,12 @@ from typing import Callable
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 
-from ....infrastructure.configuration.config import AppConfig
+from ....core.config import Config
 
 logger = logging.getLogger(__name__)
 
 
-def setup_middleware(app: FastAPI, config: AppConfig) -> None:
+def setup_middleware(app: FastAPI, config: Config) -> None:
     """Setup all middleware for the application."""
 
     # Add request ID middleware
@@ -42,9 +42,7 @@ def setup_middleware(app: FastAPI, config: AppConfig) -> None:
     logger.info("All middleware configured successfully")
 
 
-async def add_request_id_middleware(
-    request: Request, call_next: Callable
-) -> Response:
+async def add_request_id_middleware(request: Request, call_next: Callable) -> Response:
     """Add unique request ID to each request."""
     request_id = str(uuid.uuid4())
     request.state.request_id = request_id
@@ -55,9 +53,7 @@ async def add_request_id_middleware(
     return response
 
 
-async def api_versioning_middleware(
-    request: Request, call_next: Callable
-) -> Response:
+async def api_versioning_middleware(request: Request, call_next: Callable) -> Response:
     """Handle API versioning logic and add version headers."""
     # Extract version from URL path or headers
     version = "1.0"  # Default version
@@ -113,16 +109,11 @@ async def logging_middleware(request: Request, call_next: Callable) -> Response:
 
     except Exception as e:
         process_time = time.time() - start_time
-        logger.error(
-            f"Request failed - ID: {request_id}, Error: {str(e)}, "
-            f"Time: {process_time:.3f}s"
-        )
+        logger.error(f"Request failed - ID: {request_id}, Error: {str(e)}, " f"Time: {process_time:.3f}s")
         raise
 
 
-async def security_headers_middleware(
-    request: Request, call_next: Callable
-) -> Response:
+async def security_headers_middleware(request: Request, call_next: Callable) -> Response:
     """Add security headers to responses."""
     response = await call_next(request)
 
@@ -142,16 +133,12 @@ async def security_headers_middleware(
 
     # HSTS header for HTTPS
     if request.url.scheme == "https":
-        response.headers[
-            "Strict-Transport-Security"
-        ] = "max-age=31536000; includeSubDomains"
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
 
     return response
 
 
-async def performance_monitoring_middleware(
-    request: Request, call_next: Callable
-) -> Response:
+async def performance_monitoring_middleware(request: Request, call_next: Callable) -> Response:
     """Monitor performance and add timing headers."""
     start_time = time.time()
 
@@ -172,9 +159,7 @@ async def performance_monitoring_middleware(
 
 
 # Error handling middleware
-async def error_handling_middleware(
-    request: Request, call_next: Callable
-) -> Response:
+async def error_handling_middleware(request: Request, call_next: Callable) -> Response:
     """Global error handling middleware."""
     try:
         return await call_next(request)

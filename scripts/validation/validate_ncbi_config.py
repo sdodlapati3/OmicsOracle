@@ -112,7 +112,7 @@ async def validate_geo_client():
 
 async def check_env_files():
     """Check environment files for NCBI configuration."""
-    env_files = [".env", ".env.local", ".env.development"]
+    env_files = [".env", ".env.development"]
     found_config = False
 
     for env_file in env_files:
@@ -139,17 +139,17 @@ async def check_env_files():
 
 
 async def create_env_file():
-    """Create a .env.local file with NCBI configuration if it doesn't exist."""
-    if not os.path.exists(".env.local"):
-        logger.info("Creating .env.local file with NCBI configuration...")
-        with open(".env.local", "w") as f:
-            f.write("# OmicsOracle local environment configuration\n")
+    """Create a .env file with NCBI configuration if it doesn't exist."""
+    if not os.path.exists(".env"):
+        logger.info("Creating .env file with NCBI configuration...")
+        with open(".env", "w") as f:
+            f.write("# OmicsOracle environment configuration\n")
             f.write("NCBI_EMAIL=omicsoracle@example.com\n")
             f.write("NCBI_API_KEY=\n")  # Optional
-        logger.info(".env.local file created successfully")
+        logger.info(".env file created successfully")
         return True
     else:
-        logger.info(".env.local file already exists")
+        logger.info(".env file already exists")
         return False
 
 
@@ -159,15 +159,15 @@ async def fix_ncbi_config():
     os.environ["NCBI_EMAIL"] = "omicsoracle@example.com"
     logger.info("Set NCBI_EMAIL environment variable directly")
 
-    # Create/update .env.local
-    if os.path.exists(".env.local"):
-        with open(".env.local", "r") as f:
+    # Create/update .env
+    if os.path.exists(".env"):
+        with open(".env", "r") as f:
             content = f.read()
 
         if "NCBI_EMAIL" not in content:
-            with open(".env.local", "a") as f:
+            with open(".env", "a") as f:
                 f.write("\nNCBI_EMAIL=omicsoracle@example.com\n")
-            logger.info("Added NCBI_EMAIL to existing .env.local file")
+            logger.info("Added NCBI_EMAIL to existing .env file")
     else:
         await create_env_file()
 

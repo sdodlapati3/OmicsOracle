@@ -34,12 +34,7 @@ except ImportError:
     HAS_PYSRADB = False
 
 from ..core.config import Config
-from ..core.exceptions import (
-    GEOClientError,
-    GEOParseError,
-    NCBIAPIError,
-    SRAError,
-)
+from ..core.exceptions import GEOClientError, GEOParseError, NCBIAPIError, SRAError
 
 logger = logging.getLogger(__name__)
 
@@ -77,10 +72,7 @@ class NCBIDirectClient:
                 ssl_context = ssl.create_default_context()
                 ssl_context.check_hostname = False
                 ssl_context.verify_mode = ssl.CERT_NONE
-                logger.warning(
-                    "SSL verification disabled for NCBI API - "
-                    + "use only for testing"
-                )
+                logger.warning("SSL verification disabled for NCBI API - " + "use only for testing")
 
             connector = aiohttp.TCPConnector(ssl=ssl_context)
             self.session = aiohttp.ClientSession(connector=connector)
@@ -105,9 +97,7 @@ class NCBIDirectClient:
         params.update(kwargs)
         return params
 
-    async def esearch(
-        self, db: str, term: str, retmax: int = 20, retstart: int = 0, **kwargs
-    ) -> List[str]:
+    async def esearch(self, db: str, term: str, retmax: int = 20, retstart: int = 0, **kwargs) -> List[str]:
         """
         Search NCBI database and return list of IDs.
 
@@ -178,9 +168,7 @@ class NCBIDirectClient:
             return ""
 
         url = f"{self.BASE_URL}efetch.fcgi"
-        params = self._build_params(
-            db=db, id=",".join(ids), rettype=rettype, retmode=retmode, **kwargs
-        )
+        params = self._build_params(db=db, id=",".join(ids), rettype=rettype, retmode=retmode, **kwargs)
 
         session = await self._get_session()
         try:
@@ -217,9 +205,7 @@ class SimpleCache:
     def _get_cache_path(self, key: str) -> Path:
         """Get cache file path for a key."""
         # Use hash to create safe filename (non-security use)
-        key_hash = hashlib.md5(  # nosec B324
-            key.encode(), usedforsecurity=False
-        ).hexdigest()
+        key_hash = hashlib.md5(key.encode(), usedforsecurity=False).hexdigest()  # nosec B324
         return self.cache_dir / f"{key_hash}.json"
 
     def get(self, key: str) -> Optional[Dict[str, Any]]:
@@ -278,19 +264,13 @@ class RateLimiter:
         now = time.time()
 
         # Remove old calls outside the time window
-        self.calls = [
-            call_time
-            for call_time in self.calls
-            if now - call_time < self.time_window
-        ]
+        self.calls = [call_time for call_time in self.calls if now - call_time < self.time_window]
 
         # If we've hit the limit, wait
         if len(self.calls) >= self.max_calls:
             wait_time = self.time_window - (now - self.calls[0])
             if wait_time > 0:
-                logger.debug(
-                    "Rate limit reached, waiting %.2f seconds", wait_time
-                )
+                logger.debug("Rate limit reached, waiting %.2f seconds", wait_time)
                 await asyncio.sleep(wait_time)
                 return await self.acquire()  # Retry after waiting
 
@@ -298,9 +278,7 @@ class RateLimiter:
         self.calls.append(now)
 
 
-async def retry_with_backoff(
-    func, max_retries: int = 3, initial_delay: float = 1.0
-):
+async def retry_with_backoff(func, max_retries: int = 3, initial_delay: float = 1.0):
     """
     Retry a function with exponential backoff.
 
@@ -357,9 +335,7 @@ class UnifiedGEOClient:
 
         # Initialize rate limiter for NCBI API
         # Default: 3 requests per second (NCBI guideline)
-        self.rate_limiter = RateLimiter(
-            max_calls=self.config.ncbi.rate_limit, time_window=1.0
-        )
+        self.rate_limiter = RateLimiter(max_calls=self.config.ncbi.rate_limit, time_window=1.0)
 
         # Initialize cache
         self.cache = SimpleCache(
@@ -381,10 +357,7 @@ class UnifiedGEOClient:
                     api_key=self.config.ncbi.api_key,
                     verify_ssl=False,  # Disable SSL for testing
                 )
-                logger.info(
-                    "Direct NCBI client initialized "
-                    "(SSL verification disabled)"
-                )
+                logger.info("Direct NCBI client initialized " "(SSL verification disabled)")
             except Exception as e:
                 logger.error("Failed to initialize NCBI client: %s", str(e))
                 self.ncbi_client = None
@@ -406,11 +379,15 @@ class UnifiedGEOClient:
         logger.info("Unified GEO client initialized successfully")
 
     def _get_cached_data(self, key: str) -> Optional[Any]:
-        """Get data from cache if available and not expired."""
-        return self.cache.get(key)
+        """DEPRECATED: Cache disabled for fresh data - returns None."""
+        # Cache disabled for user-facing results to ensure freshness
+        return None
 
     def _cache_data(self, key: str, data: Any) -> None:
-        """Cache data with default TTL."""
+        """Cache data for debugging/analysis only - not used for serving results."""
+        # Log for debugging/analysis purposes only
+        logger.debug(f"Caching key for analysis: {key} (not used for serving results)")
+        # Still cache for debugging but don't use for serving
         self.cache.set(key, data)
 
     async def close(self) -> None:
@@ -473,9 +450,7 @@ class UnifiedGEOClient:
             List of GEO series IDs (GSE numbers)
         """
         if not self.ncbi_client:
-            raise GEOClientError(
-                "NCBI client not available - check email configuration"
-            )
+            raise GEOClientError("NCBI client not available - check email configuration")
 
         # Apply rate limiting
         await self.rate_limiter.acquire()
@@ -508,22 +483,16 @@ class UnifiedGEOClient:
             # Cache results (cache the converted GSE IDs)
             self._cache_data(cache_key, gse_results)
 
-            logger.info(
-                "Found %d GEO series for query: %s", len(gse_results), query
-            )
+            logger.info("Found %d GEO series for query: %s", len(gse_results), query)
             return gse_results
 
         except NCBIAPIError as e:
             raise GEOClientError(f"Failed to search GEO: {e}") from e
         except Exception as e:
             logger.error("Error searching GEO database: %s", str(e))
-            raise GEOClientError(
-                f"Unexpected error during GEO search: {e}"
-            ) from e
+            raise GEOClientError(f"Unexpected error during GEO search: {e}") from e
 
-    async def get_geo_metadata(
-        self, geo_id: str, include_sra: bool = True
-    ) -> Dict[str, Any]:
+    async def get_geo_metadata(self, geo_id: str, include_sra: bool = True) -> Dict[str, Any]:
         """
         Retrieve comprehensive metadata for a GEO series.
 
@@ -537,12 +506,8 @@ class UnifiedGEOClient:
         if not HAS_GEOPARSE:
             raise GEOClientError("GEOparse not available")
 
-        # Check cache first
-        cache_key = f"metadata_{geo_id}_{include_sra}"
-        cached_result = self.cache.get(cache_key)
-        if cached_result:
-            logger.info("Retrieved metadata for %s from cache", geo_id)
-            return cached_result
+        # CACHE REMOVED: Always fetch fresh GEO metadata for accurate results
+        logger.info("Retrieving fresh metadata for %s (cache disabled)", geo_id)
 
         try:
             logger.info("Retrieving metadata for %s", geo_id)
@@ -555,22 +520,12 @@ class UnifiedGEOClient:
                 "geo_id": geo_id,
                 "title": getattr(gse, "metadata", {}).get("title", [""])[0],
                 "summary": getattr(gse, "metadata", {}).get("summary", [""])[0],
-                "overall_design": getattr(gse, "metadata", {}).get(
-                    "overall_design", [""]
-                )[0],
+                "overall_design": getattr(gse, "metadata", {}).get("overall_design", [""])[0],
                 "organism": getattr(gse, "metadata", {}).get("taxon", [""])[0],
-                "submission_date": getattr(gse, "metadata", {}).get(
-                    "submission_date", [""]
-                )[0],
-                "last_update_date": getattr(gse, "metadata", {}).get(
-                    "last_update_date", [""]
-                )[0],
-                "contact_name": getattr(gse, "metadata", {}).get(
-                    "contact_name", [""]
-                ),
-                "contact_email": getattr(gse, "metadata", {}).get(
-                    "contact_email", [""]
-                ),
+                "submission_date": getattr(gse, "metadata", {}).get("submission_date", [""])[0],
+                "last_update_date": getattr(gse, "metadata", {}).get("last_update_date", [""])[0],
+                "contact_name": getattr(gse, "metadata", {}).get("contact_name", [""]),
+                "contact_email": getattr(gse, "metadata", {}).get("contact_email", [""]),
                 "platform_count": len(getattr(gse, "gpls", {})),
                 "sample_count": len(getattr(gse, "gsms", {})),
                 "platforms": list(getattr(gse, "gpls", {}).keys()),
@@ -583,22 +538,19 @@ class UnifiedGEOClient:
                     sra_metadata = await self._get_sra_metadata(geo_id)
                     metadata["sra_info"] = sra_metadata
                 except SRAError as e:
-                    logger.warning(
-                        "Could not retrieve SRA data for %s: %s", geo_id, str(e)
-                    )
+                    logger.warning("Could not retrieve SRA data for %s: %s", geo_id, str(e))
                     metadata["sra_info"] = None
 
-            # Cache the result
-            self.cache.set(cache_key, metadata)
+            # Log for query flow analysis (no caching of user-facing results)
+            cache_key = f"metadata_{geo_id}_{include_sra}"
+            logger.info("Successfully retrieved fresh metadata for %s (key: %s)", geo_id, cache_key)
 
             logger.info("Successfully retrieved metadata for %s", geo_id)
             return metadata
 
         except Exception as e:
             logger.error("Error retrieving metadata for %s: %s", geo_id, str(e))
-            raise GEOParseError(
-                f"Failed to get metadata for {geo_id}: {str(e)}"
-            ) from e
+            raise GEOParseError(f"Failed to get metadata for {geo_id}: {str(e)}") from e
 
     async def _get_sra_metadata(self, geo_id: str) -> Optional[Dict[str, Any]]:
         """Get SRA metadata for a GEO series."""
@@ -617,20 +569,14 @@ class UnifiedGEOClient:
                 "run_count": len(df),
                 "experiment_count": df["experiment_accession"].nunique(),
                 "sample_count": df["sample_accession"].nunique(),
-                "total_spots": (
-                    df["total_spots"].sum() if "total_spots" in df else 0
-                ),
-                "total_bases": (
-                    df["total_bases"].sum() if "total_bases" in df else 0
-                ),
+                "total_spots": (df["total_spots"].sum() if "total_spots" in df else 0),
+                "total_bases": (df["total_bases"].sum() if "total_bases" in df else 0),
             }
 
             return sra_info
 
         except Exception as e:
-            logger.debug(
-                "SRA metadata not available for %s: %s", geo_id, str(e)
-            )
+            logger.debug("SRA metadata not available for %s: %s", geo_id, str(e))
             raise SRAError(f"Failed to retrieve SRA data for {geo_id}") from e
 
     async def batch_retrieve_metadata(
@@ -656,9 +602,7 @@ class UnifiedGEOClient:
                     metadata = await self.get_geo_metadata(geo_id)
                     return geo_id, metadata
                 except GEOClientError as e:
-                    logger.error(
-                        "Failed to get metadata for %s: %s", geo_id, str(e)
-                    )
+                    logger.error("Failed to get metadata for %s: %s", geo_id, str(e))
                     return geo_id, {"error": str(e)}
 
         # Execute all requests concurrently
@@ -702,14 +646,10 @@ class UnifiedGEOClient:
         """Get information about configured clients."""
         return {
             "entrez_email": self.config.ncbi.email or "not_configured",
-            "entrez_api_key": (
-                "configured" if self.config.ncbi.api_key else "not_set"
-            ),
+            "entrez_api_key": ("configured" if self.config.ncbi.api_key else "not_set"),
             "cache_directory": str(self.config.cache.directory),
             "rate_limit": str(self.config.ncbi.rate_limit),
-            "has_entrez": str(
-                hasattr(self, "ncbi_client") and self.ncbi_client is not None
-            ),
+            "has_entrez": str(hasattr(self, "ncbi_client") and self.ncbi_client is not None),
             "has_geoparse": str(HAS_GEOPARSE),
             "has_pysradb": str(HAS_PYSRADB),
         }

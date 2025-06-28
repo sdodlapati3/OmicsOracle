@@ -4,6 +4,8 @@
 
 OmicsOracle is an intelligent data summary agent designed to process, analyze, and summarize genomics and omics data, with a focus on GEO (Gene Expression Omnibus) metadata summarization. The system provides AI-driven insights, automated data processing, and comprehensive summaries for researchers and bioinformaticians.
 
+📖 **For detailed system architecture and query processing flow, see [ARCHITECTURE.md](ARCHITECTURE.md)**
+
 ## 🚀 Quick Start
 
 ```bash
@@ -21,7 +23,7 @@ pip install -r requirements-web.txt
 pip install -r requirements-dev.txt
 
 # Set up environment variables
-cp .env.example .env.local
+cp .env.example .env
 
 # Start the application (full-stack)
 ./start.sh

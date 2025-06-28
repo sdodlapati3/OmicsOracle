@@ -222,6 +222,52 @@ class BiomedicalSynonymExpander:
             ],
         }
 
+        self.analysis_method_synonyms = {
+            "differential expression": [
+                "DE",
+                "differentially expressed",
+                "expression analysis",
+                "fold change",
+            ],
+            "pathway analysis": [
+                "pathway",
+                "pathways",
+                "enrichment",
+                "GSEA",
+                "GO analysis",
+            ],
+            "network analysis": [
+                "co-expression",
+                "correlation",
+                "gene network",
+                "regulatory network",
+            ],
+            "clustering": [
+                "hierarchical clustering",
+                "k-means",
+                "unsupervised learning",
+                "classification",
+            ],
+            "machine learning": [
+                "ML",
+                "artificial intelligence",
+                "AI",
+                "neural network",
+                "deep learning",
+            ],
+            "time series": [
+                "temporal",
+                "longitudinal",
+                "time course",
+                "kinetics",
+            ],
+            "meta-analysis": [
+                "systematic review",
+                "pooled analysis",
+                "combined analysis",
+            ],
+        }
+
     def expand_term(self, term: str, category: str) -> Set[str]:
         """
         Expand a biomedical term with its synonyms.
@@ -248,6 +294,8 @@ class BiomedicalSynonymExpander:
             synonym_dict = self.organism_synonyms
         elif category == "data_type":
             synonym_dict = self.data_type_synonyms
+        elif category == "analysis_method":
+            synonym_dict = self.analysis_method_synonyms
         else:
             return synonyms
 
@@ -266,9 +314,7 @@ class BiomedicalSynonymExpander:
 
         return synonyms
 
-    def expand_query_components(
-        self, components: Dict[str, Optional[str]]
-    ) -> Dict[str, Set[str]]:
+    def expand_query_components(self, components: Dict[str, Optional[str]]) -> Dict[str, Set[str]]:
         """
         Expand all components in a parsed query with synonyms.
 
@@ -280,11 +326,9 @@ class BiomedicalSynonymExpander:
         """
         expanded = {}
 
-        for category in ["disease", "tissue", "organism", "data_type"]:
+        for category in ["disease", "tissue", "organism", "data_type", "analysis_method"]:
             if components.get(category):
-                expanded[category] = self.expand_term(
-                    components[category], category
-                )
+                expanded[category] = self.expand_term(components[category], category)
             else:
                 expanded[category] = set()
 
@@ -364,9 +408,7 @@ class QueryParser:
         logger.info(f"Parsed query '{query}' into components: {components}")
         return components
 
-    def generate_alternative_queries(
-        self, components: Dict[str, Optional[str]]
-    ) -> List[str]:
+    def generate_alternative_queries(self, components: Dict[str, Optional[str]]) -> List[str]:
         """Generate alternative simpler queries based on the parsed components."""
         alternative_queries = []
 
@@ -413,32 +455,22 @@ class QueryParser:
         for data_type in expanded["data_type"]:
             for disease in expanded["disease"]:
                 for organism in expanded["organism"]:
-                    alternative_queries.append(
-                        f"{data_type} {disease} {organism}"
-                    )
+                    alternative_queries.append(f"{data_type} {disease} {organism}")
 
         for data_type in expanded["data_type"]:
             for tissue in expanded["tissue"]:
                 for organism in expanded["organism"]:
-                    alternative_queries.append(
-                        f"{data_type} {tissue} {organism}"
-                    )
+                    alternative_queries.append(f"{data_type} {tissue} {organism}")
 
         # Remove duplicates and empty queries
-        alternative_queries = [
-            q for q in list(set(alternative_queries)) if q.strip()
-        ]
+        alternative_queries = [q for q in list(set(alternative_queries)) if q.strip()]
 
         # Limit the number of alternative queries to avoid excessive searches
         if len(alternative_queries) > 10:
             # Prioritize queries with more components
-            alternative_queries = sorted(
-                alternative_queries, key=lambda q: len(q.split()), reverse=True
-            )[:10]
+            alternative_queries = sorted(alternative_queries, key=lambda q: len(q.split()), reverse=True)[:10]
 
-        logger.info(
-            f"Generated {len(alternative_queries)} alternative queries: {alternative_queries}"
-        )
+        logger.info(f"Generated {len(alternative_queries)} alternative queries: {alternative_queries}")
         return alternative_queries
 
     def extract_query_components(self, query: str) -> List[Dict[str, Any]]:
@@ -456,30 +488,22 @@ class QueryParser:
         # Extract diseases
         diseases = self._extract_diseases(query)
         for disease in diseases:
-            components.append(
-                {"type": "disease", "value": disease, "confidence": 0.9}
-            )
+            components.append({"type": "disease", "value": disease, "confidence": 0.9})
 
         # Extract tissues
         tissues = self._extract_tissues(query)
         for tissue in tissues:
-            components.append(
-                {"type": "tissue", "value": tissue, "confidence": 0.85}
-            )
+            components.append({"type": "tissue", "value": tissue, "confidence": 0.85})
 
         # Extract organisms
         organisms = self._extract_organisms(query)
         for organism in organisms:
-            components.append(
-                {"type": "organism", "value": organism, "confidence": 0.8}
-            )
+            components.append({"type": "organism", "value": organism, "confidence": 0.8})
 
         # Extract data types
         data_types = self._extract_data_types(query)
         for data_type in data_types:
-            components.append(
-                {"type": "data_type", "value": data_type, "confidence": 0.9}
-            )
+            components.append({"type": "data_type", "value": data_type, "confidence": 0.9})
 
         return components
 
@@ -610,9 +634,7 @@ async def perform_multi_strategy_search(
     components = parser.parse_query(query)
 
     # Get expanded components
-    expanded_components = parser.synonym_expander.expand_query_components(
-        components
-    )
+    expanded_components = parser.synonym_expander.expand_query_components(components)
 
     # Try the original query first
     try:
@@ -620,20 +642,12 @@ async def perform_multi_strategy_search(
         result = await pipeline.process_query(query, max_results=max_results)
 
         if result and hasattr(result, "geo_ids") and result.geo_ids:
-            logger.info(
-                f"Original query succeeded with {len(result.geo_ids)} results"
-            )
+            logger.info(f"Original query succeeded with {len(result.geo_ids)} results")
             return result.geo_ids, {
-                "metadata": result.metadata
-                if hasattr(result, "metadata")
-                else {},
-                "ai_summaries": result.ai_summaries
-                if hasattr(result, "ai_summaries")
-                else {},
+                "metadata": result.metadata if hasattr(result, "metadata") else {},
+                "ai_summaries": result.ai_summaries if hasattr(result, "ai_summaries") else {},
                 "components": components,
-                "expanded_components": {
-                    k: list(v) for k, v in expanded_components.items()
-                },
+                "expanded_components": {k: list(v) for k, v in expanded_components.items()},
                 "search_strategy": "original",
                 "query_used": query,
             }
@@ -655,25 +669,15 @@ async def perform_multi_strategy_search(
 
         try:
             logger.info(f"Trying alternative query: '{alt_query}'")
-            result = await pipeline.process_query(
-                alt_query, max_results=max_results
-            )
+            result = await pipeline.process_query(alt_query, max_results=max_results)
 
             if result and hasattr(result, "geo_ids") and result.geo_ids:
-                logger.info(
-                    f"Alternative query '{alt_query}' succeeded with {len(result.geo_ids)} results"
-                )
+                logger.info(f"Alternative query '{alt_query}' succeeded with {len(result.geo_ids)} results")
                 return result.geo_ids, {
-                    "metadata": result.metadata
-                    if hasattr(result, "metadata")
-                    else {},
-                    "ai_summaries": result.ai_summaries
-                    if hasattr(result, "ai_summaries")
-                    else {},
+                    "metadata": result.metadata if hasattr(result, "metadata") else {},
+                    "ai_summaries": result.ai_summaries if hasattr(result, "ai_summaries") else {},
                     "components": components,
-                    "expanded_components": {
-                        k: list(v) for k, v in expanded_components.items()
-                    },
+                    "expanded_components": {k: list(v) for k, v in expanded_components.items()},
                     "search_strategy": "alternative",
                     "query_used": alt_query,
                     "original_query": query,
@@ -685,9 +689,7 @@ async def perform_multi_strategy_search(
     logger.warning(f"No results found for any query strategy")
     return [], {
         "components": components,
-        "expanded_components": {
-            k: list(v) for k, v in expanded_components.items()
-        },
+        "expanded_components": {k: list(v) for k, v in expanded_components.items()},
         "search_strategy": "failed",
         "error": "No results found for any query strategy",
     }
@@ -800,37 +802,27 @@ class EnhancedQueryHandler:
 
         # Add diseases with synonyms
         for disease in components["diseases"]:
-            disease_terms = [
-                disease
-            ] + self.synonym_expander.disease_synonyms.get(disease, [])
+            disease_terms = [disease] + self.synonym_expander.disease_synonyms.get(disease, [])
             enhanced_parts.append(f"({' OR '.join(disease_terms)})")
 
         # Add tissues with synonyms
         for tissue in components["tissues"]:
-            tissue_terms = [tissue] + self.synonym_expander.tissue_synonyms.get(
-                tissue, []
-            )
+            tissue_terms = [tissue] + self.synonym_expander.tissue_synonyms.get(tissue, [])
             enhanced_parts.append(f"({' OR '.join(tissue_terms)})")
 
         # Add organisms with synonyms
         for organism in components["organisms"]:
-            organism_terms = [
-                organism
-            ] + self.synonym_expander.organism_synonyms.get(organism, [])
+            organism_terms = [organism] + self.synonym_expander.organism_synonyms.get(organism, [])
             enhanced_parts.append(f"({' OR '.join(organism_terms)})")
 
         # Add data types with synonyms
         for data_type in components["data_types"]:
-            data_type_terms = [
-                data_type
-            ] + self.synonym_expander.data_type_synonyms.get(data_type, [])
+            data_type_terms = [data_type] + self.synonym_expander.data_type_synonyms.get(data_type, [])
             enhanced_parts.append(f"({' OR '.join(data_type_terms)})")
 
         # Add analysis methods with synonyms
         for method in components["analysis_methods"]:
-            method_terms = [
-                method
-            ] + self.synonym_expander.analysis_method_synonyms.get(method, [])
+            method_terms = [method] + self.synonym_expander.analysis_method_synonyms.get(method, [])
             enhanced_parts.append(f"({' OR '.join(method_terms)})")
 
         # If we extracted components, use them to build an enhanced query
