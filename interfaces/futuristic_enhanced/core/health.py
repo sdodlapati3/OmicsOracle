@@ -5,9 +5,9 @@ Health monitoring and system status for the futuristic interface
 import asyncio
 import logging
 import time
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 from fastapi import APIRouter
 from pydantic import BaseModel
@@ -39,9 +39,7 @@ class HealthMonitor:
         self.health_checks = {}
         self.last_check_time = {}
 
-    async def check_component_health(
-        self, component_name: str
-    ) -> ComponentHealth:
+    async def check_component_health(self, component_name: str) -> ComponentHealth:
         """Check health of a specific component"""
         start_time = time.time()
 
@@ -57,9 +55,7 @@ class HealthMonitor:
             elif component_name == "api":
                 status, details = await self._check_api()
             else:
-                status, details = "error", {
-                    "error": f"Unknown component: {component_name}"
-                }
+                status, details = "error", {"error": f"Unknown component: {component_name}"}
 
         except Exception as e:
             status = "error"
@@ -180,9 +176,7 @@ class HealthMonitor:
         uptime = time.time() - self.start_time
 
         # Calculate metrics
-        avg_response_time = sum(c.response_time_ms for c in components) / len(
-            components
-        )
+        avg_response_time = sum(c.response_time_ms for c in components) / len(components)
 
         metrics = {
             "uptime_seconds": uptime,

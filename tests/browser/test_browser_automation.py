@@ -106,10 +106,7 @@ class BrowserAutomationTestSuite:
 
                 # Wait for page to load
                 WebDriverWait(self.driver, 10).until(
-                    lambda driver: driver.execute_script(
-                        "return document.readyState"
-                    )
-                    == "complete"
+                    lambda driver: driver.execute_script("return document.readyState") == "complete"
                 )
 
                 load_time = time.time() - start_time
@@ -124,9 +121,7 @@ class BrowserAutomationTestSuite:
                 )
 
                 # Check for JavaScript errors
-                js_errors = self.driver.execute_script(
-                    "return window.jsErrors || [];"
-                )
+                js_errors = self.driver.execute_script("return window.jsErrors || [];")
                 if js_errors:
                     page_result["errors"].extend(js_errors)
 
@@ -169,9 +164,7 @@ class BrowserAutomationTestSuite:
             search_input = None
             for selector in search_selectors:
                 try:
-                    search_input = self.driver.find_element(
-                        By.CSS_SELECTOR, selector
-                    )
+                    search_input = self.driver.find_element(By.CSS_SELECTOR, selector)
                     results["search_form_present"] = True
                     break
                 except NoSuchElementException:
@@ -195,9 +188,7 @@ class BrowserAutomationTestSuite:
             # Wait for results
             try:
                 WebDriverWait(self.driver, 15).until(
-                    EC.presence_of_element_located(
-                        (By.CSS_SELECTOR, ".search-results, .results, #results")
-                    )
+                    EC.presence_of_element_located((By.CSS_SELECTOR, ".search-results, .results, #results"))
                 )
 
                 search_time = time.time() - start_time
@@ -220,18 +211,14 @@ class BrowserAutomationTestSuite:
                     if next_button.is_enabled():
                         next_button.click()
                         WebDriverWait(self.driver, 10).until(
-                            EC.staleness_of(
-                                result_elements[0] if result_elements else None
-                            )
+                            EC.staleness_of(result_elements[0] if result_elements else None)
                         )
                         results["pagination_works"] = True
                 except (NoSuchElementException, TimeoutException):
                     results["pagination_works"] = False
 
             except TimeoutException:
-                results["errors"].append(
-                    "Search results not loaded within timeout"
-                )
+                results["errors"].append("Search results not loaded within timeout")
 
         except Exception as e:
             results["errors"].append(f"Search test error: {str(e)}")
@@ -264,9 +251,7 @@ class BrowserAutomationTestSuite:
             ai_element = None
             for selector in ai_selectors:
                 try:
-                    ai_element = self.driver.find_element(
-                        By.CSS_SELECTOR, selector
-                    )
+                    ai_element = self.driver.find_element(By.CSS_SELECTOR, selector)
                     results["summarization_available"] = True
                     break
                 except NoSuchElementException:
@@ -279,14 +264,20 @@ class BrowserAutomationTestSuite:
             # Check if we can find the search form to test AI with search
             search_input = None
             try:
-                search_input = self.driver.find_element(
-                    By.CSS_SELECTOR, "input[id='query']"
-                )
+                search_input = self.driver.find_element(By.CSS_SELECTOR, "input[id='query']")
             except NoSuchElementException:
                 results["errors"].append("Search input not found for AI test")
                 return results
-                text_input.clear()
-                text_input.send_keys(sample_text)
+
+            # Get sample text to summarize
+            sample_text = "This is a test dataset about gene expression in cancer cells."
+
+            try:
+                search_input.clear()
+                search_input.send_keys(sample_text)
+
+                # Find summarize button
+                summarize_element = self.driver.find_element(By.ID, "summarize-btn")
 
                 # Click summarize button
                 start_time = time.time()
@@ -295,9 +286,7 @@ class BrowserAutomationTestSuite:
                 # Wait for summary to appear
                 try:
                     WebDriverWait(self.driver, 30).until(
-                        EC.presence_of_element_located(
-                            (By.CSS_SELECTOR, ".summary, .result, .ai-output")
-                        )
+                        EC.presence_of_element_located((By.CSS_SELECTOR, ".summary, .result, .ai-output"))
                     )
 
                     summary_time = time.time() - start_time
@@ -317,8 +306,9 @@ class BrowserAutomationTestSuite:
 
                 except TimeoutException:
                     results["errors"].append("Summary generation timeout")
-            else:
-                results["errors"].append("Text input area not found")
+
+            except NoSuchElementException:
+                results["errors"].append("Summarize button not found")
 
         except Exception as e:
             results["errors"].append(f"AI summarization test error: {str(e)}")
@@ -368,18 +358,12 @@ class BrowserAutomationTestSuite:
                 # Check content readability
                 try:
                     # Check for horizontal scrolling
-                    body_width = self.driver.execute_script(
-                        "return document.body.scrollWidth"
-                    )
-                    window_width = self.driver.execute_script(
-                        "return window.innerWidth"
-                    )
+                    body_width = self.driver.execute_script("return document.body.scrollWidth")
+                    window_width = self.driver.execute_script("return window.innerWidth")
 
                     if body_width > window_width + 20:  # Allow small tolerance
                         size_result["content_readable"] = False
-                        size_result["errors"].append(
-                            "Horizontal scrolling detected"
-                        )
+                        size_result["errors"].append("Horizontal scrolling detected")
 
                     # Check font sizes
                     font_sizes = self.driver.execute_script(
@@ -399,9 +383,7 @@ class BrowserAutomationTestSuite:
                         size_result["errors"].append("Font size too small")
 
                 except Exception as e:
-                    size_result["errors"].append(
-                        f"Content readability error: {str(e)}"
-                    )
+                    size_result["errors"].append(f"Content readability error: {str(e)}")
 
                 # Test interactions (if search is available)
                 try:
@@ -414,9 +396,7 @@ class BrowserAutomationTestSuite:
                     input_size = search_input.size
                     if input_size["width"] < 30 or input_size["height"] < 30:
                         size_result["interactions_functional"] = False
-                        size_result["errors"].append(
-                            "Interactive elements too small"
-                        )
+                        size_result["errors"].append("Interactive elements too small")
 
                 except NoSuchElementException:
                     pass  # Search input not required on all pages
@@ -453,8 +433,7 @@ class BrowserAutomationTestSuite:
             images_without_alt = [
                 img
                 for img in images
-                if not img.get_attribute("alt")
-                or img.get_attribute("alt").strip() == ""
+                if not img.get_attribute("alt") or img.get_attribute("alt").strip() == ""
             ]
 
             if images_without_alt:
@@ -464,9 +443,7 @@ class BrowserAutomationTestSuite:
                 )
 
             # Check for form inputs without labels
-            inputs = self.driver.find_elements(
-                By.CSS_SELECTOR, "input, textarea, select"
-            )
+            inputs = self.driver.find_elements(By.CSS_SELECTOR, "input, textarea, select")
             inputs_without_labels = []
 
             for input_elem in inputs:
@@ -475,9 +452,7 @@ class BrowserAutomationTestSuite:
 
                 if input_id:
                     try:
-                        self.driver.find_element(
-                            By.CSS_SELECTOR, f"label[for='{input_id}']"
-                        )
+                        self.driver.find_element(By.CSS_SELECTOR, f"label[for='{input_id}']")
                         continue
                     except NoSuchElementException:
                         pass
@@ -492,9 +467,7 @@ class BrowserAutomationTestSuite:
                 )
 
             # Check heading structure
-            headings = self.driver.find_elements(
-                By.CSS_SELECTOR, "h1, h2, h3, h4, h5, h6"
-            )
+            headings = self.driver.find_elements(By.CSS_SELECTOR, "h1, h2, h3, h4, h5, h6")
             heading_levels = [int(h.tag_name[1]) for h in headings]
 
             if heading_levels:
@@ -510,9 +483,7 @@ class BrowserAutomationTestSuite:
                 for i in range(1, len(heading_levels)):
                     if heading_levels[i] - heading_levels[i - 1] > 1:
                         results["heading_structure_proper"] = False
-                        results["accessibility_violations"].append(
-                            "Heading level jumps detected"
-                        )
+                        results["accessibility_violations"].append("Heading level jumps detected")
                         break
 
             # Test keyboard navigation
@@ -534,26 +505,18 @@ class BrowserAutomationTestSuite:
                     active_element = self.driver.switch_to.active_element
                     if active_element == first_element:
                         results["keyboard_navigation"] = False
-                        results["accessibility_violations"].append(
-                            "Keyboard navigation not working"
-                        )
+                        results["accessibility_violations"].append("Keyboard navigation not working")
 
             except Exception as e:
-                results["accessibility_violations"].append(
-                    f"Keyboard navigation test failed: {str(e)}"
-                )
+                results["accessibility_violations"].append(f"Keyboard navigation test failed: {str(e)}")
 
             # Calculate accessibility score
             violations_count = len(results["accessibility_violations"])
             max_violations = 10  # Arbitrary maximum for scoring
-            results["score"] = max(
-                0, (max_violations - violations_count) / max_violations * 100
-            )
+            results["score"] = max(0, (max_violations - violations_count) / max_violations * 100)
 
         except Exception as e:
-            results["accessibility_violations"].append(
-                f"Accessibility test error: {str(e)}"
-            )
+            results["accessibility_violations"].append(f"Accessibility test error: {str(e)}")
 
         return results
 
@@ -568,44 +531,25 @@ class BrowserAutomationTestSuite:
         """Generate comprehensive browser automation test report."""
 
         # Calculate overall scores
-        pages_loaded = sum(
-            1 for page in page_loading.values() if page.get("loaded", False)
-        )
+        pages_loaded = sum(1 for page in page_loading.values() if page.get("loaded", False))
         total_pages = len(page_loading)
-        page_load_score = (
-            (pages_loaded / total_pages * 100) if total_pages > 0 else 0
-        )
+        page_load_score = (pages_loaded / total_pages * 100) if total_pages > 0 else 0
 
-        search_score = (
-            100
-            if search_functionality.get("search_results_displayed", False)
-            else 0
-        )
-        ai_score = (
-            100 if ai_summarization.get("summary_generated", False) else 0
-        )
+        search_score = 100 if search_functionality.get("search_results_displayed", False) else 0
+        ai_score = 100 if ai_summarization.get("summary_generated", False) else 0
 
         responsive_screens = sum(
             1
             for screen in responsive_design.values()
-            if screen.get("layout_intact", False)
-            and screen.get("interactions_functional", False)
+            if screen.get("layout_intact", False) and screen.get("interactions_functional", False)
         )
         total_screens = len(responsive_design)
-        responsive_score = (
-            (responsive_screens / total_screens * 100)
-            if total_screens > 0
-            else 0
-        )
+        responsive_score = (responsive_screens / total_screens * 100) if total_screens > 0 else 0
 
         accessibility_score = accessibility.get("score", 0)
 
         overall_score = (
-            page_load_score
-            + search_score
-            + ai_score
-            + responsive_score
-            + accessibility_score
+            page_load_score + search_score + ai_score + responsive_score + accessibility_score
         ) / 5
 
         # Generate recommendations
@@ -646,16 +590,12 @@ class BrowserAutomationTestSuite:
         }
 
 
-def run_browser_automation_tests(
-    browser: str = "chrome", headless: bool = True
-) -> Dict[str, Any]:
+def run_browser_automation_tests(browser: str = "chrome", headless: bool = True) -> Dict[str, Any]:
     """Run all browser automation tests and generate report."""
     print(f"Starting Browser Automation Testing with {browser}...")
 
     # Initialize test suite
-    browser_suite = BrowserAutomationTestSuite(
-        browser=browser, headless=headless
-    )
+    browser_suite = BrowserAutomationTestSuite(browser=browser, headless=headless)
 
     try:
         # Setup WebDriver
@@ -689,14 +629,10 @@ def run_browser_automation_tests(
         )
 
         # Save results
-        with open(
-            "browser_automation_results.json", "w", encoding="utf-8"
-        ) as f:
+        with open("browser_automation_results.json", "w", encoding="utf-8") as f:
             json.dump(report, f, indent=2)
 
-        print(
-            f"Browser automation testing completed. Status: {report['test_status']}"
-        )
+        print(f"Browser automation testing completed. Status: {report['test_status']}")
         print("Results saved to: browser_automation_results.json")
 
         return report

@@ -17,7 +17,7 @@ from typing import Any, Dict, List, Optional
 import uvicorn
 from fastapi import BackgroundTasks, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, Field
 
 # Add paths for legacy system imports
@@ -66,9 +66,7 @@ async def lifespan(app: FastAPI):
         startup_time = asyncio.get_event_loop().time()
 
         logger.info("[OK] Futuristic Interface initialized successfully")
-        logger.info(
-            "[SECURITY] Legacy pipeline available as processing backend"
-        )
+        logger.info("[SECURITY] Legacy pipeline available as processing backend")
 
         yield
 
@@ -321,9 +319,7 @@ async def health_check():
 
 
 @app.post("/api/v2/search", response_model=SearchResponse)
-async def futuristic_search(
-    request: SearchRequest, background_tasks: BackgroundTasks
-):
+async def futuristic_search(request: SearchRequest, background_tasks: BackgroundTasks):
     """Futuristic search with legacy processing"""
 
     job_id = str(uuid.uuid4())
@@ -379,9 +375,7 @@ async def futuristic_search(
 
     except Exception as e:
         logger.error(f"Search failed: {e}")
-        raise HTTPException(
-            status_code=500, detail=f"Search processing failed: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Search processing failed: {str(e)}")
 
 
 if __name__ == "__main__":

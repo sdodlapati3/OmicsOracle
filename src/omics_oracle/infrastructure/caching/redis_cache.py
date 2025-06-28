@@ -172,9 +172,7 @@ class RedisCache:
         """Create prefixed cache key"""
         return f"{self.key_prefix}{key}"
 
-    def _serialize_value(
-        self, value: Any, method: SerializationMethod
-    ) -> bytes:
+    def _serialize_value(self, value: Any, method: SerializationMethod) -> bytes:
         """Serialize value for storage"""
         if method == SerializationMethod.JSON:
             return json.dumps(value, default=str).encode("utf-8")
@@ -185,9 +183,7 @@ class RedisCache:
         else:
             return pickle.dumps(value)
 
-    def _deserialize_value(
-        self, data: bytes, method: SerializationMethod
-    ) -> Any:
+    def _deserialize_value(self, data: bytes, method: SerializationMethod) -> Any:
         """Deserialize value from storage"""
         if method == SerializationMethod.JSON:
             return json.loads(data.decode("utf-8"))
@@ -198,9 +194,7 @@ class RedisCache:
         else:
             return pickle.loads(data)
 
-    async def get(
-        self, key: str, default: Any = None, update_stats: bool = True
-    ) -> Any:
+    async def get(self, key: str, default: Any = None, update_stats: bool = True) -> Any:
         """
         Get value from cache
         """
@@ -220,9 +214,7 @@ class RedisCache:
             pipe.hset(cache_key, "last_accessed", time.time())
 
             results = await pipe.execute()
-            value_data, serialization_data, created_at_data, ttl_data = results[
-                :4
-            ]
+            value_data, serialization_data, created_at_data, ttl_data = results[:4]
 
             if value_data is None:
                 if update_stats:
@@ -349,7 +341,7 @@ class RedisCache:
                         tag_key = self._make_key(f"tag:{tag}")
                         pipe.srem(tag_key, key)
                     await pipe.execute()
-                except:
+                except Exception:
                     pass  # Ignore tag cleanup errors
 
             if result > 0:
@@ -447,9 +439,7 @@ class RedisCache:
             full_pattern = f"{self.key_prefix}{pattern}"
             keys = []
 
-            async for key in self._redis.scan_iter(
-                match=full_pattern, count=1000
-            ):
+            async for key in self._redis.scan_iter(match=full_pattern, count=1000):
                 # Remove prefix
                 key_str = key.decode("utf-8")
                 if key_str.startswith(self.key_prefix):
@@ -490,7 +480,7 @@ class RedisCache:
                 elif field_str == "tags":
                     try:
                         info[field_str] = json.loads(value.decode("utf-8"))
-                    except:
+                    except Exception:
                         info[field_str] = []
                 else:
                     info[field_str] = value.decode("utf-8") if value else None
@@ -540,21 +530,15 @@ class RedisCache:
                     serialization_data = result.get(b"serialization", b"pickle")
 
                     if value_data:
-                        serialization = SerializationMethod(
-                            serialization_data.decode("utf-8")
-                        )
-                        value = self._deserialize_value(
-                            value_data, serialization
-                        )
+                        serialization = SerializationMethod(serialization_data.decode("utf-8"))
+                        value = self._deserialize_value(value_data, serialization)
                         batch_results[key] = value
                         self.stats["hits"] += 1
                     else:
                         self.stats["misses"] += 1
 
                 except Exception as e:
-                    self.logger.error(
-                        f"Error processing batch result for key '{key}': {e}"
-                    )
+                    self.logger.error(f"Error processing batch result for key '{key}': {e}")
                     self.stats["misses"] += 1
 
             return batch_results
@@ -564,9 +548,7 @@ class RedisCache:
             self.stats["errors"] += 1
             return {}
 
-    async def batch_set(
-        self, items: Dict[str, Any], ttl: Optional[int] = None
-    ) -> int:
+    async def batch_set(self, items: Dict[str, Any], ttl: Optional[int] = None) -> int:
         """
         Set multiple values in a single operation
         """
@@ -588,9 +570,7 @@ class RedisCache:
                     cache_key = self._make_key(key)
 
                     # Serialize value
-                    serialized_value = self._serialize_value(
-                        value, self.default_serialization
-                    )
+                    serialized_value = self._serialize_value(value, self.default_serialization)
 
                     # Prepare entry data
                     entry_data = {
@@ -612,9 +592,7 @@ class RedisCache:
                     success_count += 1
 
                 except Exception as e:
-                    self.logger.error(
-                        f"Error preparing batch set for key '{key}': {e}"
-                    )
+                    self.logger.error(f"Error preparing batch set for key '{key}': {e}")
 
             # Execute batch
             await pipe.execute()
@@ -645,9 +623,7 @@ class RedisCache:
             try:
                 redis_info = await self._redis.info("memory")
                 stats["redis_memory_used"] = redis_info.get("used_memory", 0)
-                stats["redis_memory_peak"] = redis_info.get(
-                    "used_memory_peak", 0
-                )
+                stats["redis_memory_peak"] = redis_info.get("used_memory_peak", 0)
                 stats["redis_memory_rss"] = redis_info.get("used_memory_rss", 0)
 
                 # Get key count

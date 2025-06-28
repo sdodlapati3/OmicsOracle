@@ -35,9 +35,7 @@ logger = logging.getLogger("search_diagnostics")
 
 
 class SearchDiagnostics:
-    def __init__(
-        self, api_url="http://localhost:8001", disable_ssl_verify=False
-    ):
+    def __init__(self, api_url="http://localhost:8001", disable_ssl_verify=False):
         self.api_url = api_url
         self.disable_ssl_verify = disable_ssl_verify
         self.session = None
@@ -45,9 +43,7 @@ class SearchDiagnostics:
     async def init_session(self):
         """Initialize aiohttp session"""
         if self.session is None:
-            connector = aiohttp.TCPConnector(
-                ssl=False if self.disable_ssl_verify else None
-            )
+            connector = aiohttp.TCPConnector(ssl=False if self.disable_ssl_verify else None)
             self.session = aiohttp.ClientSession(connector=connector)
 
     async def close_session(self):
@@ -73,9 +69,7 @@ class SearchDiagnostics:
         try:
             timeout = aiohttp.ClientTimeout(total=10)
             direct_url = f"{self.api_url}/api/geo/{gse_id}"
-            async with self.session.get(
-                direct_url, timeout=timeout
-            ) as response:
+            async with self.session.get(direct_url, timeout=timeout) as response:
                 if response.status == 200:
                     results["direct_api"] = {
                         "status": "success",
@@ -157,29 +151,19 @@ class SearchDiagnostics:
             search_data = results["search"]["target_result"]
 
             results["comparison"] = {
-                "title_match": direct_data.get("title")
-                == search_data.get("title"),
+                "title_match": direct_data.get("title") == search_data.get("title"),
                 "direct_title": direct_data.get("title"),
                 "search_title": search_data.get("title"),
-                "time_difference": results["search"]["time"]
-                - results["direct_api"]["time"],
+                "time_difference": results["search"]["time"] - results["direct_api"]["time"],
             }
 
         print("\n" + "=" * 80)
         print(f"DIRECT API vs SEARCH COMPARISON FOR {gse_id}")
         print("=" * 80)
 
-        if (
-            results["direct_api"]
-            and results["direct_api"]["status"] == "success"
-        ):
-            print(
-                f"\nDirect API: SUCCESS in {results['direct_api']['time']:.2f}s"
-            )
-            if (
-                "data" in results["direct_api"]
-                and "title" in results["direct_api"]["data"]
-            ):
+        if results["direct_api"] and results["direct_api"]["status"] == "success":
+            print(f"\nDirect API: SUCCESS in {results['direct_api']['time']:.2f}s")
+            if "data" in results["direct_api"] and "title" in results["direct_api"]["data"]:
                 print(f"Title: {results['direct_api']['data']['title']}")
         else:
             print(
@@ -194,50 +178,30 @@ class SearchDiagnostics:
 
             if results["search"].get("target_found", False):
                 print(f"Target GSE ID found in results")
-                print(
-                    f"Title: {results['search']['target_result'].get('title')}"
-                )
+                print(f"Title: {results['search']['target_result'].get('title')}")
 
-                if (
-                    "comparison" in results
-                    and "title_match" in results["comparison"]
-                ):
+                if "comparison" in results and "title_match" in results["comparison"]:
                     if results["comparison"]["title_match"]:
                         print(f"\nTitles MATCH between direct API and search")
                     else:
-                        print(
-                            f"\nTitles DO NOT MATCH between direct API and search"
-                        )
-                        print(
-                            f"Direct API title: {results['comparison']['direct_title']}"
-                        )
-                        print(
-                            f"Search title: {results['comparison']['search_title']}"
-                        )
+                        print(f"\nTitles DO NOT MATCH between direct API and search")
+                        print(f"Direct API title: {results['comparison']['direct_title']}")
+                        print(f"Search title: {results['comparison']['search_title']}")
             else:
                 print(f"Target GSE ID NOT FOUND in search results")
         else:
-            print(
-                f"\nSearch API: {results['search']['status'].upper()} in {results['search']['time']:.2f}s"
-            )
+            print(f"\nSearch API: {results['search']['status'].upper()} in {results['search']['time']:.2f}s")
             if "error" in results["search"]:
                 print(f"Error: {results['search']['error']}")
 
-        if (
-            "comparison" in results
-            and "time_difference" in results["comparison"]
-        ):
-            print(
-                f"\nSearch is {results['comparison']['time_difference']:.2f}s slower than direct API"
-            )
+        if "comparison" in results and "time_difference" in results["comparison"]:
+            print(f"\nSearch is {results['comparison']['time_difference']:.2f}s slower than direct API")
 
         print("\n" + "=" * 80)
 
         return results
 
-    async def timing_test(
-        self, query: str, iterations: int = 3
-    ) -> Dict[str, Any]:
+    async def timing_test(self, query: str, iterations: int = 3) -> Dict[str, Any]:
         """
         Test search API performance with different timeout values
         """
@@ -263,9 +227,7 @@ class SearchDiagnostics:
                     timeout = aiohttp.ClientTimeout(total=timeout_seconds)
                     search_payload = {"query": query, "max_results": 10}
 
-                    print(
-                        f"\nTesting with {timeout_seconds}s timeout (iteration {i+1}/{iterations})..."
-                    )
+                    print(f"\nTesting with {timeout_seconds}s timeout (iteration {i+1}/{iterations})...")
 
                     async with self.session.post(
                         f"{self.api_url}/api/search",
@@ -278,18 +240,12 @@ class SearchDiagnostics:
                         if response.status == 200:
                             data = await response.json()
                             test_result["status"] = "success"
-                            test_result["result_count"] = len(
-                                data.get("results", [])
-                            )
-                            print(
-                                f"  SUCCESS in {elapsed:.2f}s - {test_result['result_count']} results"
-                            )
+                            test_result["result_count"] = len(data.get("results", []))
+                            print(f"  SUCCESS in {elapsed:.2f}s - {test_result['result_count']} results")
                         else:
                             test_result["status"] = "error"
                             test_result["status_code"] = response.status
-                            print(
-                                f"  ERROR {response.status} in {elapsed:.2f}s"
-                            )
+                            print(f"  ERROR {response.status} in {elapsed:.2f}s")
 
                 except asyncio.TimeoutError:
                     elapsed = time.time() - start_time
@@ -310,57 +266,35 @@ class SearchDiagnostics:
                 await asyncio.sleep(2)
 
         # Summarize results
-        success_count = sum(
-            1 for t in results["tests"] if t["status"] == "success"
-        )
-        timeout_count = sum(
-            1 for t in results["tests"] if t["status"] == "timeout"
-        )
+        success_count = sum(1 for t in results["tests"] if t["status"] == "success")
+        timeout_count = sum(1 for t in results["tests"] if t["status"] == "timeout")
         error_count = sum(1 for t in results["tests"] if t["status"] == "error")
 
         avg_time_success = 0
         if success_count > 0:
             avg_time_success = (
-                sum(
-                    t["elapsed_time"]
-                    for t in results["tests"]
-                    if t["status"] == "success"
-                )
-                / success_count
+                sum(t["elapsed_time"] for t in results["tests"] if t["status"] == "success") / success_count
             )
 
         print("\n" + "=" * 80)
         print(f"TIMING TEST SUMMARY FOR QUERY: '{query}'")
         print("=" * 80)
         print(f"\nTotal tests: {len(results['tests'])}")
-        print(
-            f"Successful: {success_count} ({success_count/len(results['tests'])*100:.1f}%)"
-        )
-        print(
-            f"Timeouts: {timeout_count} ({timeout_count/len(results['tests'])*100:.1f}%)"
-        )
-        print(
-            f"Errors: {error_count} ({error_count/len(results['tests'])*100:.1f}%)"
-        )
+        print(f"Successful: {success_count} ({success_count/len(results['tests'])*100:.1f}%)")
+        print(f"Timeouts: {timeout_count} ({timeout_count/len(results['tests'])*100:.1f}%)")
+        print(f"Errors: {error_count} ({error_count/len(results['tests'])*100:.1f}%)")
 
         if success_count > 0:
-            print(
-                f"\nAverage time for successful searches: {avg_time_success:.2f}s"
-            )
+            print(f"\nAverage time for successful searches: {avg_time_success:.2f}s")
 
             # Find minimum timeout that works
             for timeout in timeouts:
                 timeout_success = sum(
                     1
                     for t in results["tests"]
-                    if t["status"] == "success"
-                    and t["timeout_setting"] == timeout
+                    if t["status"] == "success" and t["timeout_setting"] == timeout
                 )
-                timeout_total = sum(
-                    1
-                    for t in results["tests"]
-                    if t["timeout_setting"] == timeout
-                )
+                timeout_total = sum(1 for t in results["tests"] if t["timeout_setting"] == timeout)
 
                 if timeout_success > 0:
                     print(
@@ -368,9 +302,7 @@ class SearchDiagnostics:
                     )
 
                     if timeout_success == timeout_total:
-                        print(
-                            f"\nRECOMMENDATION: Minimum reliable timeout appears to be {timeout}s"
-                        )
+                        print(f"\nRECOMMENDATION: Minimum reliable timeout appears to be {timeout}s")
                         break
         else:
             print(f"\nNo successful searches - all timed out or failed")
@@ -422,16 +354,14 @@ class SearchDiagnostics:
                 timeout = aiohttp.ClientTimeout(total=10)
 
                 if method == "get":
-                    async with self.session.get(
-                        url, timeout=timeout
-                    ) as response:
+                    async with self.session.get(url, timeout=timeout) as response:
                         elapsed = time.time() - start_time
                         status = response.status
 
                         try:
                             data = await response.json()
                             content_type = "json"
-                        except:
+                        except Exception:
                             data = await response.text()
                             content_type = "text"
 
@@ -448,16 +378,14 @@ class SearchDiagnostics:
 
                 elif method == "post":
                     payload = endpoint.get("payload", {})
-                    async with self.session.post(
-                        url, json=payload, timeout=timeout
-                    ) as response:
+                    async with self.session.post(url, json=payload, timeout=timeout) as response:
                         elapsed = time.time() - start_time
                         status = response.status
 
                         try:
                             data = await response.json()
                             content_type = "json"
-                        except:
+                        except Exception:
                             data = await response.text()
                             content_type = "text"
 
@@ -496,25 +424,17 @@ class SearchDiagnostics:
                 print(f"  EXCEPTION after {elapsed:.2f}s: {str(e)}")
 
         # Summarize results
-        success_count = sum(
-            1
-            for _, data in results["endpoints"].items()
-            if data.get("success", False)
-        )
+        success_count = sum(1 for _, data in results["endpoints"].items() if data.get("success", False))
 
         print("\n" + "=" * 80)
         print(f"CONNECTION TEST SUMMARY")
         print("=" * 80)
         print(f"\nTotal endpoints tested: {len(results['endpoints'])}")
-        print(
-            f"Successful connections: {success_count}/{len(results['endpoints'])}"
-        )
+        print(f"Successful connections: {success_count}/{len(results['endpoints'])}")
 
         # Check for patterns
         if success_count == 0:
-            print(
-                f"\nDIAGNOSIS: No endpoints are responding - API may be completely down"
-            )
+            print(f"\nDIAGNOSIS: No endpoints are responding - API may be completely down")
         elif all(
             data.get("success", False)
             for name, data in results["endpoints"].items()
@@ -528,9 +448,7 @@ class SearchDiagnostics:
             for name, data in results["endpoints"].items()
             if "search" not in name.lower()
         ):
-            print(
-                f"\nDIAGNOSIS: Only search-related endpoints are failing - search service is likely down"
-            )
+            print(f"\nDIAGNOSIS: Only search-related endpoints are failing - search service is likely down")
 
         print("\n" + "=" * 80)
 
@@ -548,18 +466,14 @@ async def main():
         "--direct-test",
         help="Compare direct API and search results for a GSE ID",
     )
-    group.add_argument(
-        "--timing-test", help="Test search performance with different timeouts"
-    )
+    group.add_argument("--timing-test", help="Test search performance with different timeouts")
     group.add_argument(
         "--connection-test",
         action="store_true",
         help="Test basic API connectivity",
     )
 
-    parser.add_argument(
-        "--api-url", default="http://localhost:8001", help="API URL"
-    )
+    parser.add_argument("--api-url", default="http://localhost:8001", help="API URL")
     parser.add_argument(
         "--disable-ssl-verify",
         action="store_true",
@@ -574,9 +488,7 @@ async def main():
 
     args = parser.parse_args()
 
-    diagnostics = SearchDiagnostics(
-        api_url=args.api_url, disable_ssl_verify=args.disable_ssl_verify
-    )
+    diagnostics = SearchDiagnostics(api_url=args.api_url, disable_ssl_verify=args.disable_ssl_verify)
 
     try:
         if args.direct_test:

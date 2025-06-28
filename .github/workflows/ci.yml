@@ -76,7 +76,7 @@ jobs:
     - name: Linting (ruff & flake8)
       run: |
         ruff check src/ tests/ scripts/ --output-format=github
-        flake8 src/ tests/ scripts/ --quiet
+        flake8 src/ tests/ scripts/ --max-line-length=110 --quiet
         echo "[PASS] Linting validated"
 
     - name: Security Scan (bandit)

@@ -157,9 +157,7 @@ class CacheHierarchy:
 
         self.logger.info("Cache hierarchy stopped")
 
-    async def get(
-        self, key: str, default: Any = None, promote_on_hit: bool = True
-    ) -> Any:
+    async def get(self, key: str, default: Any = None, promote_on_hit: bool = True) -> Any:
         """
         Get value from cache hierarchy (L1 → L2 → L3)
         """
@@ -184,12 +182,8 @@ class CacheHierarchy:
             self._stats[CacheLevel.L2_REDIS].hits += 1
 
             # Promote to L1 if policy allows
-            if promote_on_hit and self._should_promote(
-                key, CacheLevel.L2_REDIS, CacheLevel.L1_MEMORY
-            ):
-                await self._promote_value(
-                    key, value, CacheLevel.L2_REDIS, CacheLevel.L1_MEMORY
-                )
+            if promote_on_hit and self._should_promote(key, CacheLevel.L2_REDIS, CacheLevel.L1_MEMORY):
+                await self._promote_value(key, value, CacheLevel.L2_REDIS, CacheLevel.L1_MEMORY)
 
             self._update_performance_metrics(start_time, CacheLevel.L2_REDIS)
             return value
@@ -203,16 +197,10 @@ class CacheHierarchy:
 
             # Promote to higher levels if policy allows
             if promote_on_hit:
-                if self._should_promote(
-                    key, CacheLevel.L3_FILE, CacheLevel.L2_REDIS
-                ):
-                    await self._promote_value(
-                        key, value, CacheLevel.L3_FILE, CacheLevel.L2_REDIS
-                    )
+                if self._should_promote(key, CacheLevel.L3_FILE, CacheLevel.L2_REDIS):
+                    await self._promote_value(key, value, CacheLevel.L3_FILE, CacheLevel.L2_REDIS)
 
-                    if self._should_promote(
-                        key, CacheLevel.L2_REDIS, CacheLevel.L1_MEMORY
-                    ):
+                    if self._should_promote(key, CacheLevel.L2_REDIS, CacheLevel.L1_MEMORY):
                         await self._promote_value(
                             key,
                             value,
@@ -366,9 +354,7 @@ class CacheHierarchy:
         # Calculate frequency (accesses per hour)
         time_diff = current_time - pattern["first_access"]
         if time_diff > 0:
-            pattern["access_frequency"] = pattern["access_count"] / (
-                time_diff / 3600
-            )
+            pattern["access_frequency"] = pattern["access_count"] / (time_diff / 3600)
 
     def _init_access_tracking(self, key: str, level: CacheLevel):
         """Initialize access tracking for a new cache entry"""
@@ -382,9 +368,7 @@ class CacheHierarchy:
                 "current_level": level,
             }
 
-    def _should_promote(
-        self, key: str, from_level: CacheLevel, to_level: CacheLevel
-    ) -> bool:
+    def _should_promote(self, key: str, from_level: CacheLevel, to_level: CacheLevel) -> bool:
         """
         Determine if a cache entry should be promoted
         """
@@ -419,9 +403,7 @@ class CacheHierarchy:
 
         elif self.promotion_policy == CachePromotionPolicy.ADAPTIVE:
             # Adaptive policy considers multiple factors
-            score = self._calculate_promotion_score(
-                pattern, from_level, to_level
-            )
+            score = self._calculate_promotion_score(pattern, from_level, to_level)
             return score > 0.7  # Threshold for promotion
 
         return False
@@ -463,7 +445,7 @@ class CacheHierarchy:
         # Estimate size
         try:
             size_estimate = len(str(value))  # Simple size estimation
-        except:
+        except Exception:
             size_estimate = 1000  # Default estimate
 
         # Small items go to L1
@@ -478,9 +460,7 @@ class CacheHierarchy:
         else:
             return CacheLevel.L3_FILE
 
-    async def _promote_value(
-        self, key: str, value: Any, from_level: CacheLevel, to_level: CacheLevel
-    ):
+    async def _promote_value(self, key: str, value: Any, from_level: CacheLevel, to_level: CacheLevel):
         """
         Promote value between cache levels
         """
@@ -503,9 +483,7 @@ class CacheHierarchy:
                 # Update metrics
                 self._performance_metrics["promotions"] += 1
 
-                self.logger.debug(
-                    f"Promoted cache key '{key}' from {from_level.name} to {to_level.name}"
-                )
+                self.logger.debug(f"Promoted cache key '{key}' from {from_level.name} to {to_level.name}")
 
         except Exception as e:
             self.logger.error(f"Error promoting cache key '{key}': {e}")
@@ -596,9 +574,7 @@ class CacheHierarchy:
 
                 # Check for promotion opportunities
                 if current_level == CacheLevel.L3_FILE:
-                    if self._should_promote(
-                        key, CacheLevel.L3_FILE, CacheLevel.L2_REDIS
-                    ):
+                    if self._should_promote(key, CacheLevel.L3_FILE, CacheLevel.L2_REDIS):
                         # Get value for promotion
                         value = await self._l3_file.get(key)
                         if value is not None:
@@ -613,9 +589,7 @@ class CacheHierarchy:
                             self._promotion_queue.append(operation)
 
                 elif current_level == CacheLevel.L2_REDIS:
-                    if self._should_promote(
-                        key, CacheLevel.L2_REDIS, CacheLevel.L1_MEMORY
-                    ):
+                    if self._should_promote(key, CacheLevel.L2_REDIS, CacheLevel.L1_MEMORY):
                         # Get value for promotion
                         value = await self._l2_redis.get(key)
                         if value is not None:
@@ -642,13 +616,9 @@ class CacheHierarchy:
                         self._promotion_queue.append(operation)
 
             except Exception as e:
-                self.logger.error(
-                    f"Error analyzing promotion for key '{key}': {e}"
-                )
+                self.logger.error(f"Error analyzing promotion for key '{key}': {e}")
 
-    def _update_performance_metrics(
-        self, start_time: float, hit_level: Optional[CacheLevel]
-    ):
+    def _update_performance_metrics(self, start_time: float, hit_level: Optional[CacheLevel]):
         """
         Update performance metrics
         """
@@ -658,27 +628,19 @@ class CacheHierarchy:
         operations = self._performance_metrics["total_operations"]
 
         # Rolling average
-        self._performance_metrics["average_latency"] = (
-            current_avg * (operations - 1) + latency
-        ) / operations
+        self._performance_metrics["average_latency"] = (current_avg * (operations - 1) + latency) / operations
 
         # Update hit ratios
         for level in CacheLevel:
             stats = self._stats[level]
-            self._performance_metrics[
-                f"{level.name.lower()}_hit_ratio"
-            ] = stats.hit_ratio
+            self._performance_metrics[f"{level.name.lower()}_hit_ratio"] = stats.hit_ratio
 
         # Overall hit ratio
         total_hits = sum(stats.hits for stats in self._stats.values())
-        total_operations = sum(
-            stats.hits + stats.misses for stats in self._stats.values()
-        )
+        total_operations = sum(stats.hits + stats.misses for stats in self._stats.values())
 
         if total_operations > 0:
-            self._performance_metrics["overall_hit_ratio"] = (
-                total_hits / total_operations
-            )
+            self._performance_metrics["overall_hit_ratio"] = total_hits / total_operations
 
     # Information and statistics
     async def get_statistics(self) -> Dict[str, Any]:
@@ -712,8 +674,7 @@ class CacheHierarchy:
             "tracked_keys": len(self._access_patterns),
             "promotion_queue_size": len(self._promotion_queue),
             "average_access_frequency": sum(
-                p.get("access_frequency", 0)
-                for p in self._access_patterns.values()
+                p.get("access_frequency", 0) for p in self._access_patterns.values()
             )
             / max(len(self._access_patterns), 1),
         }
@@ -753,24 +714,18 @@ class CacheHierarchy:
         """
         Warm cache with pre-computed data
         """
-        self.logger.info(
-            f"Warming cache with {len(data)} entries at level {target_level.name}"
-        )
+        self.logger.info(f"Warming cache with {len(data)} entries at level {target_level.name}")
 
         success_count = 0
 
         for key, value in data.items():
             try:
-                if await self.set(
-                    key, value, target_level=target_level, propagate=False
-                ):
+                if await self.set(key, value, target_level=target_level, propagate=False):
                     success_count += 1
             except Exception as e:
                 self.logger.error(f"Error warming cache for key '{key}': {e}")
 
-        self.logger.info(
-            f"Cache warming completed: {success_count}/{len(data)} entries successful"
-        )
+        self.logger.info(f"Cache warming completed: {success_count}/{len(data)} entries successful")
         return success_count
 
 

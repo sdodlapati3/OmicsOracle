@@ -3,7 +3,6 @@
 Simple test to verify futuristic interface can start
 """
 
-import os
 import sys
 from pathlib import Path
 

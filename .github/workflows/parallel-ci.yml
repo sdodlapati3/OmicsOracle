@@ -84,7 +84,7 @@ jobs:
       - name: Run linting
         run: |
           ruff check src/ tests/ scripts/ --quiet
-          flake8 src/ tests/ scripts/ --quiet
+          flake8 src/ tests/ scripts/ --max-line-length=110 --quiet
           echo "[PASS] Code linting validated"
 
   type-check:

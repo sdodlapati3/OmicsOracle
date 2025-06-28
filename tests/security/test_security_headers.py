@@ -5,6 +5,7 @@ Security Headers and HTTPS Testing for OmicsOracle Web Interface
 This module tests security headers, HTTPS configuration, and rate limiting.
 """
 
+import json
 import socket
 import ssl
 import time
@@ -110,9 +111,7 @@ class SecurityHeadersTester:
             "weak_headers": weak_headers,
             "information_disclosure": information_disclosure,
             "security_score": round(security_score, 1),
-            "recommendations": self._generate_header_recommendations(
-                results, information_disclosure
-            ),
+            "recommendations": self._generate_header_recommendations(results, information_disclosure),
         }
 
     def _generate_header_recommendations(
@@ -124,13 +123,9 @@ class SecurityHeadersTester:
         for header, data in results.items():
             if not data["present"]:
                 if header == "Strict-Transport-Security":
-                    recommendations.append(
-                        f"🔴 Add {header}: max-age=31536000; includeSubDomains"
-                    )
+                    recommendations.append(f"🔴 Add {header}: max-age=31536000; includeSubDomains")
                 elif header == "Content-Security-Policy":
-                    recommendations.append(
-                        f"🔴 Add {header}: default-src 'self'; script-src 'self'"
-                    )
+                    recommendations.append(f"🔴 Add {header}: default-src 'self'; script-src 'self'")
                 elif header == "X-Frame-Options":
                     recommendations.append(f"🟡 Add {header}: DENY")
                 else:
@@ -139,9 +134,7 @@ class SecurityHeadersTester:
                 recommendations.append(f"🟡 Strengthen {header} configuration")
 
         for header in info_disclosure:
-            recommendations.append(
-                f"🔵 Consider removing {header} to reduce information disclosure"
-            )
+            recommendations.append(f"🔵 Consider removing {header} to reduce information disclosure")
 
         return recommendations
 
@@ -181,9 +174,7 @@ class SecurityHeadersTester:
         # Test HTTP to HTTPS redirect
         if self.base_url.startswith("http://"):
             try:
-                response = requests.get(
-                    self.base_url, allow_redirects=False, timeout=10
-                )
+                response = requests.get(self.base_url, allow_redirects=False, timeout=10)
 
                 if response.status_code in [301, 302, 307, 308]:
                     location = response.headers.get("Location", "")
@@ -201,12 +192,8 @@ class SecurityHeadersTester:
                 port = parsed_url.port or 443
 
                 context = ssl.create_default_context()
-                with socket.create_connection(
-                    (hostname, port), timeout=10
-                ) as sock:
-                    with context.wrap_socket(
-                        sock, server_hostname=hostname
-                    ) as ssock:
+                with socket.create_connection((hostname, port), timeout=10) as sock:
+                    with context.wrap_socket(sock, server_hostname=hostname) as ssock:
                         results["tls_version"] = ssock.version()
                         results["cipher_suite"] = ssock.cipher()
 
@@ -219,9 +206,7 @@ class SecurityHeadersTester:
             results["https_redirect"],
             results["ssl_certificate_valid"],
             results["hsts_header"],
-            results["tls_version"] in ["TLSv1.2", "TLSv1.3"]
-            if results["tls_version"]
-            else False,
+            results["tls_version"] in ["TLSv1.2", "TLSv1.3"] if results["tls_version"] else False,
         ]
 
         https_score = (sum(score_factors) / len(score_factors)) * 100
@@ -279,9 +264,7 @@ class SecurityHeadersTester:
                             timeout=5,
                         )
                     else:
-                        response = self.session.get(
-                            f"{self.base_url}{endpoint}", timeout=5
-                        )
+                        response = self.session.get(f"{self.base_url}{endpoint}", timeout=5)
 
                     response_time = time.time() - start_time
                     endpoint_results["response_times"].append(response_time)
@@ -294,9 +277,7 @@ class SecurityHeadersTester:
 
                         if endpoint_results["first_rate_limit_at"] is None:
                             endpoint_results["first_rate_limit_at"] = i + 1
-                            endpoint_results[
-                                "rate_limit_status_code"
-                            ] = response.status_code
+                            endpoint_results["rate_limit_status_code"] = response.status_code
 
                             # Capture rate limiting headers
                             rate_limit_headers = [
@@ -308,9 +289,7 @@ class SecurityHeadersTester:
 
                             for header in rate_limit_headers:
                                 if header in response.headers:
-                                    endpoint_results["rate_limit_headers"][
-                                        header
-                                    ] = response.headers[header]
+                                    endpoint_results["rate_limit_headers"][header] = response.headers[header]
 
                         # Stop testing after first rate limit
                         break
@@ -327,52 +306,38 @@ class SecurityHeadersTester:
 
             # Calculate statistics
             if endpoint_results["response_times"]:
-                endpoint_results["avg_response_time"] = sum(
-                    endpoint_results["response_times"]
-                ) / len(endpoint_results["response_times"])
-                endpoint_results["max_response_time"] = max(
+                endpoint_results["avg_response_time"] = sum(endpoint_results["response_times"]) / len(
                     endpoint_results["response_times"]
                 )
+                endpoint_results["max_response_time"] = max(endpoint_results["response_times"])
 
             results[endpoint] = endpoint_results
 
         # Overall rate limiting assessment
         endpoints_with_rate_limiting = sum(
-            1
-            for result in results.values()
-            if result.get("rate_limiting_detected", False)
+            1 for result in results.values() if result.get("rate_limiting_detected", False)
         )
 
-        rate_limiting_score = (
-            endpoints_with_rate_limiting / len(test_endpoints)
-        ) * 100
+        rate_limiting_score = (endpoints_with_rate_limiting / len(test_endpoints)) * 100
 
         return {
             "endpoint_results": results,
             "endpoints_tested": len(test_endpoints),
             "endpoints_with_rate_limiting": endpoints_with_rate_limiting,
             "rate_limiting_score": round(rate_limiting_score, 1),
-            "recommendations": self._generate_rate_limiting_recommendations(
-                results
-            ),
+            "recommendations": self._generate_rate_limiting_recommendations(results),
         }
 
-    def _generate_rate_limiting_recommendations(
-        self, results: Dict[str, Any]
-    ) -> List[str]:
+    def _generate_rate_limiting_recommendations(self, results: Dict[str, Any]) -> List[str]:
         """Generate recommendations for rate limiting."""
         recommendations = []
 
         endpoints_without_limits = [
-            endpoint
-            for endpoint, data in results.items()
-            if not data.get("rate_limiting_detected", False)
+            endpoint for endpoint, data in results.items() if not data.get("rate_limiting_detected", False)
         ]
 
         if endpoints_without_limits:
-            recommendations.append(
-                "🔴 CRITICAL: Implement rate limiting on all API endpoints"
-            )
+            recommendations.append("🔴 CRITICAL: Implement rate limiting on all API endpoints")
             for endpoint in endpoints_without_limits:
                 recommendations.append(f"🔴 Add rate limiting to {endpoint}")
 
@@ -404,23 +369,15 @@ class SecurityHeadersTester:
         for origin in test_origins:
             try:
                 headers = {"Origin": origin}
-                response = self.session.get(
-                    f"{self.base_url}/", headers=headers, timeout=10
-                )
+                response = self.session.get(f"{self.base_url}/", headers=headers, timeout=10)
 
                 cors_headers = {
-                    "Access-Control-Allow-Origin": response.headers.get(
-                        "Access-Control-Allow-Origin"
-                    ),
+                    "Access-Control-Allow-Origin": response.headers.get("Access-Control-Allow-Origin"),
                     "Access-Control-Allow-Credentials": response.headers.get(
                         "Access-Control-Allow-Credentials"
                     ),
-                    "Access-Control-Allow-Methods": response.headers.get(
-                        "Access-Control-Allow-Methods"
-                    ),
-                    "Access-Control-Allow-Headers": response.headers.get(
-                        "Access-Control-Allow-Headers"
-                    ),
+                    "Access-Control-Allow-Methods": response.headers.get("Access-Control-Allow-Methods"),
+                    "Access-Control-Allow-Headers": response.headers.get("Access-Control-Allow-Headers"),
                 }
 
                 # Check if origin is allowed
@@ -430,15 +387,10 @@ class SecurityHeadersTester:
 
                 results[origin] = {
                     "status_code": response.status_code,
-                    "cors_headers": {
-                        k: v for k, v in cors_headers.items() if v is not None
-                    },
+                    "cors_headers": {k: v for k, v in cors_headers.items() if v is not None},
                     "origin_allowed": origin_allowed,
                     "wildcard_used": is_wildcard,
-                    "credentials_allowed": cors_headers.get(
-                        "Access-Control-Allow-Credentials"
-                    )
-                    == "true",
+                    "credentials_allowed": cors_headers.get("Access-Control-Allow-Credentials") == "true",
                 }
 
             except Exception as e:
@@ -448,19 +400,11 @@ class SecurityHeadersTester:
         security_issues = []
 
         for origin, data in results.items():
-            if data.get("wildcard_used", False) and data.get(
-                "credentials_allowed", False
-            ):
-                security_issues.append(
-                    "🔴 CRITICAL: Wildcard CORS with credentials enabled"
-                )
+            if data.get("wildcard_used", False) and data.get("credentials_allowed", False):
+                security_issues.append("🔴 CRITICAL: Wildcard CORS with credentials enabled")
             elif data.get("wildcard_used", False):
-                security_issues.append(
-                    "🟡 WARNING: Wildcard CORS allows all origins"
-                )
-            elif origin == "https://malicious.com" and data.get(
-                "origin_allowed", False
-            ):
+                security_issues.append("🟡 WARNING: Wildcard CORS allows all origins")
+            elif origin == "https://malicious.com" and data.get("origin_allowed", False):
                 security_issues.append("🟡 WARNING: Malicious origin allowed")
 
         return {
@@ -490,11 +434,7 @@ class SecurityHeadersTester:
             test_results["security_headers"].get("security_score", 0),
             test_results["https_configuration"].get("https_security_score", 0),
             test_results["rate_limiting"].get("rate_limiting_score", 0),
-            100
-            if test_results["cors_configuration"].get(
-                "cors_properly_configured", False
-            )
-            else 50,
+            100 if test_results["cors_configuration"].get("cors_properly_configured", False) else 50,
         ]
 
         overall_score = sum(scores) / len(scores)
@@ -513,9 +453,7 @@ class SecurityHeadersTester:
 
         return final_report
 
-    def _generate_security_summary(
-        self, test_results: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _generate_security_summary(self, test_results: Dict[str, Any]) -> Dict[str, Any]:
         """Generate security summary and recommendations."""
         summary = {
             "critical_issues": [],
@@ -577,7 +515,5 @@ if __name__ == "__main__":
     with open("security_headers_results.json", "w") as f:
         json.dump(results, f, indent=2)
 
-    print(
-        "\n📊 Security headers test results saved to security_headers_results.json"
-    )
+    print("\n📊 Security headers test results saved to security_headers_results.json")
     print(f"🏆 Overall Security Score: {results['overall_security_score']}/100")

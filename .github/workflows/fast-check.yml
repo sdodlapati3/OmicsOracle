@@ -68,8 +68,8 @@ jobs:
           PID2=$!
           ruff check src/ tests/ scripts/ --quiet &
           PID3=$!
-          # Two-tier line length check (hard limit 100, soft target 80)
-          flake8 src/ tests/ scripts/ --max-line-length=100 --quiet &
+          # Two-tier line length check (hard limit 110, soft target 80)
+          flake8 src/ tests/ scripts/ --max-line-length=110 --quiet &
           PID4=$!
 
           # Wait for all and capture results

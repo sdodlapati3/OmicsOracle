@@ -10,7 +10,7 @@ import logging.handlers
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Callable, Dict, List, Optional
+from typing import Callable, Dict, List
 
 
 class LogLevel(str, Enum):
@@ -52,9 +52,7 @@ class FuturisticLogger:
             maxBytes=10 * 1024 * 1024,  # 10MB
             backupCount=5,
         )
-        file_formatter = logging.Formatter(
-            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-        )
+        file_formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
         file_handler.setFormatter(file_formatter)
 
         # Console handler
@@ -193,9 +191,7 @@ class PerformanceMonitor:
         if len(self.response_times) > 1000:
             self.response_times = self.response_times[-1000:]
 
-    def record_search_query(
-        self, query: str, results_count: int, processing_time: float
-    ):
+    def record_search_query(self, query: str, results_count: int, processing_time: float):
         """Record search query metrics"""
         self.metrics["search_queries"] += 1
         futuristic_logger.info(
@@ -212,9 +208,7 @@ class PerformanceMonitor:
         if connected:
             self.metrics["websocket_connections"] += 1
         else:
-            self.metrics["websocket_connections"] = max(
-                0, self.metrics["websocket_connections"] - 1
-            )
+            self.metrics["websocket_connections"] = max(0, self.metrics["websocket_connections"] - 1)
 
     def record_error(self, error: str, context: Dict = None):
         """Record error occurrence"""
@@ -236,9 +230,7 @@ class PerformanceMonitor:
         """Get current performance metrics"""
         avg_response_time = 0
         if self.response_times:
-            avg_response_time = sum(
-                rt["time"] for rt in self.response_times
-            ) / len(self.response_times)
+            avg_response_time = sum(rt["time"] for rt in self.response_times) / len(self.response_times)
 
         return {
             "metrics": self.metrics.copy(),

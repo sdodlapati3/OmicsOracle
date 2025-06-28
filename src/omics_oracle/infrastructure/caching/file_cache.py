@@ -89,7 +89,7 @@ class FileCache:
                     # Expired, delete file
                     try:
                         file_path.unlink()
-                    except:
+                    except Exception:
                         pass
                     self.stats["misses"] += 1
                     return default
@@ -110,9 +110,7 @@ class FileCache:
             self.stats["errors"] += 1
             return default
 
-    async def set(
-        self, key: str, value: Any, ttl: Optional[int] = None
-    ) -> bool:
+    async def set(self, key: str, value: Any, ttl: Optional[int] = None) -> bool:
         """Set value in file cache"""
         try:
             if ttl is None:
@@ -123,9 +121,7 @@ class FileCache:
 
             # Check size limit
             if len(data) > self.max_file_size:
-                self.logger.warning(
-                    f"Value too large for file cache: {len(data)} bytes"
-                )
+                self.logger.warning(f"Value too large for file cache: {len(data)} bytes")
                 return False
 
             file_path = self._get_file_path(key)
@@ -136,9 +132,7 @@ class FileCache:
             with open(temp_path, "wb") as f:
                 # Write header (creation time, TTL)
                 created_at = time.time()
-                header = bytes.fromhex(f"{created_at:016x}") + bytes.fromhex(
-                    f"{ttl:016x}"
-                )
+                header = bytes.fromhex(f"{created_at:016x}") + bytes.fromhex(f"{ttl:016x}")
                 f.write(header)
 
                 # Write data
@@ -193,7 +187,7 @@ class FileCache:
                     # Expired
                     try:
                         file_path.unlink()
-                    except:
+                    except Exception:
                         pass
                     return False
 
@@ -209,7 +203,7 @@ class FileCache:
             for file_path in self.cache_dir.glob("*.cache"):
                 try:
                     file_path.unlink()
-                except:
+                except Exception:
                     pass
 
             # Reset stats
@@ -236,7 +230,7 @@ class FileCache:
             cache_files = list(self.cache_dir.glob("*.cache"))
             stats["file_count"] = len(cache_files)
             stats["total_size"] = sum(f.stat().st_size for f in cache_files)
-        except:
+        except Exception:
             stats["file_count"] = 0
             stats["total_size"] = 0
 

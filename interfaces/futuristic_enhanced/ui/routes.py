@@ -2,7 +2,6 @@
 UI routes for the enhanced interface
 """
 
-from core.config import UI_THEME
 from fastapi import APIRouter
 from fastapi.responses import HTMLResponse
 

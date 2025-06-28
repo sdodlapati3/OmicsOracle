@@ -5,7 +5,6 @@ Provides interactive charts, network visualizations, and real-time plots
 using modern web technologies and D3.js integration
 """
 
-import json
 from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional, Union
@@ -81,9 +80,7 @@ class EnhancedVisualizationService:
             "gradient": ["#3b82f6", "#6366f1", "#8b5cf6", "#a855f7", "#c084fc"],
         }
 
-        futuristic_logger.info(
-            "[DESIGN] Enhanced Visualization Service initialized"
-        )
+        futuristic_logger.info("[DESIGN] Enhanced Visualization Service initialized")
 
     def add_update_callback(self, callback):
         """Add callback for real-time visualization updates"""
@@ -102,9 +99,7 @@ class EnhancedVisualizationService:
                     }
                 )
             except Exception as e:
-                futuristic_logger.error(
-                    f"Error sending visualization update: {e}"
-                )
+                futuristic_logger.error(f"Error sending visualization update: {e}")
 
     async def create_scatter_plot(
         self,
@@ -127,21 +122,15 @@ class EnhancedVisualizationService:
         }
 
         # Add color palette
-        if not plot_data["data"] or not any(
-            p.get("color") for p in plot_data["data"]
-        ):
-            colors = self.color_palettes.get(
-                config.theme, self.color_palettes["default"]
-            )
+        if not plot_data["data"] or not any(p.get("color") for p in plot_data["data"]):
+            colors = self.color_palettes.get(config.theme, self.color_palettes["default"])
             for i, point in enumerate(plot_data["data"]):
                 point["color"] = colors[i % len(colors)]
 
         self.active_visualizations[viz_id] = plot_data
         await self._send_update(viz_id, plot_data)
 
-        futuristic_logger.info(
-            f"[CHART] Created scatter plot '{config.title}' with {len(data)} points"
-        )
+        futuristic_logger.info(f"[CHART] Created scatter plot '{config.title}' with {len(data)} points")
         return plot_data
 
     async def create_network_graph(
@@ -168,9 +157,7 @@ class EnhancedVisualizationService:
         }
 
         # Add node colors if not specified
-        colors = self.color_palettes.get(
-            config.theme, self.color_palettes["default"]
-        )
+        colors = self.color_palettes.get(config.theme, self.color_palettes["default"])
         for i, node in enumerate(network_data["nodes"]):
             if "color" not in node:
                 node["color"] = colors[i % len(colors)]
@@ -234,9 +221,7 @@ class EnhancedVisualizationService:
 
         data_points = []
 
-        for i, (fc, pval, gene) in enumerate(
-            zip(fold_changes, p_values, gene_names)
-        ):
+        for i, (fc, pval, gene) in enumerate(zip(fold_changes, p_values, gene_names)):
             # Avoid log(0) by using a small minimum value
             log_pval = -math.log10(max(pval, 1e-300))
 
@@ -244,13 +229,7 @@ class EnhancedVisualizationService:
             significant = abs(fc) > 1 and pval < 0.05
             highly_significant = abs(fc) > 2 and pval < 0.01
 
-            color = (
-                "#FF6B6B"
-                if highly_significant
-                else "#FFA500"
-                if significant
-                else "#CCCCCC"
-            )
+            color = "#FF6B6B" if highly_significant else "#FFA500" if significant else "#CCCCCC"
 
             data_points.append(
                 {
@@ -310,9 +289,7 @@ class EnhancedVisualizationService:
         self.active_visualizations[viz_id] = timeline_data
         await self._send_update(viz_id, timeline_data)
 
-        futuristic_logger.info(
-            f"[CALENDAR] Created timeline '{config.title}' with {len(events)} events"
-        )
+        futuristic_logger.info(f"[CALENDAR] Created timeline '{config.title}' with {len(events)} events")
         return timeline_data
 
     def get_visualization(self, viz_id: str) -> Optional[Dict]:
@@ -327,9 +304,7 @@ class EnhancedVisualizationService:
                 {
                     "id": viz_id,
                     "type": viz_data.get("type"),
-                    "title": viz_data.get("config", {}).get(
-                        "title", "Untitled"
-                    ),
+                    "title": viz_data.get("config", {}).get("title", "Untitled"),
                     "created": viz_data.get("timestamp"),
                 }
                 for viz_id, viz_data in self.active_visualizations.items()
@@ -343,9 +318,7 @@ class EnhancedVisualizationService:
 
         # Update the visualization data
         self.active_visualizations[viz_id].update(new_data)
-        self.active_visualizations[viz_id][
-            "timestamp"
-        ] = datetime.utcnow().isoformat()
+        self.active_visualizations[viz_id]["timestamp"] = datetime.utcnow().isoformat()
 
         await self._send_update(viz_id, self.active_visualizations[viz_id])
         futuristic_logger.info(f"[REFRESH] Updated visualization {viz_id}")
@@ -359,11 +332,8 @@ class EnhancedVisualizationService:
             return True
         return False
 
-    def generate_demo_data(
-        self, viz_type: VisualizationType, count: int = 50
-    ) -> Dict:
+    def generate_demo_data(self, viz_type: VisualizationType, count: int = 50) -> Dict:
         """Generate demo data for different visualization types"""
-        import math
         import random
 
         if viz_type == VisualizationType.SCATTER_PLOT:
@@ -411,9 +381,7 @@ class EnhancedVisualizationService:
             return {"nodes": nodes, "edges": edges}
 
         elif viz_type == VisualizationType.HEATMAP:
-            matrix = [
-                [random.uniform(-2, 2) for _ in range(10)] for _ in range(15)
-            ]
+            matrix = [[random.uniform(-2, 2) for _ in range(10)] for _ in range(15)]
             return {
                 "matrix_data": matrix,
                 "row_labels": [f"Gene_{i}" for i in range(15)],

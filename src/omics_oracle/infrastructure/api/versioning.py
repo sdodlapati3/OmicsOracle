@@ -5,14 +5,12 @@ API Versioning Framework for OmicsOracle
 import logging
 import re
 from dataclasses import dataclass, field
-from datetime import date, datetime
+from datetime import date
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional
 
 import semver
 from fastapi import HTTPException, Request, Response
-from fastapi.responses import JSONResponse
-from fastapi.routing import APIRoute
 
 
 class VersionStatus(Enum):
@@ -63,10 +61,7 @@ class APIVersion:
 
     def is_compatible_with(self, other_version: str) -> bool:
         """Check if this version is compatible with another"""
-        return (
-            other_version in self.backward_compatible_with
-            or other_version in self.forward_compatible_with
-        )
+        return other_version in self.backward_compatible_with or other_version in self.forward_compatible_with
 
     def is_deprecated(self) -> bool:
         """Check if version is deprecated"""
@@ -105,18 +100,14 @@ class VersionRegistry:
         self._versions[version.version] = version
 
         # Update latest version
-        if not self._latest_version or self._is_newer(
-            version.version, self._latest_version
-        ):
+        if not self._latest_version or self._is_newer(version.version, self._latest_version):
             self._latest_version = version.version
 
         # Set as default if it's the first active version
         if not self._default_version and version.status == VersionStatus.ACTIVE:
             self._default_version = version.version
 
-        self.logger.info(
-            f"Registered API version: {version.version} ({version.status.value})"
-        )
+        self.logger.info(f"Registered API version: {version.version} ({version.status.value})")
 
     def register_alias(self, alias: str, version: str):
         """Register an alias for a version"""
@@ -148,34 +139,24 @@ class VersionRegistry:
 
     def get_active_versions(self) -> List[APIVersion]:
         """Get all active versions"""
-        return [
-            v
-            for v in self._versions.values()
-            if v.status == VersionStatus.ACTIVE
-        ]
+        return [v for v in self._versions.values() if v.status == VersionStatus.ACTIVE]
 
     def get_supported_versions(self) -> List[APIVersion]:
         """Get all supported versions (active + deprecated, not sunset)"""
         return [
-            v
-            for v in self._versions.values()
-            if v.status in [VersionStatus.ACTIVE, VersionStatus.DEPRECATED]
+            v for v in self._versions.values() if v.status in [VersionStatus.ACTIVE, VersionStatus.DEPRECATED]
         ]
 
     def list_versions(self) -> List[str]:
         """List all registered version strings"""
-        return sorted(
-            self._versions.keys(), key=lambda v: semver.VersionInfo.parse(v)
-        )
+        return sorted(self._versions.keys(), key=lambda v: semver.VersionInfo.parse(v))
 
     def is_supported(self, version: str) -> bool:
         """Check if version is supported"""
         version_info = self.get_version(version)
         return version_info is not None and not version_info.is_sunset()
 
-    def deprecate_version(
-        self, version: str, sunset_date: Optional[date] = None
-    ):
+    def deprecate_version(self, version: str, sunset_date: Optional[date] = None):
         """Mark version as deprecated"""
         if version in self._versions:
             self._versions[version].status = VersionStatus.DEPRECATED
@@ -196,7 +177,7 @@ class VersionRegistry:
             v1 = semver.VersionInfo.parse(version1)
             v2 = semver.VersionInfo.parse(version2)
             return v1 > v2
-        except:
+        except (ValueError, TypeError):
             return False
 
 
@@ -281,9 +262,7 @@ class VersionManager:
         self._response_transformers: Dict[str, List[Callable]] = {}
 
         # Migration handlers
-        self._migration_handlers: Dict[
-            str, Callable
-        ] = {}  # from_version -> handler
+        self._migration_handlers: Dict[str, Callable] = {}  # from_version -> handler
 
         self.logger = logging.getLogger(__name__)
 
@@ -374,9 +353,7 @@ class VersionManager:
 
         # Fallback to default if version not found
         if not version_info:
-            self.logger.warning(
-                f"Unknown API version requested: {version_str}, using default"
-            )
+            self.logger.warning(f"Unknown API version requested: {version_str}, using default")
             version_info = self.registry.get_version(self.default_version)
 
         # Check if version is supported
@@ -396,20 +373,14 @@ class VersionManager:
 
         # Deprecation warning
         if version.is_deprecated():
-            response.headers[
-                "Warning"
-            ] = f'199 - "API version {version.version} is deprecated"'
+            response.headers["Warning"] = f'199 - "API version {version.version} is deprecated"'
 
             if version.sunset_date:
                 response.headers["Sunset"] = version.sunset_date.isoformat()
 
         # Available versions
-        supported_versions = [
-            v.version for v in self.registry.get_supported_versions()
-        ]
-        response.headers["X-API-Supported-Versions"] = ",".join(
-            supported_versions
-        )
+        supported_versions = [v.version for v in self.registry.get_supported_versions()]
+        response.headers["X-API-Supported-Versions"] = ",".join(supported_versions)
 
     def register_request_transformer(self, version: str, transformer: Callable):
         """Register request transformer for specific version"""
@@ -418,9 +389,7 @@ class VersionManager:
 
         self._request_transformers[version].append(transformer)
 
-    def register_response_transformer(
-        self, version: str, transformer: Callable
-    ):
+    def register_response_transformer(self, version: str, transformer: Callable):
         """Register response transformer for specific version"""
         if version not in self._response_transformers:
             self._response_transformers[version] = []
@@ -431,9 +400,7 @@ class VersionManager:
         """Register migration handler for version upgrade/downgrade"""
         self._migration_handlers[from_version] = handler
 
-    async def transform_request(
-        self, request: Request, version: APIVersion
-    ) -> Request:
+    async def transform_request(self, request: Request, version: APIVersion) -> Request:
         """Transform request based on version"""
 
         transformers = self._request_transformers.get(version.version, [])
@@ -442,15 +409,11 @@ class VersionManager:
             try:
                 request = await transformer(request, version)
             except Exception as e:
-                self.logger.error(
-                    f"Request transformation error for version {version.version}: {e}"
-                )
+                self.logger.error(f"Request transformation error for version {version.version}: {e}")
 
         return request
 
-    async def transform_response(
-        self, response: Any, version: APIVersion
-    ) -> Any:
+    async def transform_response(self, response: Any, version: APIVersion) -> Any:
         """Transform response based on version"""
 
         transformers = self._response_transformers.get(version.version, [])
@@ -459,9 +422,7 @@ class VersionManager:
             try:
                 response = await transformer(response, version)
             except Exception as e:
-                self.logger.error(
-                    f"Response transformation error for version {version.version}: {e}"
-                )
+                self.logger.error(f"Response transformation error for version {version.version}: {e}")
 
         return response
 
@@ -482,12 +443,8 @@ class VersionManager:
             if version.is_deprecated():
                 version_data["deprecated"] = True
                 if version.sunset_date:
-                    version_data[
-                        "sunset_date"
-                    ] = version.sunset_date.isoformat()
-                    version_data[
-                        "days_until_sunset"
-                    ] = version.days_until_sunset()
+                    version_data["sunset_date"] = version.sunset_date.isoformat()
+                    version_data["days_until_sunset"] = version.days_until_sunset()
 
             if version.changelog:
                 version_data["changelog"] = version.changelog

@@ -15,7 +15,7 @@ from pathlib import Path
 from typing import Any, Dict, List
 
 # Add tests directory to path for imports
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 try:
     from performance.test_load_testing import LoadTestSuite
@@ -60,9 +60,7 @@ class ComprehensiveTestRunner:
 
         try:
             load_suite = LoadTestSuite(self.base_url)
-            results = load_suite.run_comprehensive_load_test(
-                duration=duration, users=users
-            )
+            results = load_suite.run_comprehensive_load_test(duration=duration, users=users)
 
             print(f"✅ Load tests completed successfully")
             print(f"   - Total requests: {results.get('total_requests', 'N/A')}")
@@ -106,8 +104,7 @@ class ComprehensiveTestRunner:
 
                 # Generate comprehensive report
                 security_report = security_suite.generate_security_report(
-                    injection_results, ai_injection_results, auth_results,
-                    upload_results, info_results
+                    injection_results, ai_injection_results, auth_results, upload_results, info_results
                 )
 
                 security_results["main_security"] = security_report
@@ -120,7 +117,10 @@ class ComprehensiveTestRunner:
                 security_results["main_security"] = {"error": str(e), "failed": True}
                 print(f"❌ Main security tests failed: {str(e)}")
         else:
-            security_results["main_security"] = {"error": "Security test suite not available", "skipped": True}
+            security_results["main_security"] = {
+                "error": "Security test suite not available",
+                "skipped": True,
+            }
 
         # Run security headers tests
         if SecurityHeadersTestSuite is not None:
@@ -147,14 +147,19 @@ class ComprehensiveTestRunner:
                 security_results["security_headers"] = headers_report
 
                 print(f"✅ Security headers tests completed")
-                print(f"   - Overall security score: {headers_report.get('overall_security_score', 0):.1f}/100")
+                print(
+                    f"   - Overall security score: {headers_report.get('overall_security_score', 0):.1f}/100"
+                )
                 print(f"   - Risk level: {headers_report.get('risk_level', 'Unknown')}")
 
             except Exception as e:
                 security_results["security_headers"] = {"error": str(e), "failed": True}
                 print(f"❌ Security headers tests failed: {str(e)}")
         else:
-            security_results["security_headers"] = {"error": "Security headers test suite not available", "skipped": True}
+            security_results["security_headers"] = {
+                "error": "Security headers test suite not available",
+                "skipped": True,
+            }
 
         return security_results
 
@@ -168,9 +173,7 @@ class ComprehensiveTestRunner:
             return {"error": "Browser automation test suite not available", "skipped": True}
 
         try:
-            browser_suite = BrowserAutomationTestSuite(
-                self.base_url, browser=browser, headless=headless
-            )
+            browser_suite = BrowserAutomationTestSuite(self.base_url, browser=browser, headless=headless)
 
             # Setup WebDriver
             print(f"🌐 Setting up {browser} WebDriver...")
@@ -194,8 +197,11 @@ class ComprehensiveTestRunner:
 
                 # Generate browser report
                 browser_report = browser_suite.generate_browser_report(
-                    page_loading_results, search_results, ai_results,
-                    responsive_results, accessibility_results
+                    page_loading_results,
+                    search_results,
+                    ai_results,
+                    responsive_results,
+                    accessibility_results,
                 )
 
                 print(f"✅ Browser tests completed")
@@ -239,8 +245,7 @@ class ComprehensiveTestRunner:
 
             # Generate mobile report
             mobile_report = mobile_suite.generate_mobile_report(
-                responsiveness_results, performance_results,
-                touch_results, accessibility_results
+                responsiveness_results, performance_results, touch_results, accessibility_results
             )
 
             print(f"✅ Mobile tests completed")
@@ -266,8 +271,7 @@ class ComprehensiveTestRunner:
         # Run all test suites
         if config.get("run_load_tests", True):
             self.results["load_testing"] = self.run_load_tests(
-                duration=config.get("load_duration", 30),
-                users=config.get("load_users", 10)
+                duration=config.get("load_duration", 30), users=config.get("load_users", 10)
             )
 
         if config.get("run_security_tests", True):
@@ -275,8 +279,7 @@ class ComprehensiveTestRunner:
 
         if config.get("run_browser_tests", True):
             self.results["browser_testing"] = self.run_browser_tests(
-                browser=config.get("browser", "chrome"),
-                headless=config.get("headless", True)
+                browser=config.get("browser", "chrome"), headless=config.get("headless", True)
             )
 
         if config.get("run_mobile_tests", True):
@@ -368,25 +371,116 @@ class ComprehensiveTestRunner:
                 "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
                 "base_url": self.base_url,
                 "total_duration": total_duration,
-                "tests_run": list(self.results.keys())
+                "tests_run": list(self.results.keys()),
             },
             "overall_assessment": {
                 "overall_score": overall_score,
                 "test_status": test_status,
-                "category_scores": scores
+                "category_scores": scores,
             },
             "detailed_results": self.results,
             "recommendations": {
                 "high_priority": all_recommendations[:5],  # Top 5 recommendations
-                "all_recommendations": all_recommendations
+                "all_recommendations": all_recommendations,
             },
             "summary": {
-                "tests_passed": sum(1 for r in self.results.values()
-                                  if not r.get("error") and not r.get("failed")),
-                "tests_failed": sum(1 for r in self.results.values()
-                                 if r.get("error") or r.get("failed")),
-                "tests_skipped": sum(1 for r in self.results.values()
-                                   if r.get("skipped")),
-                "total_tests": len(self.results)
-            }
-        }\n    \n    def save_results(self, report: Dict[str, Any]) -> None:\n        """Save test results to files."""\n        # Create results directory\n        results_dir = Path("test_results")\n        results_dir.mkdir(exist_ok=True)\n        \n        timestamp = time.strftime("%Y%m%d_%H%M%S")\n        \n        # Save comprehensive report\n        comprehensive_file = results_dir / f"comprehensive_test_report_{timestamp}.json"\n        with open(comprehensive_file, "w", encoding="utf-8") as f:\n            json.dump(report, f, indent=2)\n        \n        print(f"📄 Comprehensive report saved to: {comprehensive_file}")\n        \n        # Save individual test results\n        for test_name, test_result in self.results.items():\n            if not test_result.get("error") and not test_result.get("skipped"):\n                individual_file = results_dir / f"{test_name}_{timestamp}.json"\n                with open(individual_file, "w", encoding="utf-8") as f:\n                    json.dump(test_result, f, indent=2)\n                print(f"📄 {test_name} results saved to: {individual_file}")\n    \n    def print_summary(self, report: Dict[str, Any]) -> None:\n        """Print test summary."""\n        print("")\n        print("=" * 80)\n        print("🏁 COMPREHENSIVE TESTING SUMMARY")\n        print("=" * 80)\n        \n        assessment = report["overall_assessment"]\n        summary = report["summary"]\n        \n        print(f"📊 Overall Score: {assessment['overall_score']:.1f}/100 ({assessment['test_status']})")\n        print(f"📈 Tests Passed: {summary['tests_passed']}/{summary['total_tests']}")\n        print(f"❌ Tests Failed: {summary['tests_failed']}")\n        print(f"⏭️  Tests Skipped: {summary['tests_skipped']}")\n        print(f"⏱️  Total Duration: {report['test_metadata']['total_duration']:.1f} seconds")\n        \n        print("")\n        print("📋 Category Scores:")\n        for category, score in assessment["category_scores"].items():\n            print(f"   • {category.title()}: {score:.1f}/100")\n        \n        print("")\n        print("🔧 Top Recommendations:")\n        for i, rec in enumerate(report["recommendations"]["high_priority"], 1):\n            print(f"   {i}. {rec}")\n        \n        print("")\n        print("=" * 80)\n\n\ndef main():\n    """Main function for running comprehensive tests."""\n    parser = argparse.ArgumentParser(description="Comprehensive Web Interface Testing")\n    parser.add_argument("--url", default="http://localhost:8000", help="Base URL to test")\n    parser.add_argument("--skip-load", action="store_true", help="Skip load testing")\n    parser.add_argument("--skip-security", action="store_true", help="Skip security testing")\n    parser.add_argument("--skip-browser", action="store_true", help="Skip browser testing")\n    parser.add_argument("--skip-mobile", action="store_true", help="Skip mobile testing")\n    parser.add_argument("--browser", default="chrome", choices=["chrome", "firefox"], help="Browser for testing")\n    parser.add_argument("--no-headless", action="store_true", help="Run browser tests with GUI")\n    parser.add_argument("--load-duration", type=int, default=30, help="Load test duration in seconds")\n    parser.add_argument("--load-users", type=int, default=10, help="Number of concurrent users for load testing")\n    \n    args = parser.parse_args()\n    \n    # Create test configuration\n    config = {\n        "run_load_tests": not args.skip_load,\n        "run_security_tests": not args.skip_security,\n        "run_browser_tests": not args.skip_browser,\n        "run_mobile_tests": not args.skip_mobile,\n        "browser": args.browser,\n        "headless": not args.no_headless,\n        "load_duration": args.load_duration,\n        "load_users": args.load_users\n    }\n    \n    # Run comprehensive tests\n    runner = ComprehensiveTestRunner(args.url)\n    runner.run_all_tests(config)\n\n\nif __name__ == "__main__":\n    main()
+                "tests_passed": sum(
+                    1 for r in self.results.values() if not r.get("error") and not r.get("failed")
+                ),
+                "tests_failed": sum(1 for r in self.results.values() if r.get("error") or r.get("failed")),
+                "tests_skipped": sum(1 for r in self.results.values() if r.get("skipped")),
+                "total_tests": len(self.results),
+            },
+        }
+
+    def save_results(self, report: Dict[str, Any]) -> None:
+        """Save test results to files."""
+        # Create results directory
+        results_dir = Path("test_results")
+        results_dir.mkdir(exist_ok=True)
+
+        timestamp = time.strftime("%Y%m%d_%H%M%S")
+
+        # Save comprehensive report
+        comprehensive_file = results_dir / f"comprehensive_test_report_{timestamp}.json"
+        with open(comprehensive_file, "w", encoding="utf-8") as f:
+            json.dump(report, f, indent=2)
+
+        print(f"📄 Comprehensive report saved to: {comprehensive_file}")
+
+        # Save individual test results
+        for test_name, test_result in self.results.items():
+            if not test_result.get("error") and not test_result.get("skipped"):
+                individual_file = results_dir / f"{test_name}_{timestamp}.json"
+                with open(individual_file, "w", encoding="utf-8") as f:
+                    json.dump(test_result, f, indent=2)
+                print(f"📄 {test_name} results saved to: {individual_file}")
+
+    def print_summary(self, report: Dict[str, Any]) -> None:
+        """Print test summary."""
+        print("")
+        print("=" * 80)
+        print("🏁 COMPREHENSIVE TESTING SUMMARY")
+        print("=" * 80)
+
+        assessment = report["overall_assessment"]
+        summary = report["summary"]
+
+        print(f"📊 Overall Score: {assessment['overall_score']:.1f}/100 ({assessment['test_status']})")
+        print(f"📈 Tests Passed: {summary['tests_passed']}/{summary['total_tests']}")
+        print(f"❌ Tests Failed: {summary['tests_failed']}")
+        print(f"⏭️  Tests Skipped: {summary['tests_skipped']}")
+        print(f"⏱️  Total Duration: {report['test_metadata']['total_duration']:.1f} seconds")
+
+        print("")
+        print("📋 Category Scores:")
+        for category, score in assessment["category_scores"].items():
+            print(f"   • {category.title()}: {score:.1f}/100")
+
+        print("")
+        print("🔧 Top Recommendations:")
+        for i, rec in enumerate(report["recommendations"]["high_priority"], 1):
+            print(f"   {i}. {rec}")
+
+        print("")
+        print("=" * 80)
+
+
+def main():
+    """Main function for running comprehensive tests."""
+    parser = argparse.ArgumentParser(description="Comprehensive Web Interface Testing")
+    parser.add_argument("--url", default="http://localhost:8000", help="Base URL to test")
+    parser.add_argument("--skip-load", action="store_true", help="Skip load testing")
+    parser.add_argument("--skip-security", action="store_true", help="Skip security testing")
+    parser.add_argument("--skip-browser", action="store_true", help="Skip browser testing")
+    parser.add_argument("--skip-mobile", action="store_true", help="Skip mobile testing")
+    parser.add_argument(
+        "--browser", default="chrome", choices=["chrome", "firefox"], help="Browser for testing"
+    )
+    parser.add_argument("--no-headless", action="store_true", help="Run browser tests with GUI")
+    parser.add_argument("--load-duration", type=int, default=30, help="Load test duration in seconds")
+    parser.add_argument(
+        "--load-users", type=int, default=10, help="Number of concurrent users for load testing"
+    )
+
+    args = parser.parse_args()
+
+    # Create test configuration
+    config = {
+        "run_load_tests": not args.skip_load,
+        "run_security_tests": not args.skip_security,
+        "run_browser_tests": not args.skip_browser,
+        "run_mobile_tests": not args.skip_mobile,
+        "browser": args.browser,
+        "headless": not args.no_headless,
+        "load_duration": args.load_duration,
+        "load_users": args.load_users,
+    }
+
+    # Run comprehensive tests
+    runner = ComprehensiveTestRunner(args.url)
+    runner.run_all_tests(config)
+
+
+if __name__ == "__main__":
+    main()

@@ -9,7 +9,7 @@ import logging
 from datetime import datetime
 from typing import Any, Dict, Set
 
-from fastapi import WebSocket, WebSocketDisconnect
+from fastapi import WebSocket
 
 logger = logging.getLogger(__name__)
 
@@ -70,9 +70,7 @@ class WebSocketManager:
 
         logger.info(f"[CONNECT] WebSocket disconnected: {client_id}")
 
-    async def send_personal_message(
-        self, message: Dict[str, Any], client_id: str
-    ) -> bool:
+    async def send_personal_message(self, message: Dict[str, Any], client_id: str) -> bool:
         """Send message to a specific client"""
         if client_id not in self.active_connections:
             logger.warning(f"[WARNING] Client {client_id} not connected")
@@ -80,9 +78,7 @@ class WebSocketManager:
 
         # Update activity metadata
         if client_id in self.connection_metadata:
-            self.connection_metadata[client_id][
-                "last_activity"
-            ] = datetime.utcnow()
+            self.connection_metadata[client_id]["last_activity"] = datetime.utcnow()
             self.connection_metadata[client_id]["message_count"] += 1
 
         # Send to all connections for this client
@@ -94,9 +90,7 @@ class WebSocketManager:
                 await connection.send_text(json.dumps(message, default=str))
                 successful_sends += 1
             except Exception as e:
-                logger.error(
-                    f"[ERROR] Failed to send message to {client_id}: {e}"
-                )
+                logger.error(f"[ERROR] Failed to send message to {client_id}: {e}")
                 failed_connections.append(connection)
 
         # Clean up failed connections
@@ -113,14 +107,10 @@ class WebSocketManager:
             if await self.send_personal_message(message, client_id):
                 sent_count += 1
 
-        logger.info(
-            f"[BROADCAST] Broadcast message sent to {sent_count} clients"
-        )
+        logger.info(f"[BROADCAST] Broadcast message sent to {sent_count} clients")
         return sent_count
 
-    async def send_to_multiple_clients(
-        self, message: Dict[str, Any], client_ids: list
-    ) -> int:
+    async def send_to_multiple_clients(self, message: Dict[str, Any], client_ids: list) -> int:
         """Send message to multiple specific clients"""
         sent_count = 0
 
@@ -132,9 +122,7 @@ class WebSocketManager:
 
     async def get_connection_stats(self) -> Dict[str, Any]:
         """Get connection statistics"""
-        total_connections = sum(
-            len(connections) for connections in self.active_connections.values()
-        )
+        total_connections = sum(len(connections) for connections in self.active_connections.values())
 
         stats = {
             "total_clients": len(self.active_connections),
@@ -144,9 +132,7 @@ class WebSocketManager:
 
         for client_id, metadata in self.connection_metadata.items():
             stats["clients"][client_id] = {
-                "connection_count": len(
-                    self.active_connections.get(client_id, [])
-                ),
+                "connection_count": len(self.active_connections.get(client_id, [])),
                 "connected_at": metadata["connected_at"].isoformat(),
                 "last_activity": metadata["last_activity"].isoformat(),
                 "message_count": metadata["message_count"],
@@ -154,18 +140,14 @@ class WebSocketManager:
 
         return stats
 
-    async def cleanup_inactive_connections(
-        self, timeout_minutes: int = 30
-    ) -> int:
+    async def cleanup_inactive_connections(self, timeout_minutes: int = 30) -> int:
         """Clean up connections that have been inactive for too long"""
         cutoff_time = datetime.utcnow().timestamp() - (timeout_minutes * 60)
         cleaned_count = 0
 
         for client_id in list(self.active_connections.keys()):
             if client_id in self.connection_metadata:
-                last_activity = self.connection_metadata[client_id][
-                    "last_activity"
-                ]
+                last_activity = self.connection_metadata[client_id]["last_activity"]
                 if last_activity.timestamp() < cutoff_time:
                     # Close all connections for this client
                     for connection in self.active_connections[client_id].copy():
@@ -179,15 +161,11 @@ class WebSocketManager:
                     del self.connection_metadata[client_id]
                     cleaned_count += 1
 
-                    logger.info(
-                        f"[CLEANUP] Cleaned up inactive client: {client_id}"
-                    )
+                    logger.info(f"[CLEANUP] Cleaned up inactive client: {client_id}")
 
         return cleaned_count
 
-    async def send_agent_status_update(
-        self, agent_id: str, status: Dict[str, Any]
-    ) -> None:
+    async def send_agent_status_update(self, agent_id: str, status: Dict[str, Any]) -> None:
         """Send agent status update to all connected clients"""
         message = {
             "type": "agent_status_update",
@@ -198,9 +176,7 @@ class WebSocketManager:
 
         await self.broadcast_message(message)
 
-    async def send_job_progress_update(
-        self, job_id: str, progress: float, client_id: str = None
-    ) -> None:
+    async def send_job_progress_update(self, job_id: str, progress: float, client_id: str = None) -> None:
         """Send job progress update"""
         message = {
             "type": "job_progress",
@@ -214,9 +190,7 @@ class WebSocketManager:
         else:
             await self.broadcast_message(message)
 
-    async def send_search_results_update(
-        self, job_id: str, results: list, client_id: str
-    ) -> None:
+    async def send_search_results_update(self, job_id: str, results: list, client_id: str) -> None:
         """Send search results update"""
         message = {
             "type": "search_results",
@@ -227,9 +201,7 @@ class WebSocketManager:
 
         await self.send_personal_message(message, client_id)
 
-    async def send_visualization_update(
-        self, job_id: str, visualization_data: Dict, client_id: str
-    ) -> None:
+    async def send_visualization_update(self, job_id: str, visualization_data: Dict, client_id: str) -> None:
         """Send visualization update"""
         message = {
             "type": "visualization_update",
@@ -240,9 +212,7 @@ class WebSocketManager:
 
         await self.send_personal_message(message, client_id)
 
-    async def send_error_notification(
-        self, error_message: str, client_id: str = None
-    ) -> None:
+    async def send_error_notification(self, error_message: str, client_id: str = None) -> None:
         """Send error notification"""
         message = {
             "type": "error_notification",
@@ -255,9 +225,7 @@ class WebSocketManager:
         else:
             await self.broadcast_message(message)
 
-    async def send_system_notification(
-        self, notification: str, level: str = "info"
-    ) -> None:
+    async def send_system_notification(self, notification: str, level: str = "info") -> None:
         """Send system-wide notification"""
         message = {
             "type": "system_notification",
@@ -274,10 +242,7 @@ class WebSocketManager:
 
     def is_client_connected(self, client_id: str) -> bool:
         """Check if a client is connected"""
-        return (
-            client_id in self.active_connections
-            and len(self.active_connections[client_id]) > 0
-        )
+        return client_id in self.active_connections and len(self.active_connections[client_id]) > 0
 
     async def cleanup(self) -> None:
         """Clean up all connections"""

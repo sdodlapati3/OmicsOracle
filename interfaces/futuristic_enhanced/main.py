@@ -9,18 +9,11 @@ import logging
 import os
 import sys
 import time
-from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import uvicorn
-from fastapi import (
-    BackgroundTasks,
-    FastAPI,
-    HTTPException,
-    WebSocket,
-    WebSocketDisconnect,
-)
+from fastapi import BackgroundTasks, FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
@@ -40,15 +33,14 @@ try:
     os.environ["NCBI_EMAIL"] = "omicsoracle@example.com"
 
     # Try to import the patch if it exists
-    if Path(project_root / "entrez_patch.py").exists():
-        sys.path.insert(0, str(project_root))
-        import entrez_patch
+    try:
+        # Import patch module but we don't need to use it directly
+        # The import itself applies the patch
+        import src.omics_oracle.utils.entrez_patch  # noqa: F401
 
         logger.info("Successfully applied Bio.Entrez email patch")
-    else:
-        logger.warning(
-            "entrez_patch.py not found - NCBI email may not be correctly configured"
-        )
+    except ImportError:
+        logger.warning("entrez_patch.py not found - NCBI email may not be correctly configured")
 except Exception as e:
     logger.warning(f"Failed to apply Bio.Entrez email patch: {e}")
 
@@ -56,7 +48,6 @@ except Exception as e:
 try:
     # Try to import from Clean Architecture backend
     import httpx
-    import requests
 
     BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
     logger.info(f"Enhanced interface will connect to backend at: {BACKEND_URL}")
@@ -80,9 +71,7 @@ except ImportError as e:
 
     class Config:
         def __init__(self):
-            self.ncbi = type(
-                "NCBIConfig", (), {"email": "omicsoracle@example.com"}
-            )()
+            self.ncbi = type("NCBIConfig", (), {"email": "omicsoracle@example.com"})()
 
 
 # Enhanced API models for Clean Architecture integration
@@ -96,12 +85,8 @@ class SearchRequest(BaseModel):
         "comprehensive",
         description="Search type (quick, comprehensive, or advanced)",
     )
-    disable_cache: bool = Field(
-        False, description="Force fresh data by disabling the cache"
-    )
-    timestamp: Optional[float] = Field(
-        None, description="Client timestamp for cache-busting"
-    )
+    disable_cache: bool = Field(False, description="Force fresh data by disabling the cache")
+    timestamp: Optional[float] = Field(None, description="Client timestamp for cache-busting")
 
 
 class SearchResponse(BaseModel):
@@ -114,19 +99,13 @@ class SearchResponse(BaseModel):
 
 class EnhancedSearchRequest(BaseModel):
     query: str = Field(..., description="Search query for biomedical datasets")
-    filters: Dict[str, Any] = Field(
-        default_factory=dict, description="Search filters"
-    )
+    filters: Dict[str, Any] = Field(default_factory=dict, description="Search filters")
     max_results: int = Field(
         10,
         description="Maximum number of results (5, 10, 20, 50, 100, or 1000 for 'All Results')",
     )
-    include_metadata: bool = Field(
-        True, description="Include metadata in response"
-    )
-    enable_ai_summary: bool = Field(
-        True, description="Enable AI-powered summary"
-    )
+    include_metadata: bool = Field(True, description="Include metadata in response")
+    enable_ai_summary: bool = Field(True, description="Enable AI-powered summary")
 
 
 class EnhancedSearchResponse(BaseModel):
@@ -181,16 +160,12 @@ class BackendClient:
     async def search_enhanced(self, request: EnhancedSearchRequest) -> dict:
         """Perform enhanced search via Clean Architecture backend"""
         try:
-            response = await self.session.post(
-                "/api/v2/search/enhanced", json=request.dict(), timeout=30.0
-            )
+            response = await self.session.post("/api/v2/search/enhanced", json=request.dict(), timeout=30.0)
             response.raise_for_status()
             return response.json()
         except httpx.HTTPError as e:
             logger.error(f"Backend search failed: {e}")
-            raise HTTPException(
-                status_code=503, detail="Backend service unavailable"
-            )
+            raise HTTPException(status_code=503, detail="Backend service unavailable")
 
     async def get_dataset_details(self, dataset_id: str) -> dict:
         """Get dataset details from backend"""
@@ -220,16 +195,12 @@ class ConnectionManager:
     async def connect(self, websocket: WebSocket):
         await websocket.accept()
         self.active_connections.append(websocket)
-        logger.info(
-            f"WebSocket connected. Total connections: {len(self.active_connections)}"
-        )
+        logger.info(f"WebSocket connected. Total connections: {len(self.active_connections)}")
 
     def disconnect(self, websocket: WebSocket):
         if websocket in self.active_connections:
             self.active_connections.remove(websocket)
-        logger.info(
-            f"WebSocket disconnected. Total connections: {len(self.active_connections)}"
-        )
+        logger.info(f"WebSocket disconnected. Total connections: {len(self.active_connections)}")
 
     async def broadcast(self, message: str):
         """Broadcast message to all connected clients"""
@@ -325,9 +296,7 @@ async def log_to_frontend(message: str, level: str = "info"):
 async def send_progress_to_frontend(query_id: str, event):
     """Send progress event to frontend via WebSocket"""
     # Log each progress event for debugging
-    logger.info(
-        f"[PROGRESS] {event.stage} - {event.message} ({event.percentage:.1f}%)"
-    )
+    logger.info(f"[PROGRESS] {event.stage} - {event.message} ({event.percentage:.1f}%)")
 
     # Log detailed event information at debug level
     if event.detail:
@@ -362,9 +331,7 @@ async def startup_event():
 
         # Set NCBI email in environment variable
         os.environ["NCBI_EMAIL"] = "omicsoracle@example.com"
-        logger.info(
-            f"Set NCBI_EMAIL environment variable to {os.environ['NCBI_EMAIL']}"
-        )
+        logger.info(f"Set NCBI_EMAIL environment variable to {os.environ['NCBI_EMAIL']}")
 
         # Create configuration
         config = Config()
@@ -430,19 +397,13 @@ async def futuristic_interface():
 
 
 @app.post("/api/search")
-async def search_datasets(
-    request: SearchRequest, background_tasks: BackgroundTasks
-):
+async def search_datasets(request: SearchRequest, background_tasks: BackgroundTasks):
     """Search for biomedical datasets using the OmicsOracle pipeline"""
-    await log_to_frontend(
-        f"[SEARCH] New search query received: '{request.query}'", "info"
-    )
+    await log_to_frontend(f"[SEARCH] New search query received: '{request.query}'", "info")
 
     if not hasattr(app.state, "pipeline") or not app.state.pipeline:
         await log_to_frontend("[ERROR] Pipeline not available", "error")
-        raise HTTPException(
-            status_code=503, detail="OmicsOracle pipeline not available"
-        )
+        raise HTTPException(status_code=503, detail="OmicsOracle pipeline not available")
 
     search_start_time = time.time()
     await log_to_frontend(
@@ -452,17 +413,13 @@ async def search_datasets(
 
     try:
         logger.info(f"[SEARCH] Processing search query: {request.query}")
-        await log_to_frontend(
-            "[AI] Initializing AI-powered search pipeline...", "info"
-        )
+        await log_to_frontend("[AI] Initializing AI-powered search pipeline...", "info")
 
         # Use the existing OmicsOracle pipeline to process the query
         result = await process_search_query(request.query, request.max_results)
 
         search_time = time.time() - search_start_time
-        await log_to_frontend(
-            f"[OK] Search completed in {search_time:.2f}s", "success"
-        )
+        await log_to_frontend(f"[OK] Search completed in {search_time:.2f}s", "success")
         await log_to_frontend(
             f"[RESULTS] Found {len(result['datasets'])} relevant datasets",
             "success",
@@ -482,9 +439,7 @@ async def search_datasets(
         raise HTTPException(status_code=500, detail=f"Search failed: {str(e)}")
 
 
-async def process_search_query(
-    query: str, max_results: int = 10
-) -> Dict[str, Any]:
+async def process_search_query(query: str, max_results: int = 10) -> Dict[str, Any]:
     """Process search query using the existing OmicsOracle pipeline"""
     try:
         # Check if pipeline is available
@@ -494,9 +449,7 @@ async def process_search_query(
         # Validate max_results
         valid_values = [5, 10, 20, 50, 100, 1000]
         if max_results not in valid_values:
-            logger.warning(
-                f"Invalid max_results value: {max_results}. Defaulting to 10."
-            )
+            logger.warning(f"Invalid max_results value: {max_results}. Defaulting to 10.")
             max_results = 10
 
         # Handle "All Results" option (value of 1000)
@@ -505,19 +458,13 @@ async def process_search_query(
         logger.info(
             f"[SEARCH] Starting pipeline query processing for: {query} with max_results={max_results}"
         )
-        await log_to_frontend(
-            "[SEARCH] Starting pipeline query processing...", "info"
-        )
+        await log_to_frontend("[SEARCH] Starting pipeline query processing...", "info")
 
-        await log_to_frontend(
-            "[DATA] Connecting to NCBI GEO database...", "info"
-        )
+        await log_to_frontend("[DATA] Connecting to NCBI GEO database...", "info")
 
         # First try to import the enhanced query handler for better handling of complex queries
         try:
-            from src.omics_oracle.search.enhanced_query_handler import (
-                perform_multi_strategy_search,
-            )
+            from src.omics_oracle.search.enhanced_query_handler import perform_multi_strategy_search
 
             await log_to_frontend(
                 "[SEARCH] Using enhanced query handling for complex queries...",
@@ -533,9 +480,7 @@ async def process_search_query(
             if geo_ids:
                 # Get components used in the search from metadata_info
                 components = metadata_info.get("components", {})
-                search_strategy = metadata_info.get(
-                    "search_strategy", "original"
-                )
+                search_strategy = metadata_info.get("search_strategy", "original")
                 query_used = metadata_info.get("query_used", query)
 
                 # Add search strategy information to the frontend
@@ -546,11 +491,7 @@ async def process_search_query(
                     )
 
                     # If we have identified components, show them to the user
-                    components_found = [
-                        k
-                        for k, v in components.items()
-                        if v and k != "original_query"
-                    ]
+                    components_found = [k for k, v in components.items() if v and k != "original_query"]
                     if components_found:
                         await log_to_frontend(
                             f"[ANALYSIS] Identified query components: {', '.join(components_found)}",
@@ -577,19 +518,13 @@ async def process_search_query(
                     "info",
                 )
                 # Use the pipeline's process_query method (it's async!)
-                query_result = await app.state.pipeline.process_query(
-                    query, max_results=actual_max_results
-                )
+                query_result = await app.state.pipeline.process_query(query, max_results=actual_max_results)
 
         except ImportError:
             # If enhanced query handler is not available, use the standard pipeline
-            await log_to_frontend(
-                "[SEARCH] Using standard pipeline search...", "info"
-            )
+            await log_to_frontend("[SEARCH] Using standard pipeline search...", "info")
             # Use the pipeline's process_query method (it's async!)
-            query_result = await app.state.pipeline.process_query(
-                query, max_results=actual_max_results
-            )
+            query_result = await app.state.pipeline.process_query(query, max_results=actual_max_results)
 
         await log_to_frontend(
             f"[RESULTS] Pipeline results: {len(query_result.geo_ids)} GEO IDs found",
@@ -610,9 +545,7 @@ async def process_search_query(
         # Extract and format the results
         datasets = []
 
-        await log_to_frontend(
-            "[AI] Processing metadata and generating AI insights...", "info"
-        )
+        await log_to_frontend("[AI] Processing metadata and generating AI insights...", "info")
 
         # Check if we have GEO IDs (even without metadata)
         if query_result.geo_ids:
@@ -655,18 +588,12 @@ async def process_search_query(
 
                 # Format publication date properly
                 pub_date = "Date not available"
-                if (
-                    metadata.get("submission_date")
-                    and metadata["submission_date"][0]
-                ):
+                if metadata.get("submission_date") and metadata["submission_date"][0]:
                     raw_date = metadata["submission_date"][0]
                     # If it's just a single character, it's probably incomplete
                     if len(raw_date) > 1:
                         pub_date = raw_date
-                elif (
-                    metadata.get("last_update_date")
-                    and metadata["last_update_date"][0]
-                ):
+                elif metadata.get("last_update_date") and metadata["last_update_date"][0]:
                     raw_date = metadata["last_update_date"][0]
                     if len(raw_date) > 1:
                         pub_date = raw_date
@@ -674,13 +601,8 @@ async def process_search_query(
                     pub_date = metadata["pubdate"]
                 # Get AI insights - only use real AI summaries, no fallbacks
                 ai_insights = None
-                if (
-                    query_result.ai_summaries
-                    and "individual_summaries" in query_result.ai_summaries
-                ):
-                    for summary_item in query_result.ai_summaries[
-                        "individual_summaries"
-                    ]:
+                if query_result.ai_summaries and "individual_summaries" in query_result.ai_summaries:
+                    for summary_item in query_result.ai_summaries["individual_summaries"]:
                         if summary_item.get("accession") == geo_id:
                             ai_insights = summary_item.get("summary")
                             break
@@ -688,22 +610,16 @@ async def process_search_query(
                 dataset_info = {
                     "geo_id": geo_id,
                     "title": metadata.get("title"),  # Can be None
-                    "summary": metadata.get(
-                        "summary"
-                    ),  # Can be None (GEO summary)
+                    "summary": metadata.get("summary"),  # Can be None (GEO summary)
                     "organism": organism,  # Can be None
                     "sample_count": metadata.get("sample_count"),  # Can be None
                     "platform": platform,  # Can be None
-                    "publication_date": pub_date
-                    if pub_date != "Date not available"
-                    else None,
+                    "publication_date": pub_date if pub_date != "Date not available" else None,
                     "study_type": metadata.get("type"),  # Can be None
                     "ai_insights": ai_insights,  # Can be None (AI summary)
                     "relevance_score": relevance_score,  # Can be None
                     # Include both summaries explicitly for clarity
-                    "geo_summary": metadata.get(
-                        "summary"
-                    ),  # Original GEO summary
+                    "geo_summary": metadata.get("summary"),  # Original GEO summary
                     "ai_summary": ai_insights,  # AI-generated summary
                 }
                 datasets.append(dataset_info)
@@ -720,8 +636,7 @@ async def process_search_query(
                 key=lambda d: (
                     d.get("title") is not None,  # Has real title
                     d.get("summary") is not None,  # Has real summary
-                    d.get("relevance_score", 0)
-                    or 0,  # Real relevance score (handle None)
+                    d.get("relevance_score", 0) or 0,  # Real relevance score (handle None)
                 ),
                 reverse=True,
             )
@@ -736,12 +651,8 @@ async def process_search_query(
             }
 
         # Create AI insights message based only on real data
-        datasets_with_metadata = [
-            d for d in datasets if d.get("title") is not None
-        ]
-        datasets_with_summaries = [
-            d for d in datasets if d.get("summary") is not None
-        ]
+        datasets_with_metadata = [d for d in datasets if d.get("title") is not None]
+        datasets_with_summaries = [d for d in datasets if d.get("summary") is not None]
 
         ai_insights = f"Found {len(datasets)} biomedical datasets for '{query}'"
 
@@ -762,9 +673,7 @@ async def process_search_query(
         if datasets_without_metadata > 0:
             ai_insights += f" Note: {datasets_without_metadata} datasets have limited metadata from NCBI."
 
-        await log_to_frontend(
-            "[COMPLETE] Query processing complete!", "success"
-        )
+        await log_to_frontend("[COMPLETE] Query processing complete!", "success")
 
         return {
             "datasets": datasets,
@@ -788,18 +697,14 @@ async def health_check():
     if pipeline is not None:
         # Get pipeline details when available
         pipeline_info = {
-            "geo_client_available": hasattr(pipeline, "geo_client")
-            and pipeline.geo_client is not None,
+            "geo_client_available": hasattr(pipeline, "geo_client") and pipeline.geo_client is not None,
             "cache_disabled": getattr(pipeline, "disable_cache", False),
-            "summarizer_available": hasattr(pipeline, "summarizer")
-            and pipeline.summarizer is not None,
+            "summarizer_available": hasattr(pipeline, "summarizer") and pipeline.summarizer is not None,
         }
 
         # Check NCBI email configuration
         if hasattr(pipeline, "config") and hasattr(pipeline.config, "ncbi"):
-            pipeline_info["ncbi_email"] = getattr(
-                pipeline.config.ncbi, "email", "Not set"
-            )
+            pipeline_info["ncbi_email"] = getattr(pipeline.config.ncbi, "email", "Not set")
 
         # Check if critical components are ready
         pipeline_info["critical_components_ready"] = all(
@@ -829,9 +734,7 @@ async def health_check():
         "pipeline_available": pipeline is not None,
         "pipeline_info": pipeline_info,
         "environment": env_info,
-        "message": "Futuristic interface ready"
-        if status == "healthy"
-        else "Pipeline not initialized",
+        "message": "Futuristic interface ready" if status == "healthy" else "Pipeline not initialized",
     }
 
 
