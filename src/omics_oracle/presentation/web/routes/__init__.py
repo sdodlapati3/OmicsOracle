@@ -143,15 +143,17 @@ def setup_routes(app: FastAPI) -> None:
             "research": "research_dashboard.html",
             "intelligence": "research_intelligence_dashboard.html",
             "advanced": "dashboard.html",
+            "futuristic": "futuristic_interface.html",
         }
 
         for name, filename in dashboard_files.items():
             file_path = static_dir / filename
             if file_path.exists():
+                url = f"/dashboard/{name}" if name != "futuristic" else "/futuristic"
                 dashboards.append(
                     {
                         "name": name,
-                        "url": f"/dashboard/{name}",
+                        "url": url,
                         "description": f"{name.title()} dashboard interface",
                     }
                 )
@@ -161,7 +163,7 @@ def setup_routes(app: FastAPI) -> None:
     # Futuristic interface route
     @app.get("/futuristic", tags=["dashboard"])
     async def futuristic_interface():
-        """Serve the next-generation futuristic interface."""
+        """Serve the futuristic next-generation interface."""
         static_dir = Path(__file__).parent.parent / "static"
         futuristic_path = static_dir / "futuristic_interface.html"
         if futuristic_path.exists():
