@@ -50,18 +50,23 @@ def setup_routes(app: FastAPI) -> None:
     async def root():
         """Serve the main web interface."""
         static_dir = Path(__file__).parent.parent / "static"
-        # Use the advanced research intelligence dashboard
-        dashboard_path = static_dir / "research_intelligence_dashboard.html"
+        # Use the enhanced futuristic interface as the default (restored from backup)
+        enhanced_path = static_dir / "futuristic_enhanced.html"
 
-        if dashboard_path.exists():
-            return FileResponse(str(dashboard_path))
+        if enhanced_path.exists():
+            return FileResponse(str(enhanced_path))
         else:
-            # Fallback to basic index if advanced dashboard not available
-            index_path = static_dir / "index.html"
-            if index_path.exists():
-                return FileResponse(str(index_path))
+            # Fallback to research intelligence dashboard
+            dashboard_path = static_dir / "research_intelligence_dashboard.html"
+            if dashboard_path.exists():
+                return FileResponse(str(dashboard_path))
             else:
-                return {"error": "Web interface not found"}
+                # Final fallback to basic index
+                index_path = static_dir / "index.html"
+                if index_path.exists():
+                    return FileResponse(str(index_path))
+                else:
+                    return {"error": "Web interface not found"}
 
     @app.get("/api", tags=["version-discovery"])
     async def api_version_discovery():
@@ -144,12 +149,18 @@ def setup_routes(app: FastAPI) -> None:
             "intelligence": "research_intelligence_dashboard.html",
             "advanced": "dashboard.html",
             "futuristic": "futuristic_interface.html",
+            "futuristic-enhanced": "futuristic_enhanced.html",
         }
 
         for name, filename in dashboard_files.items():
             file_path = static_dir / filename
             if file_path.exists():
-                url = f"/dashboard/{name}" if name != "futuristic" else "/futuristic"
+                if name == "futuristic":
+                    url = "/futuristic"
+                elif name == "futuristic-enhanced":
+                    url = "/futuristic-enhanced"
+                else:
+                    url = f"/dashboard/{name}"
                 dashboards.append(
                     {
                         "name": name,
@@ -170,5 +181,22 @@ def setup_routes(app: FastAPI) -> None:
             return FileResponse(str(futuristic_path))
         else:
             return {"error": "Futuristic interface not found"}
+
+    # Enhanced futuristic interface route (restored from backup)
+    @app.get("/futuristic-enhanced", tags=["dashboard"])
+    async def futuristic_enhanced_interface():
+        """Serve the enhanced futuristic interface with agent monitoring."""
+        return FileResponse("src/omics_oracle/presentation/web/static/futuristic_enhanced.html")
+
+    # Enhanced futuristic interface route (additional)
+    @app.get("/enhanced", tags=["dashboard"])
+    async def enhanced_interface():
+        """Serve the enhanced futuristic interface"""
+        static_dir = Path(__file__).parent.parent / "static"
+        enhanced_path = static_dir / "futuristic_enhanced.html"
+        if enhanced_path.exists():
+            return FileResponse(str(enhanced_path))
+        else:
+            return {"error": "Enhanced futuristic interface not found"}
 
     logger.info("All routes configured successfully (including v1 & v2 APIs)")

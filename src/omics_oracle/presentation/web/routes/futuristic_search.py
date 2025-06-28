@@ -147,7 +147,7 @@ async def perform_search_with_updates(query: str, client_id: str, max_results: i
             "results": query_result.__dict__ if hasattr(query_result, "__dict__") else str(query_result),
             "search_time": search_time,
             "timestamp": time.time(),
-            "total_found": len(query_result.results) if hasattr(query_result, "results") else 0,
+            "total_found": len(query_result.metadata) if hasattr(query_result, "metadata") else 0,
         }
 
         await manager.send_search_results(client_id, results_data)
