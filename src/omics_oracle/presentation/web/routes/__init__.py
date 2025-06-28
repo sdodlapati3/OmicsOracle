@@ -13,6 +13,7 @@ from fastapi.responses import FileResponse
 
 from .analysis import router as analysis_router
 from .enhanced_search import router as enhanced_search_router
+from .futuristic_search import router as futuristic_search_router
 from .health import router as health_router
 from .search import router as search_router
 from .v1 import router as v1_router
@@ -40,6 +41,9 @@ def setup_routes(app: FastAPI) -> None:
     app.include_router(v1_router, prefix="/api", tags=["v1", "compatibility"])
 
     app.include_router(v2_router, prefix="/api", tags=["v2", "advanced"])
+
+    # Futuristic search routes
+    app.include_router(futuristic_search_router, prefix="/api", tags=["futuristic", "search"])
 
     # Default route to serve the web interface
     @app.get("/", tags=["root"])
@@ -153,5 +157,16 @@ def setup_routes(app: FastAPI) -> None:
                 )
 
         return {"available_dashboards": dashboards, "default": "/", "current_default": "intelligence"}
+
+    # Futuristic interface route
+    @app.get("/futuristic", tags=["dashboard"])
+    async def futuristic_interface():
+        """Serve the next-generation futuristic interface."""
+        static_dir = Path(__file__).parent.parent / "static"
+        futuristic_path = static_dir / "futuristic_interface.html"
+        if futuristic_path.exists():
+            return FileResponse(str(futuristic_path))
+        else:
+            return {"error": "Futuristic interface not found"}
 
     logger.info("All routes configured successfully (including v1 & v2 APIs)")
