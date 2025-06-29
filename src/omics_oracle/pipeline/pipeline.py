@@ -430,7 +430,7 @@ class OmicsOracle:
             top_results = result.metadata[:5]
             individual_summaries = []
 
-            for metadata in top_results:
+            for i, metadata in enumerate(top_results):
                 try:
                     # Generate comprehensive summary for each dataset
                     dataset_id = (
@@ -439,9 +439,26 @@ class OmicsOracle:
                     summary = self.summarizer.summarize_dataset(
                         metadata,
                         query_context=result.original_query,
-                        summary_type="comprehensive",
+                        summary_type="brief",  # Use brief for frontend display
                         dataset_id=dataset_id,
                     )
+
+                    # Extract the summary text from the result
+                    ai_summary_text = None
+                    if isinstance(summary, dict):
+                        # Try different possible keys for the summary text
+                        ai_summary_text = summary.get("brief") or summary.get("overview")
+                        if not ai_summary_text:
+                            brief_overview = summary.get("brief_overview")
+                            if isinstance(brief_overview, dict):
+                                ai_summary_text = brief_overview.get("overview")
+                    elif isinstance(summary, str):
+                        ai_summary_text = summary
+
+                    # Add AI summary directly to the metadata entry
+                    if ai_summary_text and ai_summary_text.strip():
+                        result.metadata[i]["ai_summary"] = ai_summary_text
+
                     individual_summaries.append(
                         {
                             "accession": metadata.get("accession", "Unknown"),
@@ -454,6 +471,9 @@ class OmicsOracle:
                         metadata.get("accession", "Unknown"),
                         str(e),
                     )
+                    # Set ai_summary to None for failed cases so frontend can handle gracefully
+                    if i < len(result.metadata):
+                        result.metadata[i]["ai_summary"] = None
                     continue
 
             result.ai_summaries["individual_summaries"] = individual_summaries

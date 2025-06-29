@@ -177,6 +177,7 @@ class OmicsOracleInterface {
             }
 
             const data = await response.json();
+            console.log('[DEBUG] API Response received:', data);
             const responseTime = (Date.now() - startTime) / 1000;
 
             // Update statistics
@@ -184,7 +185,8 @@ class OmicsOracleInterface {
             this.totalResponseTime += responseTime;
             this.updateStats();
 
-            this.addLogEntry(`Found ${data.total_found || 0} results in ${responseTime.toFixed(2)}s`, 'success');
+            this.addLogEntry(`Found ${data.geo_ids?.length || 0} results in ${responseTime.toFixed(2)}s`, 'success');
+            console.log('[DEBUG] About to call displayResults with data');
             this.displayResults(data);
 
         } catch (error) {
@@ -210,15 +212,23 @@ class OmicsOracleInterface {
     }
 
     displayResults(data) {
+        console.log('[DEBUG] displayResults called with data:', data);
+
         if (!this.elements.resultsGrid || !this.elements.noResults || !this.elements.searchStatus) {
             console.error('Required DOM elements not found');
             return;
         }
 
-        if (!data.results || data.results.length === 0) {
-            this.showNoResults(data.query);
+        console.log('[DEBUG] Checking metadata:', data.metadata);
+        console.log('[DEBUG] Metadata length:', data.metadata ? data.metadata.length : 'undefined');
+
+        if (!data.metadata || data.metadata.length === 0) {
+            console.log('[DEBUG] No metadata found, showing no results');
+            this.showNoResults(data.original_query);
             return;
         }
+
+        console.log('[DEBUG] Found', data.metadata.length, 'results, proceeding to display');
 
         // Hide no results message
         this.elements.noResults.style.display = 'none';
@@ -227,7 +237,7 @@ class OmicsOracleInterface {
         this.updateSearchStatus(data);
 
         // Build and display results
-        this.buildResultsHTML(data.results);
+        this.buildResultsHTML(data.metadata);
     }
 
     showNoResults(query) {
@@ -242,13 +252,16 @@ class OmicsOracleInterface {
     }
 
     updateSearchStatus(data) {
+        const resultsCount = data.metadata ? data.metadata.length : 0;
+        const totalCount = data.geo_ids ? data.geo_ids.length : resultsCount;
+
         this.elements.searchStatus.innerHTML = `
             <div class="search-status-summary">
                 <div>
-                    <h3>Results for: "${data.query || ''}"</h3>
+                    <h3>Results for: "${data.original_query || ''}"</h3>
                 </div>
                 <div class="search-status-details">
-                    <p>${data.results.length} of ${data.total_found || data.results.length} datasets shown</p>
+                    <p>${resultsCount} of ${totalCount} datasets shown</p>
                     <p class="search-time">Search time: ${data.search_time ? data.search_time.toFixed(2) : '0.00'}s</p>
                 </div>
             </div>
@@ -260,7 +273,7 @@ class OmicsOracleInterface {
 
         results.forEach((result, index) => {
             // Process GEO summary for truncation
-            const geoSummaryText = result.geo_summary || result.summary || '';
+            const geoSummaryText = result.summary || result.geo_summary || '';
             const truncatedSummary = this.truncateText(geoSummaryText, 300);
             const needsShowMore = geoSummaryText.length > 300;
 
@@ -278,7 +291,7 @@ class OmicsOracleInterface {
                     </div>
                     ${geoSummaryText ? `
                     <div class="result-summary">
-                        <h5>Summary:</h5>
+                        <h5>GEO Summary:</h5>
                         <div id="summary-${result.geo_id}" data-full-text="${this.escapeHtml(geoSummaryText)}">
                             ${truncatedSummary}
                         </div>
@@ -296,7 +309,14 @@ class OmicsOracleInterface {
                             ${this.escapeHtml(result.ai_summary)}
                         </div>
                     </div>
-                    ` : ''}
+                    ` : `
+                    <div class="ai-summary-unavailable">
+                        <h5>🤖 AI Summary:</h5>
+                        <div class="ai-summary-message">
+                            <em>AI summaries temporarily unavailable (rate limit reached)</em>
+                        </div>
+                    </div>
+                    `}
                 </div>
             `;
         });
